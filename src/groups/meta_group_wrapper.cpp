@@ -47,11 +47,19 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod(
                             "membersMarkPendingRemoval",
                             &MetaGroupWrapper::membersMarkPendingRemoval),
-                    InstanceMethod("memberSetName", &MetaGroupWrapper::memberSetName),
+                    InstanceMethod(
+                            "memberSetNameTruncated", &MetaGroupWrapper::memberSetNameTruncated),
                     InstanceMethod("memberSetInvited", &MetaGroupWrapper::memberSetInvited),
                     InstanceMethod("memberSetAccepted", &MetaGroupWrapper::memberSetAccepted),
                     InstanceMethod("memberSetPromoted", &MetaGroupWrapper::memberSetPromoted),
-                    InstanceMethod("memberSetAdmin", &MetaGroupWrapper::memberSetAdmin),
+                    InstanceMethod(
+                            "memberSetPromotionSent", &MetaGroupWrapper::memberSetPromotionSent),
+                    InstanceMethod(
+                            "memberSetPromotionFailed",
+                            &MetaGroupWrapper::memberSetPromotionFailed),
+                    InstanceMethod(
+                            "memberSetPromotionAccepted",
+                            &MetaGroupWrapper::memberSetPromotionAccepted),
                     InstanceMethod(
                             "memberSetProfilePicture", &MetaGroupWrapper::memberSetProfilePicture),
                     InstanceMethod("memberEraseAndRekey", &MetaGroupWrapper::memberEraseAndRekey),
@@ -73,6 +81,7 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod(
                             "swarmVerifySubAccount", &MetaGroupWrapper::swarmVerifySubAccount),
                     InstanceMethod("loadAdminKeys", &MetaGroupWrapper::loadAdminKeys),
+                    InstanceMethod("keysAdmin", &MetaGroupWrapper::keysAdmin),
 
                     InstanceMethod("swarmSubaccountSign", &MetaGroupWrapper::swarmSubaccountSign),
                     InstanceMethod(
@@ -431,7 +440,7 @@ void MetaGroupWrapper::memberConstructAndSet(const Napi::CallbackInfo& info) {
     });
 }
 
-void MetaGroupWrapper::memberSetName(const Napi::CallbackInfo& info) {
+void MetaGroupWrapper::memberSetNameTruncated(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertIsString(info[0]);
         assertIsString(info[1]);
@@ -477,29 +486,51 @@ void MetaGroupWrapper::memberSetAccepted(const Napi::CallbackInfo& info) {
 
 void MetaGroupWrapper::memberSetPromoted(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
-        assertInfoLength(info, 2);
+        assertInfoLength(info, 1);
         assertIsString(info[0]);
-        assertIsBoolean(info[1]);
         auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
-        auto failed = toCppBoolean(info[1], __PRETTY_FUNCTION__);
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
-            m->set_promoted(failed);
+            m->set_promoted();
             this->meta_group->members->set(*m);
         }
     });
 }
 
-void MetaGroupWrapper::memberSetAdmin(const Napi::CallbackInfo& info) {
+void MetaGroupWrapper::memberSetPromotionSent(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
         auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
-        // Note: this step might add an admin which was removed back once he accepts the promotion,
-        // but there is not much we can do about it
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
-            m->admin = true;
+            m->set_promotion_sent();
+            this->meta_group->members->set(*m);
+        }
+    });
+}
+
+void MetaGroupWrapper::memberSetPromotionFailed(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsString(info[0]);
+        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto m = this->meta_group->members->get(pubkeyHex);
+        if (m) {
+            m->set_promotion_failed();
+            this->meta_group->members->set(*m);
+        }
+    });
+}
+
+void MetaGroupWrapper::memberSetPromotionAccepted(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsString(info[0]);
+        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto m = this->meta_group->members->get(pubkeyHex);
+        if (m) {
+            m->set_promotion_accepted();
             this->meta_group->members->set(*m);
         }
     });
@@ -702,7 +733,6 @@ Napi::Value MetaGroupWrapper::loadAdminKeys(const Napi::CallbackInfo& info) {
         return info.Env().Null();
     });
 }
-
 
 Napi::Value MetaGroupWrapper::keysAdmin(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {

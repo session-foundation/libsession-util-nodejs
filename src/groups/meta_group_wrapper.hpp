@@ -21,13 +21,23 @@ struct toJs_impl<member> {
         obj["pubkeyHex"] = toJs(env, info.session_id);
         obj["name"] = toJs(env, info.name);
         obj["profilePicture"] = toJs(env, info.profile_picture);
+        obj["removedStatus"] = toJs(env, info.removed_status);
+
+        // invites
+        obj["inviteNotSent"] = toJs(env, info.invite_not_sent());
         obj["invitePending"] = toJs(env, info.invite_pending());
+        obj["inviteAccepted"] = toJs(env, info.invite_status == 0);
         obj["inviteFailed"] = toJs(env, info.invite_failed());
+
+        // promotions
+        obj["promotionNotSent"] = toJs(env, info.promotion_not_sent());
         obj["promotionPending"] = toJs(env, info.promotion_pending());
         obj["promotionFailed"] = toJs(env, info.promotion_failed());
         obj["promoted"] = toJs(env, info.promoted());
-        obj["admin"] = toJs(env, info.admin);
-        obj["removedStatus"] = toJs(env, info.removed_status);
+
+        // removed status
+        obj["isRemoved"] = toJs(env, info.is_removed());
+        obj["shouldRemoveMessages"] = toJs(env, info.should_remove_messages());
 
         return obj;
     }
@@ -75,11 +85,13 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     Napi::Value memberGetOrConstruct(const Napi::CallbackInfo& info);
     void memberConstructAndSet(const Napi::CallbackInfo& info);
 
-    void memberSetName(const Napi::CallbackInfo& info);
+    void memberSetNameTruncated(const Napi::CallbackInfo& info);
     void memberSetInvited(const Napi::CallbackInfo& info);
     void memberSetAccepted(const Napi::CallbackInfo& info);
     void memberSetPromoted(const Napi::CallbackInfo& info);
-    void memberSetAdmin(const Napi::CallbackInfo& info);
+    void memberSetPromotionSent(const Napi::CallbackInfo& info);
+    void memberSetPromotionFailed(const Napi::CallbackInfo& info);
+    void memberSetPromotionAccepted(const Napi::CallbackInfo& info);
     void memberSetProfilePicture(const Napi::CallbackInfo& info);
     Napi::Value memberEraseAndRekey(const Napi::CallbackInfo& info);
     void membersMarkPendingRemoval(const Napi::CallbackInfo& info);

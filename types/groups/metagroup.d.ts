@@ -17,8 +17,8 @@ declare module 'libsession_util_nodejs' {
     GroupMemberWrapper &
     GroupKeysWrapper & {
       // shared actions
-    init: (options: GroupWrapperConstructor) => void;
-    free: () => void;
+      init: (options: GroupWrapperConstructor) => void;
+      free: () => void;
       needsPush: () => boolean;
       push: () => {
         groupInfo: PushConfigResult | null;
@@ -80,9 +80,11 @@ declare module 'libsession_util_nodejs' {
     public memberGetAll: MetaGroupWrapper['memberGetAll'];
     public memberGetAllPendingRemovals: MetaGroupWrapper['memberGetAllPendingRemovals'];
     public memberSetAccepted: MetaGroupWrapper['memberSetAccepted'];
-    public memberSetName: MetaGroupWrapper['memberSetName'];
+    public memberSetNameTruncated: MetaGroupWrapper['memberSetNameTruncated'];
     public memberSetPromoted: MetaGroupWrapper['memberSetPromoted'];
-    public memberSetAdmin: MetaGroupWrapper['memberSetAdmin'];
+    public memberSetPromotionAccepted: MetaGroupWrapper['memberSetPromotionAccepted'];
+    public memberSetPromotionSent: MetaGroupWrapper['memberSetPromotionSent'];
+    public memberSetPromotionFailed: MetaGroupWrapper['memberSetPromotionFailed'];
     public memberSetInvited: MetaGroupWrapper['memberSetInvited'];
     public memberEraseAndRekey: MetaGroupWrapper['memberEraseAndRekey'];
     public membersMarkPendingRemoval: MetaGroupWrapper['membersMarkPendingRemoval'];
@@ -125,9 +127,11 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MetaGroupWrapper, 'memberGetAll'>
     | MakeActionCall<MetaGroupWrapper, 'memberGetAllPendingRemovals'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetAccepted'>
-    | MakeActionCall<MetaGroupWrapper, 'memberSetName'>
+    | MakeActionCall<MetaGroupWrapper, 'memberSetNameTruncated'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetPromoted'>
-    | MakeActionCall<MetaGroupWrapper, 'memberSetAdmin'>
+    | MakeActionCall<MetaGroupWrapper, 'memberSetPromotionFailed'>
+    | MakeActionCall<MetaGroupWrapper, 'memberSetPromotionSent'>
+    | MakeActionCall<MetaGroupWrapper, 'memberSetPromotionAccepted'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetInvited'>
     | MakeActionCall<MetaGroupWrapper, 'memberEraseAndRekey'>
     | MakeActionCall<MetaGroupWrapper, 'membersMarkPendingRemoval'>
