@@ -7,7 +7,7 @@ declare module 'libsession_util_nodejs' {
        * len 64: ed25519 secretKey with pubkey
        */
       ed25519SecretKey: Uint8Array;
-    }) => Uint8Array;
+    }) => string;
     blindVersionSign: (opts: {
       /**
        * len 64: ed25519 secretKey with pubkey
