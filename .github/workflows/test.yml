@@ -20,8 +20,7 @@ jobs:
 
 
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-
+        os: [windows-2022, macos-12, ubuntu-20.04]
     env:
       SIGNAL_ENV: production
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

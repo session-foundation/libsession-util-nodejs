@@ -11,17 +11,13 @@ declare module 'libsession_util_nodejs' {
     init: (secretKey: Uint8Array, dump: Uint8Array | null) => void;
     /** This function is used to free wrappers from memory only */
     free: () => void;
-    getUserInfo: () => {
-      name: string;
-      priority: number;
-      url: string;
-      key: Uint8Array; // TODO could be made a FixedLength<32> but that impacts a bunch of things
-    };
-    setUserInfo: (
-      name: string,
-      priority: number,
-      profilePic: { url: string; key: Uint8Array } | null // TODO could be made a FixedLength<32> but that impacts a bunch of things
-    ) => void;
+    getPriority: () => number;
+    getName: () => string | null;
+    getProfilePic: () => ProfilePicture;
+    setPriority: (priority: number) => void;
+    setName: (name: string) => void;
+    setNameTruncated: (name: string) => void;
+    setProfilePic: (pic: ProfilePicture) => void;
     setEnableBlindedMsgRequest: (msgRequest: boolean) => void;
     getEnableBlindedMsgRequest: () => boolean | undefined;
     setNoteToSelfExpiry: (expirySeconds: number) => void;
@@ -34,12 +30,17 @@ declare module 'libsession_util_nodejs' {
   export type UserConfigWrapperActionsCalls = MakeWrapperActionCalls<UserConfigWrapper>;
 
   /**
-   * To be used inside the web worker only (calls are synchronous and won't work asynchrously)
+   * To be used inside the web worker only (calls are synchronous and won't work asynchronously)
    */
   export class UserConfigWrapperNode extends BaseConfigWrapperNode {
     constructor(secretKey: Uint8Array, dump: Uint8Array | null);
-    public getUserInfo: UserConfigWrapper['getUserInfo'];
-    public setUserInfo: UserConfigWrapper['setUserInfo'];
+    public getPriority: UserConfigWrapper['getPriority'];
+    public getName: UserConfigWrapper['getName'];
+    public getProfilePic: UserConfigWrapper['getProfilePic'];
+    public setPriority: UserConfigWrapper['setPriority'];
+    public setName: UserConfigWrapper['setName'];
+    public setNameTruncated: UserConfigWrapper['setNameTruncated'];
+    public setProfilePic: UserConfigWrapper['setProfilePic'];
     public getEnableBlindedMsgRequest: UserConfigWrapper['getEnableBlindedMsgRequest'];
     public setEnableBlindedMsgRequest: UserConfigWrapper['setEnableBlindedMsgRequest'];
     public getNoteToSelfExpiry: UserConfigWrapper['getNoteToSelfExpiry'];
@@ -54,8 +55,13 @@ declare module 'libsession_util_nodejs' {
   export type UserConfigActionsType =
     | ['init', Uint8Array, Uint8Array | null]
     | MakeActionCall<UserConfigWrapper, 'free'>
-    | MakeActionCall<UserConfigWrapper, 'getUserInfo'>
-    | MakeActionCall<UserConfigWrapper, 'setUserInfo'>
+    | MakeActionCall<UserConfigWrapper, 'getPriority'>
+    | MakeActionCall<UserConfigWrapper, 'getName'>
+    | MakeActionCall<UserConfigWrapper, 'getProfilePic'>
+    | MakeActionCall<UserConfigWrapper, 'setPriority'>
+    | MakeActionCall<UserConfigWrapper, 'setName'>
+    | MakeActionCall<UserConfigWrapper, 'setNameTruncated'>
+    | MakeActionCall<UserConfigWrapper, 'setProfilePic'>
     | MakeActionCall<UserConfigWrapper, 'getEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'setEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'getNoteToSelfExpiry'>

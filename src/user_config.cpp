@@ -18,8 +18,13 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
             exports,
             "UserConfigWrapperNode",
             {
-                    InstanceMethod("getUserInfo", &UserConfigWrapper::getUserInfo),
-                    InstanceMethod("setUserInfo", &UserConfigWrapper::setUserInfo),
+                    InstanceMethod("getPriority", &UserConfigWrapper::getPriority),
+                    InstanceMethod("getName", &UserConfigWrapper::getName),
+                    InstanceMethod("getProfilePic", &UserConfigWrapper::getProfilePic),
+                    InstanceMethod("setPriority", &UserConfigWrapper::setPriority),
+                    InstanceMethod("setName", &UserConfigWrapper::setName),
+                    InstanceMethod("setNameTruncated", &UserConfigWrapper::setNameTruncated),
+                    InstanceMethod("setProfilePic", &UserConfigWrapper::setProfilePic),
                     InstanceMethod(
                             "getEnableBlindedMsgRequest",
                             &UserConfigWrapper::getEnableBlindedMsgRequest),
@@ -35,49 +40,78 @@ UserConfigWrapper::UserConfigWrapper(const Napi::CallbackInfo& info) :
         ConfigBaseImpl{construct<config::UserProfile>(info, "UserConfig")},
         Napi::ObjectWrap<UserConfigWrapper>{info} {}
 
-Napi::Value UserConfigWrapper::getUserInfo(const Napi::CallbackInfo& info) {
+Napi::Value UserConfigWrapper::getPriority(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         auto env = info.Env();
-        auto user_info_obj = Napi::Object::New(env);
-
-        auto name = config.get_name();
-        auto priority = config.get_nts_priority();
-
-        user_info_obj["name"] = toJs(env, name);
-        user_info_obj["priority"] = toJs(env, priority);
-
-        auto profile_pic_obj = toJs(env, config.get_profile_pic());
-        if (profile_pic_obj) {
-            user_info_obj["url"] = profile_pic_obj.Get("url");
-            user_info_obj["key"] = profile_pic_obj.Get("key");
-        } else {
-            user_info_obj["url"] = env.Null();
-            user_info_obj["key"] = env.Null();
-        }
-
-        return user_info_obj;
+        return config.get_nts_priority();
     });
 }
 
-void UserConfigWrapper::setUserInfo(const Napi::CallbackInfo& info) {
-    wrapExceptions(info, [&] {
-        assertInfoLength(info, 3);
+Napi::Value UserConfigWrapper::getName(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto env = info.Env();
+        return config.get_name();
+    });
+}
 
-        auto name = info[0];
-        auto priority = info[1];
-        auto profile_pic_obj = info[2];
+Napi::Value UserConfigWrapper::getProfilePic(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto env = info.Env();
+        auto pic = config.get_profile_pic();
+        auto obj = Napi::Object::New(env);
+        if (pic) {
+            obj["url"] = toJs(env, pic.url);
+            obj["key"] = toJs(env, pic.key);
+        } else {
+            obj["url"] = env.Null();
+            obj["key"] = env.Null();
+        }
+        return obj;
+    });
+}
 
-        assertIsStringOrNull(name);
-        assertIsNumber(priority, "setUserInfo priority");
-        std::string new_name;
-
-        if (name.IsString())
-            new_name = name.As<Napi::String>().Utf8Value();
-
-        config.set_name(new_name);
+void UserConfigWrapper::setPriority(const Napi::CallbackInfo& info) {
+    return wrapExceptions(info, [&] {
+        auto env = info.Env();
+        assertInfoLength(info, 1);
+        auto priority = info[0];
+        assertIsNumber(priority, "UserConfigWrapper::setPriority");
 
         auto new_priority = toPriority(priority, config.get_nts_priority());
         config.set_nts_priority(new_priority);
+    });
+}
+
+void UserConfigWrapper::setName(const Napi::CallbackInfo& info) {
+    return wrapExceptions(info, [&] {
+        auto env = info.Env();
+        assertInfoLength(info, 1);
+        auto name = info[0];
+        assertIsString(name);
+
+        auto new_name = name.As<Napi::String>().Utf8Value();
+        // this will throw if the name is too long
+        config.set_name(new_name);
+    });
+}
+
+void UserConfigWrapper::setNameTruncated(const Napi::CallbackInfo& info) {
+    return wrapExceptions(info, [&] {
+        auto env = info.Env();
+        assertInfoLength(info, 1);
+        auto name = info[0];
+        assertIsString(name);
+
+        auto new_name = name.As<Napi::String>().Utf8Value();
+        // this will truncate silently if the name is too long
+        config.set_name_truncated(new_name);
+    });
+}
+
+void UserConfigWrapper::setProfilePic(const Napi::CallbackInfo& info) {
+    return wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        auto profile_pic_obj = info[0];
 
         if (!profile_pic_obj.IsNull() && !profile_pic_obj.IsUndefined())
             assertIsObject(profile_pic_obj);

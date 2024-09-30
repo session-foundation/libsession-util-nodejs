@@ -7,7 +7,7 @@
 #include "session/config/user_profile.hpp"
 #include "session/multi_encrypt.hpp"
 #include "session/random.hpp"
-#include "utilities.hpp"
+#include "../utilities.hpp"
 
 namespace session::nodeapi {
 
