@@ -100,7 +100,7 @@ declare module 'libsession_util_nodejs' {
   type MakeGroupActionCall<A extends BaseConfigWrapper, B extends keyof A> = [
     B,
     ...Parameters<A[B]>
-  ]; // all of the groupActionCalls need the pubkey of the group we are targetting
+  ]; // all of the groupActionCalls need the pubkey of the group we are targeting
 
   type AsyncGroupWrapper<T extends (...args: any) => any> = (
     groupPk: GroupPubkeyType,
@@ -140,7 +140,7 @@ declare module 'libsession_util_nodejs' {
   export type Uint8ArrayLen64 = Uint8Array;
   export type Uint8ArrayLen32 = Uint8Array;
   export type Uint8ArrayLen36 = Uint8Array; // subaccount tokens are 36 bytes long
-  export type Uint8ArrayLen100 = Uint8Array; // subaccount authdata are 100 bytes long
+  export type Uint8ArrayLen100 = Uint8Array; // subaccount auth data are 100 bytes long
 
   export type EncryptionDomain = 'SessionGroupKickedMessage';
 
