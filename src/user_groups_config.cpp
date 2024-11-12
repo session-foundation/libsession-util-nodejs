@@ -70,6 +70,7 @@ struct toJs_impl<group_info> {
         obj["authData"] = toJs(env, info.auth_data);
         obj["invitePending"] = toJs(env, info.invited);
         obj["kicked"] = toJs(env, info.kicked());
+        obj["destroyed"] = toJs(env, info.isDestroyed());
 
         return obj;
     }
@@ -103,6 +104,9 @@ void UserGroupsWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("getGroup", &UserGroupsWrapper::getGroup),
                     InstanceMethod("getAllGroups", &UserGroupsWrapper::getAllGroups),
                     InstanceMethod("setGroup", &UserGroupsWrapper::setGroup),
+                    InstanceMethod("markGroupKicked", &UserGroupsWrapper::markGroupKicked),
+                    InstanceMethod("markGroupInvited", &UserGroupsWrapper::markGroupInvited),
+                    InstanceMethod("markGroupDestroyed", &UserGroupsWrapper::markGroupDestroyed),
                     InstanceMethod("eraseGroup", &UserGroupsWrapper::eraseGroup),
 
             });
@@ -316,13 +320,6 @@ Napi::Value UserGroupsWrapper::setGroup(const Napi::CallbackInfo& info) {
             group_info.invited = *invited;
         }
 
-        if (auto kicked =
-                    maybeNonemptyBoolean(obj.Get("kicked"), "UserGroupsWrapper::setGroup kicked")) {
-            if (*kicked) {
-                group_info.setKicked();
-            }
-        }
-
         if (auto secretKey = maybeNonemptyBuffer(
                     obj.Get("secretKey"), "UserGroupsWrapper::setGroup secretKey")) {
             group_info.secretkey = *secretKey;
@@ -339,6 +336,45 @@ Napi::Value UserGroupsWrapper::setGroup(const Napi::CallbackInfo& info) {
 
         config.set(group_info);
 
+        return config.get_or_construct_group(groupPk);
+    });
+}
+
+Napi::Value UserGroupsWrapper::markGroupKicked(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto groupPk = getStringArgs<1>(info);
+
+        auto group = config.get_group(groupPk);
+        if (group) {
+            group->markKicked();
+            config.set(*group);
+        }
+        return config.get_or_construct_group(groupPk);
+    });
+}
+
+Napi::Value UserGroupsWrapper::markGroupInvited(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto groupPk = getStringArgs<1>(info);
+
+        auto group = config.get_group(groupPk);
+        if (group) {
+            group->markInvited();
+            config.set(*group);
+        }
+        return config.get_or_construct_group(groupPk);
+    });
+}
+
+Napi::Value UserGroupsWrapper::markGroupDestroyed(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto groupPk = getStringArgs<1>(info);
+
+        auto group = config.get_group(groupPk);
+        if (group) {
+            group->markDestroyed();
+            config.set(*group);
+        }
         return config.get_or_construct_group(groupPk);
     });
 }

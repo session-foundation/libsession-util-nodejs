@@ -46,15 +46,16 @@ declare module 'libsession_util_nodejs' {
     authData: Uint8ArrayLen100 | null; // len 100
     name: string | null;
     invitePending: boolean; // tracks `db.approved`. libsession allows this field for all groups (including communities, but we don't need it for more)
-    kicked: boolean; // Note: setting this to true will erase authData and admin secretKey, permanently
+    kicked: boolean; // Note: if the group was `destroyed` this will be false, but `destroyed` will be true
+    destroyed: boolean;
   };
 
   /**
-   * We can set anything on a UserGroup and can omit fields by explicitely setting them to null.
-   * The only one which cannot be omited is the pubkeyHex
+   * We can set anything on a UserGroup and can omit fields by explicitly setting them to null.
+   * The only one which cannot be omitted is the pubkeyHex
    */
   type UserGroupsSet = Pick<UserGroupsGet, 'pubkeyHex'> &
-    AllFieldsNullable<Omit<UserGroupsGet, 'pubkeyHex'>>;
+    AllFieldsNullable<Omit<UserGroupsGet, 'pubkeyHex' | 'kicked' | 'destroyed'>>;
 
   type UserGroupsWrapper = BaseConfigWrapper & {
     init: (secretKey: Uint8Array, dump: Uint8Array | null) => void;
@@ -90,6 +91,9 @@ declare module 'libsession_util_nodejs' {
     getGroup: (pubkeyHex: GroupPubkeyType) => UserGroupsGet | null;
     getAllGroups: () => Array<UserGroupsGet>;
     setGroup: (info: UserGroupsSet) => UserGroupsGet;
+    markGroupKicked: (pubkeyHex: GroupPubkeyType) => UserGroupsGet;
+    markGroupInvited: (pubkeyHex: GroupPubkeyType) => UserGroupsGet;
+    markGroupDestroyed: (pubkeyHex: GroupPubkeyType) => UserGroupsGet;
     eraseGroup: (pubkeyHex: GroupPubkeyType) => boolean;
   };
 
@@ -115,6 +119,9 @@ declare module 'libsession_util_nodejs' {
     public getGroup: UserGroupsWrapper['getGroup'];
     public getAllGroups: UserGroupsWrapper['getAllGroups'];
     public setGroup: UserGroupsWrapper['setGroup'];
+    public markGroupKicked: UserGroupsWrapper['markGroupKicked'];
+    public markGroupInvited: UserGroupsWrapper['markGroupInvited'];
+    public markGroupDestroyed: UserGroupsWrapper['markGroupDestroyed'];
     public eraseGroup: UserGroupsWrapper['eraseGroup'];
   }
 
@@ -134,5 +141,8 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserGroupsWrapper, 'getGroup'>
     | MakeActionCall<UserGroupsWrapper, 'getAllGroups'>
     | MakeActionCall<UserGroupsWrapper, 'setGroup'>
+    | MakeActionCall<UserGroupsWrapper, 'markGroupKicked'>
+    | MakeActionCall<UserGroupsWrapper, 'markGroupInvited'>
+    | MakeActionCall<UserGroupsWrapper, 'markGroupDestroyed'>
     | MakeActionCall<UserGroupsWrapper, 'eraseGroup'>;
 }

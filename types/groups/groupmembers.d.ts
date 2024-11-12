@@ -12,26 +12,27 @@ declare module 'libsession_util_nodejs' {
     profilePicture: ProfilePicture | null;
   };
 
+  type MemberStateGroupV2 =
+    | 'INVITE_NOT_SENT' // as soon as we've scheduled that guy to be invited, but before we've tried sending the invite message
+    | 'INVITE_FAILED'
+    | 'INVITE_SENT'
+    | 'INVITE_ACCEPTED' // regular member
+    | 'PROMOTION_NOT_SENT' // as soon as we've scheduled that guy to be an admin, but before we've tried sending the promotion message
+    | 'PROMOTION_FAILED'
+    | 'PROMOTION_SENT'
+    | 'PROMOTION_ACCEPTED'; // regular admin
+
   export type GroupMemberGet = GroupMemberShared & {
-    /**  Default state, before we try sending the invite */
-    inviteNotSent: boolean;
-    /** We did send the invite to the user */
-    invitePending: boolean;
-    /** The invite was accepted by the user */
-    inviteAccepted: boolean;
-
-    /** We failed to send the invite to the user */
-    inviteFailed: boolean;
-
-    /** Default state, before we try sending the promotion */
-    promotionNotSent: boolean;
-    /** We did send the promotion, not accepted yet */
-    promotionPending: boolean;
-    /** We tried to send the promotion but failed */
-    promotionFailed: boolean;
-    /** The user is already an admin *or* has a pending promotion */
-    promoted: boolean;
-
+    memberStatus: MemberStateGroupV2;
+    /**
+     * True if the member is scheduled to get the keys (.admin field of libsession).
+     * This is equivalent of memberStatus being one of:
+     *  - PROMOTION_NOT_SENT
+     *  - PROMOTION_FAILED
+     *  - PROMOTION_SENT
+     *  - PROMOTION_ACCEPTED
+     */
+    nominatedAdmin: boolean;
     /** True if the user should be removed from the group */
     isRemoved: boolean;
     /** True if the user and his messages should be removed from the group */

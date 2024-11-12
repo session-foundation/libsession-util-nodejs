@@ -23,17 +23,28 @@ struct toJs_impl<member> {
         obj["profilePicture"] = toJs(env, info.profile_picture);
         obj["removedStatus"] = toJs(env, info.removed_status);
 
-        // invites
-        obj["inviteNotSent"] = toJs(env, info.invite_not_sent());
-        obj["invitePending"] = toJs(env, info.invite_pending());
-        obj["inviteAccepted"] = toJs(env, info.invite_status == 0);
-        obj["inviteFailed"] = toJs(env, info.invite_failed());
-
-        // promotions
-        obj["promotionNotSent"] = toJs(env, info.promotion_not_sent());
-        obj["promotionPending"] = toJs(env, info.promotion_pending());
-        obj["promotionFailed"] = toJs(env, info.promotion_failed());
-        obj["promoted"] = toJs(env, info.promoted());
+        // promoted() is true as soon as the member is scheduled to be promoted
+        // Note: this should be part of `libsession-util`, not `libsession-util-nodejs`
+        if (info.promoted() && !info.promotion_pending()) {
+            obj["memberStatus"] = toJs(env, "PROMOTION_ACCEPTED");
+        } else if (info.promotion_pending()) {
+            obj["memberStatus"] = toJs(env, "PROMOTION_SENT");
+        } else if (info.promotion_failed()) {
+            obj["memberStatus"] = toJs(env, "PROMOTION_FAILED");
+        } else if (info.admin) {
+            obj["memberStatus"] = toJs(env, "PROMOTION_NOT_SENT");
+        } else if (info.invite_status == 0) {
+            obj["memberStatus"] = toJs(env, "INVITE_ACCEPTED");
+        } else if (info.invite_pending()) {
+            obj["memberStatus"] = toJs(env, "INVITE_SENT");
+        } else if (info.invite_failed()) {
+            obj["memberStatus"] = toJs(env, "INVITE_FAILED");
+        } else {
+            // this is probably a bad idea to have a catch-all else, but we have to when we consider
+            // upgrades of libsession-util
+            obj["memberStatus"] = toJs(env, "INVITE_NOT_SENT");
+        }
+        obj["nominatedAdmin"] = toJs(env, info.admin);
 
         // removed status
         obj["isRemoved"] = toJs(env, info.is_removed());
