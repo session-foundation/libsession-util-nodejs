@@ -24,6 +24,13 @@ declare module 'libsession_util_nodejs' {
 
   export type GroupMemberGet = GroupMemberShared & {
     memberStatus: MemberStateGroupV2;
+
+    /**
+     * NOT_REMOVED = 0:
+     * REMOVED_MEMBER = 1,
+     * REMOVED_MEMBER_AND_MESSAGES = 2;
+     */
+    removedStatus: number;
     /**
      * True if the member is scheduled to get the keys (.admin field of libsession).
      * This is equivalent of memberStatus being one of:
