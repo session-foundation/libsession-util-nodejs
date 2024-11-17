@@ -35,15 +35,17 @@ struct toJs_impl<member> {
             obj["memberStatus"] = toJs(env, "PROMOTION_NOT_SENT");
         } else if (info.invite_status == 0) {
             obj["memberStatus"] = toJs(env, "INVITE_ACCEPTED");
-        } else if (info.invite_pending()) {
-            obj["memberStatus"] = toJs(env, "INVITE_SENT");
+        } else if (info.invite_not_sent()) {
+            obj["memberStatus"] = toJs(env, "INVITE_NOT_SENT");
         } else if (info.invite_failed()) {
             obj["memberStatus"] = toJs(env, "INVITE_FAILED");
         } else {
-            // this is probably a bad idea to have a catch-all else, but we have to when we consider
-            // upgrades of libsession-util
-            obj["memberStatus"] = toJs(env, "INVITE_NOT_SENT");
+            // Note: INVITE_NOT_SENT is 3, which makes invite_pending() return true, so be sure to
+            // check for invite_not_sent() above. this is probably a bad idea to have a catch-all
+            // else, but we have to when we consider upgrades of libsession-util
+            obj["memberStatus"] = toJs(env, "INVITE_SENT");
         }
+
         obj["nominatedAdmin"] = toJs(env, info.admin);
 
         // removed status
@@ -94,7 +96,7 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     Napi::Value memberGetAllPendingRemovals(const Napi::CallbackInfo& info);
     Napi::Value memberGet(const Napi::CallbackInfo& info);
     Napi::Value memberGetOrConstruct(const Napi::CallbackInfo& info);
-    void memberConstructAndSet(const Napi::CallbackInfo& info);
+    Napi::Value memberConstructAndSet(const Napi::CallbackInfo& info);
 
     void memberSetNameTruncated(const Napi::CallbackInfo& info);
     void memberSetInvited(const Napi::CallbackInfo& info);

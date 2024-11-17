@@ -429,14 +429,15 @@ Napi::Value MetaGroupWrapper::memberGetOrConstruct(const Napi::CallbackInfo& inf
     });
 }
 
-void MetaGroupWrapper::memberConstructAndSet(const Napi::CallbackInfo& info) {
-    wrapExceptions(info, [&] {
+Napi::Value MetaGroupWrapper::memberConstructAndSet(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
         auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
         auto created = meta_group->members->get_or_construct(pubkeyHex);
         meta_group->members->set(created);
+        return created;
     });
 }
 
