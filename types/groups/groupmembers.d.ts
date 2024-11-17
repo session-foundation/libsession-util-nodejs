@@ -20,7 +20,8 @@ declare module 'libsession_util_nodejs' {
     | 'PROMOTION_NOT_SENT' // as soon as we've scheduled that guy to be an admin, but before we've tried sending the promotion message
     | 'PROMOTION_FAILED'
     | 'PROMOTION_SENT'
-    | 'PROMOTION_ACCEPTED'; // regular admin
+    | 'PROMOTION_ACCEPTED' // regular admin
+    | 'UNKNOWN';
 
   export type GroupMemberGet = GroupMemberShared & {
     memberStatus: MemberStateGroupV2;
@@ -30,7 +31,7 @@ declare module 'libsession_util_nodejs' {
      * REMOVED_MEMBER = 1,
      * REMOVED_MEMBER_AND_MESSAGES = 2;
      */
-    removedStatus: number;
+    removedStatus: 'NOT_REMOVED' | 'REMOVED_MEMBER' | 'REMOVED_MEMBER_AND_MESSAGES' | 'UNKNOWN';
     /**
      * True if the member is scheduled to get the keys (.admin field of libsession).
      * This is equivalent of memberStatus being one of:
@@ -40,10 +41,6 @@ declare module 'libsession_util_nodejs' {
      *  - PROMOTION_ACCEPTED
      */
     nominatedAdmin: boolean;
-    /** True if the user should be removed from the group */
-    isRemoved: boolean;
-    /** True if the user and his messages should be removed from the group */
-    shouldRemoveMessages: boolean;
   };
 
   type GroupMemberWrapper = {

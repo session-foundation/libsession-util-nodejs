@@ -7,9 +7,13 @@
 #include "../utilities.hpp"
 #include "./meta_group.hpp"
 #include "oxenc/bt_producer.h"
+#include "session/config/user_groups.hpp"
 
 namespace session::nodeapi {
 using config::groups::Members;
+using session::config::GROUP_DESTROYED;
+using session::config::KICKED_FROM_GROUP;
+using session::config::NOT_REMOVED;
 using session::config::groups::member;
 using session::nodeapi::MetaGroup;
 
@@ -27,10 +31,10 @@ struct toJs_impl<member> {
         // Note: this should be part of `libsession-util`, not `libsession-util-nodejs`
         if (info.promoted() && !info.promotion_pending()) {
             obj["memberStatus"] = toJs(env, "PROMOTION_ACCEPTED");
-        } else if (info.promotion_pending()) {
-            obj["memberStatus"] = toJs(env, "PROMOTION_SENT");
         } else if (info.promotion_failed()) {
             obj["memberStatus"] = toJs(env, "PROMOTION_FAILED");
+        } else if (info.promotion_pending()) {
+            obj["memberStatus"] = toJs(env, "PROMOTION_SENT");
         } else if (info.admin) {
             obj["memberStatus"] = toJs(env, "PROMOTION_NOT_SENT");
         } else if (info.invite_status == 0) {
@@ -39,19 +43,25 @@ struct toJs_impl<member> {
             obj["memberStatus"] = toJs(env, "INVITE_NOT_SENT");
         } else if (info.invite_failed()) {
             obj["memberStatus"] = toJs(env, "INVITE_FAILED");
-        } else {
+        } else if (info.invite_pending()) {
             // Note: INVITE_NOT_SENT is 3, which makes invite_pending() return true, so be sure to
-            // check for invite_not_sent() above. this is probably a bad idea to have a catch-all
-            // else, but we have to when we consider upgrades of libsession-util
+            // check for invite_not_sent() above.
             obj["memberStatus"] = toJs(env, "INVITE_SENT");
+        } else {
+            obj["memberStatus"] = toJs(env, "UNKNOWN");
         }
 
         obj["nominatedAdmin"] = toJs(env, info.admin);
 
-        // removed status
-        obj["isRemoved"] = toJs(env, info.is_removed());
-        obj["shouldRemoveMessages"] = toJs(env, info.should_remove_messages());
-
+        if (!info.is_removed()) {
+            obj["removedStatus"] = toJs(env, "NOT_REMOVED");
+        } else {
+            if (info.should_remove_messages()) {
+                obj["removedStatus"] = toJs(env, "REMOVED_MEMBER_AND_MESSAGES");
+            } else {
+                obj["removedStatus"] = toJs(env, "REMOVED_MEMBER");
+            }
+        }
         return obj;
     }
 };
