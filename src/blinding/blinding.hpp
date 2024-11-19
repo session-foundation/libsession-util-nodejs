@@ -19,7 +19,7 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
   public:
     BlindingWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWrap<BlindingWrapper>{info} {
         throw std::invalid_argument(
-                "BlindingWrapper is all static and don't need to be constructed");
+                "BlindingWrapper is static and doesn't need to be constructed");
     }
 
     static void Init(Napi::Env env, Napi::Object exports) {

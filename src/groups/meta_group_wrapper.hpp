@@ -120,7 +120,6 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     void membersMarkPendingRemoval(const Napi::CallbackInfo& info);
 
     /** Keys Actions */
-
     Napi::Value keysNeedsRekey(const Napi::CallbackInfo& info);
     Napi::Value keyRekey(const Napi::CallbackInfo& info);
     Napi::Value keyGetAll(const Napi::CallbackInfo& info);

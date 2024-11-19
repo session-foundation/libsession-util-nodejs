@@ -20,7 +20,6 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
             "MetaGroupWrapperNode",
             {
                     // shared exposed functions
-
                     InstanceMethod("needsPush", &MetaGroupWrapper::needsPush),
                     InstanceMethod("push", &MetaGroupWrapper::push),
                     InstanceMethod("needsDump", &MetaGroupWrapper::needsDump),
@@ -39,7 +38,6 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("memberGetOrConstruct", &MetaGroupWrapper::memberGetOrConstruct),
                     InstanceMethod(
                             "memberConstructAndSet", &MetaGroupWrapper::memberConstructAndSet),
-
                     InstanceMethod("memberGetAll", &MetaGroupWrapper::memberGetAll),
                     InstanceMethod(
                             "memberGetAllPendingRemovals",
@@ -65,15 +63,12 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("memberEraseAndRekey", &MetaGroupWrapper::memberEraseAndRekey),
 
                     // keys exposed functions
-
                     InstanceMethod("keysNeedsRekey", &MetaGroupWrapper::keysNeedsRekey),
                     InstanceMethod("keyRekey", &MetaGroupWrapper::keyRekey),
                     InstanceMethod("keyGetAll", &MetaGroupWrapper::keyGetAll),
-
                     InstanceMethod("currentHashes", &MetaGroupWrapper::currentHashes),
                     InstanceMethod("loadKeyMessage", &MetaGroupWrapper::loadKeyMessage),
                     InstanceMethod("keyGetCurrentGen", &MetaGroupWrapper::keyGetCurrentGen),
-
                     InstanceMethod("encryptMessages", &MetaGroupWrapper::encryptMessages),
                     InstanceMethod("decryptMessage", &MetaGroupWrapper::decryptMessage),
                     InstanceMethod("makeSwarmSubAccount", &MetaGroupWrapper::makeSwarmSubAccount),
@@ -82,7 +77,6 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                             "swarmVerifySubAccount", &MetaGroupWrapper::swarmVerifySubAccount),
                     InstanceMethod("loadAdminKeys", &MetaGroupWrapper::loadAdminKeys),
                     InstanceMethod("keysAdmin", &MetaGroupWrapper::keysAdmin),
-
                     InstanceMethod("swarmSubaccountSign", &MetaGroupWrapper::swarmSubaccountSign),
                     InstanceMethod(
                             "generateSupplementKeys", &MetaGroupWrapper::generateSupplementKeys),
@@ -538,7 +532,6 @@ void MetaGroupWrapper::memberSetPromotionAccepted(const Napi::CallbackInfo& info
 }
 
 void MetaGroupWrapper::memberSetProfilePicture(const Napi::CallbackInfo& info) {
-
     wrapExceptions(info, [&] {
         assertInfoLength(info, 2);
         assertIsString(info[0]);

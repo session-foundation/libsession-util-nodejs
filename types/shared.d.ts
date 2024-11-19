@@ -6,7 +6,7 @@ declare module 'libsession_util_nodejs' {
   /**
    * Allow a single type to be Nullable. i.e. string => string | null
    */
-  type Nullable<T> = T | null;
+  export type Nullable<T> = T | null;
 
   /**
    * Allow all the fields of a type to be -themselves- nullable.

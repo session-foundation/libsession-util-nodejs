@@ -149,7 +149,6 @@ struct toJs_impl<std::unordered_set<T>> {
         auto arr = Napi::Array::New(env, as_array.size());
         for (size_t i = 0; i < as_array.size(); i++)
             arr[i] = toJs(env, as_array[i]);
-
         return arr;
     }
 };

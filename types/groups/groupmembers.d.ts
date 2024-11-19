@@ -55,7 +55,7 @@ declare module 'libsession_util_nodejs' {
     // setters
     memberSetNameTruncated: (pubkeyHex: PubkeyType, newName: string) => void;
 
-    /** A member invite states defaults to invite-not-sent. Use this function to mark that you've sent one, or at least tried (failed: boolean)*/
+    /** A member's invite state defaults to invite-not-sent. Use this function to mark that you've sent one, or at least tried (failed: boolean)*/
     memberSetInvited: (pubkeyHex: PubkeyType, failed: boolean) => void;
     /** User has accepted an invitation and is now a regular member of the group */
     memberSetAccepted: (pubkeyHex: PubkeyType) => void;

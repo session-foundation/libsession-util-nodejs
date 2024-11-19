@@ -36,17 +36,38 @@ declare module 'libsession_util_nodejs' {
     name: string; // human-readable; this should normally always be set, but in theory could be set to an empty string.
     encPubkey: Uint8ArrayLen32; // bytes (32 or empty)
     encSeckey: Uint8Array; // bytes (32 or empty)
-    // disappearingTimerSeconds: number; // in seconds, 0 == disabled.
     members: Array<LegacyGroupMemberInfo>;
   };
 
   type UserGroupsGet = BaseUserGroup & {
-    pubkeyHex: GroupPubkeyType; // The group "session id" (33 bytes), starting with 03.
-    secretKey: Uint8ArrayLen64 | null; // len 64
-    authData: Uint8ArrayLen100 | null; // len 100
+    /**
+     * The group "session id" (33 bytes), starting with 03.
+     */
+    pubkeyHex: GroupPubkeyType;
+    /**
+     * The group admin secret key if we have it, length 64.
+     */
+    secretKey: Uint8ArrayLen64 | null;
+    /**
+     * The group auth data we were given if we have it, length 100.
+     */
+    authData: Uint8ArrayLen100 | null;
+    /**
+     * The group name.
+     */
     name: string | null;
-    invitePending: boolean; // tracks `db.approved`. libsession allows this field for all groups (including communities, but we don't need it for more)
-    kicked: boolean; // Note: if the group was `destroyed` this will be false, but `destroyed` will be true
+    /**
+     * True if the invite is pending, i.e. we've received it but haven't approved or auto-approved it yet.
+     */
+    invitePending: boolean;
+    /**
+     * If we were kicked from that group, this will be true.
+     * Note: if the group was `destroyed` this will be false, but `destroyed` will be true
+     */
+    kicked: boolean;
+    /**
+     * If the group was destroyed, this will be true
+     */
     destroyed: boolean;
   };
 

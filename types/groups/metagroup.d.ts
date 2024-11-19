@@ -7,9 +7,22 @@ declare module 'libsession_util_nodejs' {
   export type ConfirmKeysPush = [data: Uint8Array, hash: string, timestampMs: number];
 
   export type GroupWrapperConstructor = {
-    userEd25519Secretkey: Uint8Array; // (len 64)
-    groupEd25519Pubkey: Uint8Array; // the ed25519 pubkey without the 03 prefix  (len 32)
-    groupEd25519Secretkey: Uint8Array | null; // the ed25519 privkey if we have it (len 64) (comes from usergroup wrapper if we have it)
+    /**
+     * The user's ed25519 secret key, length 64.
+     */
+    userEd25519Secretkey: Uint8Array;
+    /**
+     *  The group ed25519 pubkey without the 03 prefix, length 32.
+     */
+    groupEd25519Pubkey: Uint8Array;
+    /**
+     * The group ed25519 priv key if we have it (len 64). Having this means we have admin rights in the group.
+     * This usually comes from the user group wrapper if we have it.
+     */
+    groupEd25519Secretkey: Uint8Array | null;
+    /**
+     * The unified dumps (as saved in the db) for this group. i.e. Keys, Members and Info concatenated, see MetaGroupWrapper::metaDump for details.
+     */
     metaDumped: Uint8Array | null;
   };
 

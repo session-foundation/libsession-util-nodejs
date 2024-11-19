@@ -4,20 +4,19 @@
 
 #include <algorithm>
 
+#include "../utilities.hpp"
 #include "session/config/user_profile.hpp"
 #include "session/multi_encrypt.hpp"
 #include "session/random.hpp"
-#include "../utilities.hpp"
 
 namespace session::nodeapi {
 
 class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
-
   public:
     MultiEncryptWrapper(const Napi::CallbackInfo& info) :
             Napi::ObjectWrap<MultiEncryptWrapper>{info} {
         throw std::invalid_argument(
-                "MultiEncryptWrapper is all static and don't need to be constructed");
+                "MultiEncryptWrapper is static and doesn't need to be constructed");
     }
 
     static void Init(Napi::Env env, Napi::Object exports) {
@@ -85,7 +84,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             std::vector<ustring_view> messages_sv(messages.begin(), messages.end());
             std::vector<ustring_view> recipients_sv(recipients.begin(), recipients.end());
 
-            // Note: this function needs the first 2 args to be vector of sv explicitely
+            // Note: this function needs the first 2 args to be vector of sv explicitly
             return session::encrypt_for_multiple_simple(
                     messages_sv, recipients_sv, ed25519SecretKey, domain, random_nonce);
         });

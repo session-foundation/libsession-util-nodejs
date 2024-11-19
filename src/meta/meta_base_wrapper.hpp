@@ -68,7 +68,6 @@ class MetaBaseWrapper {
             std::optional<ustring_view> dumped_keys;
 
             if (dumped_meta) {
-
                 auto dumped_meta_str = from_unsigned_sv(*dumped_meta);
 
                 oxenc::bt_dict_consumer combined{dumped_meta_str};
