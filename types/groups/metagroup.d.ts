@@ -104,7 +104,6 @@ declare module 'libsession_util_nodejs' {
     public memberSetProfilePicture: MetaGroupWrapper['memberSetProfilePicture'];
 
     // keys
-
     public keysNeedsRekey: MetaGroupWrapper['keysNeedsRekey'];
     public keyRekey: MetaGroupWrapper['keyRekey'];
     public loadKeyMessage: MetaGroupWrapper['loadKeyMessage'];
@@ -118,6 +117,7 @@ declare module 'libsession_util_nodejs' {
 
   export type MetaGroupActionsType =
     | ['init', GroupWrapperConstructor]
+
     // shared actions
     | MakeActionCall<MetaGroupWrapper, 'needsPush'>
     | MakeActionCall<MetaGroupWrapper, 'push'>

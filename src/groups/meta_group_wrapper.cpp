@@ -391,6 +391,7 @@ Napi::Value MetaGroupWrapper::memberGetAll(const Napi::CallbackInfo& info) {
         return allMembers;
     });
 }
+
 Napi::Value MetaGroupWrapper::memberGetAllPendingRemovals(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         std::vector<session::config::groups::member> allMembersRemoved;
