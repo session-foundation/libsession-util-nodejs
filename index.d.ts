@@ -1,5 +1,4 @@
-/// <reference path="./shared.d.ts" />
-/// <reference path="./user/index.d.ts" />
+
 /// <reference path="./types/index.d.ts" />
 
 declare module 'libsession_util_nodejs' {
@@ -10,7 +9,7 @@ declare module 'libsession_util_nodejs' {
    *  - one side are calls made by the webworker directly to the wrapper
    *  - the other side are calls made by the renderer to the webworker (which should forward them to the wrapper)
    *
-   * We cannot pass unserializable data between those two, so we need to have a serializable way of calling one
+   * We cannot pass non serializable data between those two, so we need to have a serializable way of calling one
    * method of a wrapper with the required arguments.
    * Those serializable data, are `UserConfigActionsType` or just any of the `*ActionsType`. They are defined with a tuple of what each methods accepts on which wrapper with which argument.
    *

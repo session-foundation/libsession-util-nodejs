@@ -19,7 +19,7 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
   public:
     BlindingWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWrap<BlindingWrapper>{info} {
         throw std::invalid_argument(
-                "BlindingWrapper is all static and don't need to be constructed");
+                "BlindingWrapper is static and doesn't need to be constructed");
     }
 
     static void Init(Napi::Env env, Napi::Object exports) {
@@ -50,7 +50,7 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
             if (obj.IsEmpty())
                 throw std::invalid_argument("blindVersionPubkey received empty");
 
-            assertIsUInt8Array(obj.Get("ed25519SecretKey"));
+            assertIsUInt8Array(obj.Get("ed25519SecretKey"), "BlindingWrapper::blindVersionPubkey");
             auto ed25519_secret_key =
                     toCppBuffer(obj.Get("ed25519SecretKey"), "blindVersionPubkey.ed25519SecretKey");
 
@@ -76,11 +76,11 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
             if (obj.IsEmpty())
                 throw std::invalid_argument("blindVersionSign received empty");
 
-            assertIsUInt8Array(obj.Get("ed25519SecretKey"));
+            assertIsUInt8Array(obj.Get("ed25519SecretKey"), "BlindingWrapper::blindVersionSign");
             auto ed25519_secret_key =
                     toCppBuffer(obj.Get("ed25519SecretKey"), "blindVersionSign.ed25519SecretKey");
 
-            assertIsNumber(obj.Get("sigTimestampSeconds"));
+            assertIsNumber(obj.Get("sigTimestampSeconds"), "BlindingWrapper::blindVersionSign");
             auto sig_timestamp = toCppInteger(
                     obj.Get("sigTimestampSeconds"), "blindVersionSign.sigTimestampSeconds", false);
 

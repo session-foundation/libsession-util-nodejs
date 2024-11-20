@@ -20,7 +20,7 @@ declare module 'libsession_util_nodejs' {
   export type BlindingActionsCalls = MakeWrapperActionCalls<BlindingWrapper>;
 
   /**
-   * To be used inside the web worker only (calls are synchronous and won't work asynchrously)
+   * To be used inside the web worker only (calls are synchronous and won't work asynchronously)
    */
   export class BlindingWrapperNode {
     public static blindVersionPubkey: BlindingWrapper['blindVersionPubkey'];

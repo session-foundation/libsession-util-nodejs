@@ -15,6 +15,7 @@ concurrency:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -49,6 +50,13 @@ jobs:
         run: |
           yarn global add node-gyp@latest
 
+      # - name: sed it
+      #   if: runner.os == 'Windows'
+      #   shell: bash
+      #   run: |
+      #     sed -i "s/target_compile_options(oxen-logging-warnings INTERFACE/#target_compile_options(oxen-logging-warnings INTERFACE/" libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
+      #     cat libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
+
       - name: build libsession-util-nodejs
         shell: bash
-        run: yarn install --frozen-lockfile --network-timeout 600000
+        run: yarn install --frozen-lockfile
