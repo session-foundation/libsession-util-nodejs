@@ -409,7 +409,7 @@ Napi::Value MetaGroupWrapper::memberGet(const Napi::CallbackInfo& info) {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberGet");
         return meta_group->members->get(pubkeyHex);
     });
 }
@@ -419,7 +419,7 @@ Napi::Value MetaGroupWrapper::memberGetOrConstruct(const Napi::CallbackInfo& inf
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberGetOrConstruct");
         return meta_group->members->get_or_construct(pubkeyHex);
     });
 }
@@ -429,7 +429,7 @@ Napi::Value MetaGroupWrapper::memberConstructAndSet(const Napi::CallbackInfo& in
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberConstructAndSet");
         auto created = meta_group->members->get_or_construct(pubkeyHex);
         meta_group->members->set(created);
         return created;
@@ -441,8 +441,8 @@ void MetaGroupWrapper::memberSetNameTruncated(const Napi::CallbackInfo& info) {
         assertIsString(info[0]);
         assertIsString(info[1]);
 
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
-        auto newName = toCppString(info[1], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetNameTruncated pubkeyHex");
+        auto newName = toCppString(info[1], "memberSetNameTruncated newName");
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
             m->set_name(newName);
@@ -455,8 +455,8 @@ void MetaGroupWrapper::memberSetInvited(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertIsString(info[0]);
         assertIsBoolean(info[1]);
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
-        auto failed = toCppBoolean(info[1], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetInvited");
+        auto failed = toCppBoolean(info[1], "memberSetInvited");
 
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
@@ -471,7 +471,7 @@ void MetaGroupWrapper::memberSetAccepted(const Napi::CallbackInfo& info) {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetAccepted");
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
             m->set_accepted();
@@ -484,7 +484,7 @@ void MetaGroupWrapper::memberSetPromoted(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetPromoted");
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
             m->set_promoted();
@@ -497,7 +497,7 @@ void MetaGroupWrapper::memberSetPromotionSent(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetPromotionSent");
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
             m->set_promotion_sent();
@@ -510,7 +510,7 @@ void MetaGroupWrapper::memberSetPromotionFailed(const Napi::CallbackInfo& info) 
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetPromotionFailed");
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
             m->set_promotion_failed();
@@ -523,7 +523,7 @@ void MetaGroupWrapper::memberSetPromotionAccepted(const Napi::CallbackInfo& info
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetPromotionAccepted");
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
             m->set_promotion_accepted();
@@ -538,7 +538,7 @@ void MetaGroupWrapper::memberSetProfilePicture(const Napi::CallbackInfo& info) {
         assertIsString(info[0]);
         assertIsObject(info[1]);
 
-        auto pubkeyHex = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto pubkeyHex = toCppString(info[0], "memberSetProfilePicture");
         auto profilePicture = profile_pic_from_object(info[1]);
 
         auto m = this->meta_group->members->get(pubkeyHex);
@@ -557,11 +557,11 @@ void MetaGroupWrapper::membersMarkPendingRemoval(const Napi::CallbackInfo& info)
 
         assertIsArray(toUpdateJSValue);
         assertIsBoolean(withMessageJSValue);
-        bool withMessages = toCppBoolean(withMessageJSValue, __PRETTY_FUNCTION__);
+        bool withMessages = toCppBoolean(withMessageJSValue, "membersMarkPendingRemoval");
 
         auto toUpdateJS = toUpdateJSValue.As<Napi::Array>();
         for (uint32_t i = 0; i < toUpdateJS.Length(); i++) {
-            auto pubkeyHex = toCppString(toUpdateJS[i], __PRETTY_FUNCTION__);
+            auto pubkeyHex = toCppString(toUpdateJS[i], "membersMarkPendingRemoval");
             auto existing = this->meta_group->members->get(pubkeyHex);
             if (existing) {
                 existing->set_removed(withMessages);
@@ -581,7 +581,7 @@ Napi::Value MetaGroupWrapper::memberEraseAndRekey(const Napi::CallbackInfo& info
         auto toRemoveJS = toRemoveJSValue.As<Napi::Array>();
         auto rekeyed = false;
         for (uint32_t i = 0; i < toRemoveJS.Length(); i++) {
-            auto pubkeyHex = toCppString(toRemoveJS[i], __PRETTY_FUNCTION__);
+            auto pubkeyHex = toCppString(toRemoveJS[i], "memberEraseAndRekey");
             rekeyed |= this->meta_group->members->erase(pubkeyHex);
         }
 
@@ -614,12 +614,12 @@ Napi::Value MetaGroupWrapper::loadKeyMessage(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         assertInfoLength(info, 3);
         assertIsString(info[0]);
-        assertIsUInt8Array(info[1], __PRETTY_FUNCTION__);
-        assertIsNumber(info[2], __PRETTY_FUNCTION__);
+        assertIsUInt8Array(info[1], "loadKeyMessage");
+        assertIsNumber(info[2], "loadKeyMessage");
 
-        auto hash = toCppString(info[0], __PRETTY_FUNCTION__);
-        auto data = toCppBuffer(info[1], __PRETTY_FUNCTION__);
-        auto timestamp_ms = toCppInteger(info[2], __PRETTY_FUNCTION__);
+        auto hash = toCppString(info[0], "loadKeyMessage");
+        auto data = toCppBuffer(info[1], "loadKeyMessage");
+        auto timestamp_ms = toCppInteger(info[2], "loadKeyMessage");
 
         return meta_group->keys->load_key_message(
                 hash, data, timestamp_ms, *(this->meta_group->info), *(this->meta_group->members));
@@ -657,7 +657,7 @@ Napi::Value MetaGroupWrapper::encryptMessages(const Napi::CallbackInfo& info) {
         encryptedMessages.reserve(arrayLength);
 
         for (uint32_t i = 0; i < plaintextsJS.Length(); i++) {
-            auto plaintext = toCppBuffer(plaintextsJS[i], __PRETTY_FUNCTION__);
+            auto plaintext = toCppBuffer(plaintextsJS[i], "encryptMessages");
 
             encryptedMessages.push_back(this->meta_group->keys->encrypt_message(plaintext));
         }
@@ -668,9 +668,9 @@ Napi::Value MetaGroupWrapper::encryptMessages(const Napi::CallbackInfo& info) {
 Napi::Value MetaGroupWrapper::decryptMessage(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         assertInfoLength(info, 1);
-        assertIsUInt8Array(info[0], __PRETTY_FUNCTION__);
+        assertIsUInt8Array(info[0], "decryptMessage");
 
-        auto ciphertext = toCppBuffer(info[0], __PRETTY_FUNCTION__);
+        auto ciphertext = toCppBuffer(info[0], "decryptMessage");
         auto decrypted = this->meta_group->keys->decrypt_message(ciphertext);
 
         return decrypt_result_to_JS(info.Env(), decrypted);
@@ -682,7 +682,7 @@ Napi::Value MetaGroupWrapper::makeSwarmSubAccount(const Napi::CallbackInfo& info
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
-        auto memberPk = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto memberPk = toCppString(info[0], "makeSwarmSubAccount");
         ustring subaccount = this->meta_group->keys->swarm_make_subaccount(memberPk);
 
         session::nodeapi::checkOrThrow(
@@ -697,7 +697,7 @@ Napi::Value MetaGroupWrapper::swarmSubAccountToken(const Napi::CallbackInfo& inf
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
-        auto memberPk = toCppString(info[0], __PRETTY_FUNCTION__);
+        auto memberPk = toCppString(info[0], "swarmSubAccountToken");
         ustring subaccount = this->meta_group->keys->swarm_subaccount_token(memberPk);
 
         session::nodeapi::checkOrThrow(
@@ -710,9 +710,9 @@ Napi::Value MetaGroupWrapper::swarmSubAccountToken(const Napi::CallbackInfo& inf
 Napi::Value MetaGroupWrapper::swarmVerifySubAccount(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         assertInfoLength(info, 1);
-        assertIsUInt8Array(info[0], __PRETTY_FUNCTION__);
+        assertIsUInt8Array(info[0], "swarmVerifySubAccount");
 
-        auto signingValue = toCppBuffer(info[0], __PRETTY_FUNCTION__);
+        auto signingValue = toCppBuffer(info[0], "swarmVerifySubAccount");
         return this->meta_group->keys->swarm_verify_subaccount(signingValue);
     });
 }
@@ -720,9 +720,9 @@ Napi::Value MetaGroupWrapper::swarmVerifySubAccount(const Napi::CallbackInfo& in
 Napi::Value MetaGroupWrapper::loadAdminKeys(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         assertInfoLength(info, 1);
-        assertIsUInt8Array(info[0], __PRETTY_FUNCTION__);
+        assertIsUInt8Array(info[0], "loadAdminKeys");
 
-        auto secret = toCppBuffer(info[0], __PRETTY_FUNCTION__);
+        auto secret = toCppBuffer(info[0], "loadAdminKeys");
         this->meta_group->keys->load_admin_key(
                 secret, *(this->meta_group->info), *(this->meta_group->members));
         return info.Env().Null();
@@ -750,7 +750,7 @@ Napi::Value MetaGroupWrapper::generateSupplementKeys(const Napi::CallbackInfo& i
         membersCpp.reserve(arrayLength);
 
         for (uint32_t i = 0; i < membersJS.Length(); i++) {
-            auto memberPk = toCppString(membersJS[i], __PRETTY_FUNCTION__);
+            auto memberPk = toCppString(membersJS[i], "generateSupplementKeys");
             membersCpp.push_back(memberPk);
         }
         return this->meta_group->keys->key_supplement(membersCpp);
@@ -763,8 +763,8 @@ Napi::Value MetaGroupWrapper::swarmSubaccountSign(const Napi::CallbackInfo& info
         assertIsUInt8Array(info[0], "swarmSubaccountSign 0");
         assertIsUInt8Array(info[1], "swarmSubaccountSign 1");
 
-        auto message = toCppBuffer(info[0], __PRETTY_FUNCTION__);
-        auto authdata = toCppBuffer(info[1], __PRETTY_FUNCTION__);
+        auto message = toCppBuffer(info[0], "swarmSubaccountSign message");
+        auto authdata = toCppBuffer(info[1], "swarmSubaccountSign authdata");
         auto subaccountSign = this->meta_group->keys->swarm_subaccount_sign(message, authdata);
 
         return subaccountSign;
