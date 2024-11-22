@@ -28,6 +28,16 @@ class UserGroupsWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserGro
     Napi::Value getAllLegacyGroups(const Napi::CallbackInfo& info);
     void setLegacyGroup(const Napi::CallbackInfo& info);
     Napi::Value eraseLegacyGroup(const Napi::CallbackInfo& info);
+
+    // groups related methods
+    Napi::Value createGroup(const Napi::CallbackInfo& info);
+    Napi::Value getGroup(const Napi::CallbackInfo& info);
+    Napi::Value getAllGroups(const Napi::CallbackInfo& info);
+    Napi::Value setGroup(const Napi::CallbackInfo& info);
+    Napi::Value markGroupKicked(const Napi::CallbackInfo& info);
+    Napi::Value markGroupInvited(const Napi::CallbackInfo& info);
+    Napi::Value markGroupDestroyed(const Napi::CallbackInfo& info);
+    Napi::Value eraseGroup(const Napi::CallbackInfo& info);
 };
 
 }  // namespace session::nodeapi

@@ -18,7 +18,6 @@ declare module 'libsession_util_nodejs' {
     setName: (name: string) => void;
     setNameTruncated: (name: string) => void;
     setProfilePic: (pic: ProfilePicture) => void;
-
     setEnableBlindedMsgRequest: (msgRequest: boolean) => void;
     getEnableBlindedMsgRequest: () => boolean | undefined;
     setNoteToSelfExpiry: (expirySeconds: number) => void;
@@ -31,7 +30,7 @@ declare module 'libsession_util_nodejs' {
   export type UserConfigWrapperActionsCalls = MakeWrapperActionCalls<UserConfigWrapper>;
 
   /**
-   * To be used inside the web worker only (calls are synchronous and won't work asynchrously)
+   * To be used inside the web worker only (calls are synchronous and won't work asynchronously)
    */
   export class UserConfigWrapperNode extends BaseConfigWrapperNode {
     constructor(secretKey: Uint8Array, dump: Uint8Array | null);

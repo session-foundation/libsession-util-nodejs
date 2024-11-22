@@ -16,7 +16,7 @@ Clone this project to somewhere **not** part of `session-desktop` node_modules:
 
 ```
 cd [FOLDER_NOT_IN_SESSION_DESKTOP]
-git clone --recursive git@github.com:oxen-io/libsession-util-nodejs.git
+git clone --recursive git@github.com:session-foundation/libsession-util-nodejs.git
 ```
 
 Always do your changes in `[FOLDER_NOT_IN_SESSION_DESKTOP]/libsession-util-nodejs`, never in the one under session-desktop's `node_modules` as you might override your local changes.
@@ -31,7 +31,7 @@ Replace `[SESSION_DESKTOP_PATH]` with the full path to your `session-desktop` fo
 
 Every part of this command is needed and might need to be updated using your paths. Also, the `worker:libsession` needs to be recompiled too to include the just created .node file in itself. This is done by the `yarn build:workers` command.
 
-Note: The `electron` property in the `config` object will need to be updated in the `package.json` every time we update `electron` package in [session-desktop](https://github.com/oxen-io/session-desktop/) so that the versions match. It is a node version, but not part of the official node docs. If you compiled the node module for an incorrect electron/node version you will get an error on `session-desktop` start.
+Note: The `electron` property in the `config` object will need to be updated in the `package.json` every time we update `electron` package in [session-desktop](https://github.com/session-foundation/session-desktop/) so that the versions match. It is a node version, but not part of the official node docs. If you compiled the node module for an incorrect electron/node version you will get an error on `session-desktop` start.
 
 ### Making a Release and updating Session-desktop
 
@@ -71,7 +71,7 @@ Once this is done, update the dependency on `session-desktop`.
 Make sure to remove the existing one first (with the include `yarn remove` below) as you might have messed up your `node_modules` doing the dev instructions.
 
 ```
-yarn remove libsession_util_nodejs && yarn add https://github.com/oxen-io/libsession-util-nodejs/releases/download/v0.1.15/libsession_util_nodejs-v0.1.15.tar.gz
+yarn remove libsession_util_nodejs && yarn add https://github.com/session-foundation/libsession-util-nodejs/releases/download/v0.1.15/libsession_util_nodejs-v0.1.15.tar.gz
 ```
 
 Keep in mind that you need to update the two version numbers (e.g. `0.1.15`) to the just created release version of this project.

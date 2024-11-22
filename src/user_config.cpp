@@ -1,7 +1,10 @@
 #include "user_config.hpp"
 
+#include <iostream>
+
 #include "base_config.hpp"
 #include "profile_pic.hpp"
+#include "session/config/base.hpp"
 #include "session/config/user_profile.hpp"
 
 namespace session::nodeapi {
@@ -36,7 +39,6 @@ UserConfigWrapper::UserConfigWrapper(const Napi::CallbackInfo& info) :
         ConfigBaseImpl{construct<config::UserProfile>(info, "UserConfig")},
         Napi::ObjectWrap<UserConfigWrapper>{info} {}
 
-
 Napi::Value UserConfigWrapper::getPriority(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         auto env = info.Env();
@@ -54,7 +56,16 @@ Napi::Value UserConfigWrapper::getName(const Napi::CallbackInfo& info) {
 Napi::Value UserConfigWrapper::getProfilePic(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         auto env = info.Env();
-        return object_from_profile_pic(env, config.get_profile_pic());
+        auto pic = config.get_profile_pic();
+        auto obj = Napi::Object::New(env);
+        if (pic) {
+            obj["url"] = toJs(env, pic.url);
+            obj["key"] = toJs(env, pic.key);
+        } else {
+            obj["url"] = env.Null();
+            obj["key"] = env.Null();
+        }
+        return obj;
     });
 }
 
@@ -63,7 +74,7 @@ void UserConfigWrapper::setPriority(const Napi::CallbackInfo& info) {
         auto env = info.Env();
         assertInfoLength(info, 1);
         auto priority = info[0];
-        assertIsNumber(priority);
+        assertIsNumber(priority, "UserConfigWrapper::setPriority");
 
         auto new_priority = toPriority(priority, config.get_nts_priority());
         config.set_nts_priority(new_priority);
@@ -145,7 +156,7 @@ void UserConfigWrapper::setNoteToSelfExpiry(const Napi::CallbackInfo& info) {
         assertInfoLength(info, 1);
 
         auto expirySeconds = info[0];
-        assertIsNumber(expirySeconds);
+        assertIsNumber(expirySeconds, "setNoteToSelfExpiry");
 
         auto expiryCppSeconds = toCppInteger(expirySeconds, "set_nts_expiry", false);
         config.set_nts_expiry(std::chrono::seconds{expiryCppSeconds});
