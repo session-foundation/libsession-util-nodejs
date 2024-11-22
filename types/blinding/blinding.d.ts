@@ -14,8 +14,8 @@ declare module 'libsession_util_nodejs' {
        */
       ed25519SecretKey: Uint8Array;
       sigTimestampSeconds: number;
-      sigMethod: Uint8Array;
-      sigPath: Uint8Array;
+      sigMethod: string;
+      sigPath: string;
       sigBody: Uint8Array | null;
     }) => Uint8Array;
     blindVersionSign: (opts: {

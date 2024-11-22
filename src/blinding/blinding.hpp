@@ -89,12 +89,12 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
                     "blindVersionSignRequest.sigTimestampSeconds",
                     false);
 
-            assertIsUInt8Array(obj.Get("sigMethod"));
+            assertIsString(obj.Get("sigMethod"));
             auto sig_method =
-                    toCppBuffer(obj.Get("sigMethod"), "blindVersionSignRequest.sigMethod");
+                    toCppString(obj.Get("sigMethod"), "blindVersionSignRequest.sigMethod");
 
-            assertIsUInt8Array(obj.Get("sigPath"));
-            auto sig_path = toCppBuffer(obj.Get("sigPath"), "blindVersionSignRequest.sigPath");
+            assertIsString(obj.Get("sigPath"));
+            auto sig_path = toCppString(obj.Get("sigPath"), "blindVersionSignRequest.sigPath");
 
             assertIsUInt8ArrayOrNull(obj.Get("sigBody"));
             auto sig_body =
