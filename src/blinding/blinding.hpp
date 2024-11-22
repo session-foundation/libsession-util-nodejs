@@ -18,8 +18,7 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
 
   public:
     BlindingWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWrap<BlindingWrapper>{info} {
-        throw std::invalid_argument(
-                "BlindingWrapper is static and doesn't need to be constructed");
+        throw std::invalid_argument("BlindingWrapper is static and doesn't need to be constructed");
     }
 
     static void Init(Napi::Env env, Napi::Object exports) {
@@ -32,11 +31,14 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
                                 "blindVersionPubkey",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
+                        StaticMethod<&BlindingWrapper::blindVersionSignRequest>(
+                                "blindVersionSignRequest",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
                         StaticMethod<&BlindingWrapper::blindVersionSign>(
                                 "blindVersionSign",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
-
                 });
     }
 
@@ -64,6 +66,43 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
             oxenc::to_hex(blinded_pk.begin(), blinded_pk.end(), std::back_inserter(blinded_pk_hex));
 
             return blinded_pk_hex;
+        });
+    };
+
+    static Napi::Value blindVersionSignRequest(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            assertInfoLength(info, 1);
+            assertIsObject(info[0]);
+            auto obj = info[0].As<Napi::Object>();
+
+            if (obj.IsEmpty())
+                throw std::invalid_argument("blindVersionSignRequest received empty");
+
+            assertIsUInt8Array(
+                    obj.Get("ed25519SecretKey"), "blindVersionSignRequest.ed25519SecretKey");
+            auto ed25519_secret_key = toCppBuffer(
+                    obj.Get("ed25519SecretKey"), "blindVersionSignRequest.ed25519SecretKey");
+
+            assertIsNumber(
+                    obj.Get("sigTimestampSeconds"), "blindVersionSignRequest.sigTimestampSeconds");
+            auto sig_timestamp = toCppInteger(
+                    obj.Get("sigTimestampSeconds"),
+                    "blindVersionSignRequest.sigTimestampSeconds",
+                    false);
+
+            assertIsString(obj.Get("sigMethod"));
+            auto sig_method =
+                    toCppString(obj.Get("sigMethod"), "blindVersionSignRequest.sigMethod");
+
+            assertIsString(obj.Get("sigPath"));
+            auto sig_path = toCppString(obj.Get("sigPath"), "blindVersionSignRequest.sigPath");
+
+            assertIsUInt8ArrayOrNull(obj.Get("sigBody"));
+            auto sig_body =
+                    maybeNonemptyBuffer(obj.Get("sigBody"), "blindVersionSignRequest.sigBody");
+
+            return session::blind_version_sign_request(
+                    ed25519_secret_key, sig_timestamp, sig_method, sig_path, sig_body);
         });
     };
 
