@@ -12,33 +12,56 @@ declare module 'libsession_util_nodejs' {
     profilePicture: ProfilePicture | null;
   };
 
+  /**
+   * Unified status that a member can have based on the various libsession-util values.
+   *
+   * **Invite statuses**
+   * - INVITE_UNKNOWN: fallback invite case
+   * - INVITE_NOT_SENT: as soon as we've scheduled that member to be invited, but before we've tried sending the invite message
+   * - INVITE_FAILED: we know the invite failed to be sent to the member
+   * - INVITE_SENT: we know the invite has been sent to the member
+   * - INVITE_ACCEPTED: regular member
+   *
+   * **Promotion statuses**
+   * - PROMOTION_UNKNOWN: promotion fallback case
+   * - PROMOTION_NOT_SENT: as soon as we've scheduled that guy to be an admin, but before we've tried sending the promotion message
+   * - PROMOTION_FAILED: we know the promotion failed to be sent to the member
+   * - PROMOTION_SENT: we know the promotion message was sent to the member
+   * - PROMOTION_ACCEPTED: regular admin
+   *
+   * **Removed statuses**
+   * - REMOVED_MEMBER: the member is pending removal from the group
+   * - REMOVED_MEMBER_AND_MESSAGES: the member and his messages are pending removal from the group
+   * - REMOVED_UNKNOWN: the member is pending removal, fallback case;
+   */
   type MemberStateGroupV2 =
-    | 'INVITE_NOT_SENT' // as soon as we've scheduled that guy to be invited, but before we've tried sending the invite message
+    | 'INVITE_UNKNOWN'
+    | 'INVITE_NOT_SENT'
     | 'INVITE_FAILED'
     | 'INVITE_SENT'
-    | 'INVITE_ACCEPTED' // regular member
-    | 'PROMOTION_NOT_SENT' // as soon as we've scheduled that guy to be an admin, but before we've tried sending the promotion message
+    | 'INVITE_ACCEPTED'
+    | 'PROMOTION_UNKNOWN'
+    | 'PROMOTION_NOT_SENT'
     | 'PROMOTION_FAILED'
     | 'PROMOTION_SENT'
-    | 'PROMOTION_ACCEPTED' // regular admin
-    | 'UNKNOWN';
+    | 'PROMOTION_ACCEPTED'
+    | 'REMOVED_MEMBER'
+    | 'REMOVED_MEMBER_AND_MESSAGES'
+    | 'REMOVED_UNKNOWN';
 
   export type GroupMemberGet = GroupMemberShared & {
     memberStatus: MemberStateGroupV2;
 
     /**
-     * NOT_REMOVED = 0:
-     * REMOVED_MEMBER = 1,
-     * REMOVED_MEMBER_AND_MESSAGES = 2;
-     */
-    removedStatus: 'NOT_REMOVED' | 'REMOVED_MEMBER' | 'REMOVED_MEMBER_AND_MESSAGES' | 'UNKNOWN';
-    /**
-     * True if the member is scheduled to get the keys (.admin field of libsession).
+     * True if the member is scheduled to get the keys (`.admin` field of libsession).
      * This is equivalent of memberStatus being one of:
+     *  - PROMOTION_UNKNOWN
      *  - PROMOTION_NOT_SENT
      *  - PROMOTION_FAILED
      *  - PROMOTION_SENT
      *  - PROMOTION_ACCEPTED
+     *
+     * We display the "crown" on top of the member's avatar when this field is true
      */
     nominatedAdmin: boolean;
   };
