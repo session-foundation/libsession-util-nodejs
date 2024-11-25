@@ -396,7 +396,10 @@ Napi::Value MetaGroupWrapper::memberGetAllPendingRemovals(const Napi::CallbackIn
     return wrapResult(info, [&] {
         std::vector<session::config::groups::member> allMembersRemoved;
         for (auto& member : *this->meta_group->members) {
-            if (member.is_removed()) {
+            auto memberStatus = member.status();
+            if (memberStatus == member::Status::removed_unknown ||
+                memberStatus == member::Status::removed ||
+                memberStatus == member::Status::removed_including_messages) {
                 allMembersRemoved.push_back(member);
             }
         }
