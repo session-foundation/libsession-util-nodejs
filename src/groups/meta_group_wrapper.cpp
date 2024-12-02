@@ -47,8 +47,11 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                             &MetaGroupWrapper::membersMarkPendingRemoval),
                     InstanceMethod(
                             "memberSetNameTruncated", &MetaGroupWrapper::memberSetNameTruncated),
-                    InstanceMethod("memberSetInvited", &MetaGroupWrapper::memberSetInvited),
-                    InstanceMethod("memberSetAccepted", &MetaGroupWrapper::memberSetAccepted),
+                    InstanceMethod("memberSetInviteSent", &MetaGroupWrapper::memberSetInviteSent),
+                    InstanceMethod(
+                            "memberSetInviteFailed", &MetaGroupWrapper::memberSetInviteFailed),
+                    InstanceMethod(
+                            "memberSetInviteAccepted", &MetaGroupWrapper::memberSetInviteAccepted),
                     InstanceMethod("memberSetPromoted", &MetaGroupWrapper::memberSetPromoted),
                     InstanceMethod(
                             "memberSetPromotionSent", &MetaGroupWrapper::memberSetPromotionSent),
@@ -342,8 +345,9 @@ Napi::Value MetaGroupWrapper::infoSet(const Napi::CallbackInfo& info) {
         assertIsObject(arg);
         auto obj = arg.As<Napi::Object>();
 
+        // we want to not throw if the name is too long, but just truncate it
         if (auto name = maybeNonemptyString(obj.Get("name"), "MetaGroupWrapper::setInfo name"))
-            this->meta_group->info->set_name(*name);
+            this->meta_group->info->set_name_truncated(*name);
 
         if (auto created = maybeNonemptyInt(
                     obj.Get("createdAtSeconds"), "MetaGroupWrapper::setInfo set_created"))
@@ -454,30 +458,41 @@ void MetaGroupWrapper::memberSetNameTruncated(const Napi::CallbackInfo& info) {
     });
 }
 
-void MetaGroupWrapper::memberSetInvited(const Napi::CallbackInfo& info) {
+void MetaGroupWrapper::memberSetInviteFailed(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertIsString(info[0]);
-        assertIsBoolean(info[1]);
-        auto pubkeyHex = toCppString(info[0], "memberSetInvited");
-        auto failed = toCppBoolean(info[1], "memberSetInvited");
+        auto pubkeyHex = toCppString(info[0], "memberSetInviteFailed");
 
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
-            m->set_invited(failed);
+            m->set_invite_failed();
             this->meta_group->members->set(*m);
         }
     });
 }
 
-void MetaGroupWrapper::memberSetAccepted(const Napi::CallbackInfo& info) {
+void MetaGroupWrapper::memberSetInviteSent(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertIsString(info[0]);
+        auto pubkeyHex = toCppString(info[0], "memberSetInviteSent");
+
+        auto m = this->meta_group->members->get(pubkeyHex);
+        if (m) {
+            m->set_invite_sent();
+            this->meta_group->members->set(*m);
+        }
+    });
+}
+
+void MetaGroupWrapper::memberSetInviteAccepted(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
         assertIsString(info[0]);
 
-        auto pubkeyHex = toCppString(info[0], "memberSetAccepted");
+        auto pubkeyHex = toCppString(info[0], "memberSetInviteAccepted");
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
-            m->set_accepted();
+            m->set_invite_accepted();
             this->meta_group->members->set(*m);
         }
     });

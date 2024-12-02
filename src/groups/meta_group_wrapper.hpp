@@ -124,8 +124,9 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     Napi::Value memberConstructAndSet(const Napi::CallbackInfo& info);
 
     void memberSetNameTruncated(const Napi::CallbackInfo& info);
-    void memberSetInvited(const Napi::CallbackInfo& info);
-    void memberSetAccepted(const Napi::CallbackInfo& info);
+    void memberSetInviteFailed(const Napi::CallbackInfo& info);
+    void memberSetInviteSent(const Napi::CallbackInfo& info);
+    void memberSetInviteAccepted(const Napi::CallbackInfo& info);
     void memberSetPromoted(const Napi::CallbackInfo& info);
     void memberSetPromotionSent(const Napi::CallbackInfo& info);
     void memberSetPromotionFailed(const Napi::CallbackInfo& info);

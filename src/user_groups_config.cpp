@@ -70,7 +70,7 @@ struct toJs_impl<group_info> {
         obj["authData"] = toJs(env, info.auth_data);
         obj["invitePending"] = toJs(env, info.invited);
         obj["kicked"] = toJs(env, info.kicked());
-        obj["destroyed"] = toJs(env, info.isDestroyed());
+        obj["destroyed"] = toJs(env, info.is_destroyed());
 
         return obj;
     }
@@ -346,7 +346,7 @@ Napi::Value UserGroupsWrapper::markGroupKicked(const Napi::CallbackInfo& info) {
 
         auto group = config.get_group(groupPk);
         if (group) {
-            group->markKicked();
+            group->mark_kicked();
             config.set(*group);
         }
         return config.get_or_construct_group(groupPk);
@@ -359,7 +359,7 @@ Napi::Value UserGroupsWrapper::markGroupInvited(const Napi::CallbackInfo& info) 
 
         auto group = config.get_group(groupPk);
         if (group) {
-            group->markInvited();
+            group->mark_invited();
             config.set(*group);
         }
         return config.get_or_construct_group(groupPk);
@@ -372,7 +372,7 @@ Napi::Value UserGroupsWrapper::markGroupDestroyed(const Napi::CallbackInfo& info
 
         auto group = config.get_group(groupPk);
         if (group) {
-            group->markDestroyed();
+            group->mark_destroyed();
             config.set(*group);
         }
         return config.get_or_construct_group(groupPk);
