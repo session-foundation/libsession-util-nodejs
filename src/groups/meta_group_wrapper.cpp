@@ -345,8 +345,9 @@ Napi::Value MetaGroupWrapper::infoSet(const Napi::CallbackInfo& info) {
         assertIsObject(arg);
         auto obj = arg.As<Napi::Object>();
 
+        // we want to not throw if the name is too long, but just truncate it
         if (auto name = maybeNonemptyString(obj.Get("name"), "MetaGroupWrapper::setInfo name"))
-            this->meta_group->info->set_name(*name);
+            this->meta_group->info->set_name_truncated(*name);
 
         if (auto created = maybeNonemptyInt(
                     obj.Get("createdAtSeconds"), "MetaGroupWrapper::setInfo set_created"))
