@@ -314,8 +314,8 @@ Napi::Value UserGroupsWrapper::setGroup(const Napi::CallbackInfo& info) {
                     obj.Get("joinedAtSeconds"), "UserGroupsWrapper::setGroup joinedAtSeconds")) {
             group_info.joined_at = *joinedAtSeconds;
         }
-        // 1st Jan 2100. Probably an invalid timestamp.
-        if (group_info.joined_at > 4099680000) {
+        // Probably an invalid timestamp.
+        if (group_info.joined_at > 9000000000) {
             throw std::invalid_argument{"group.joined_at is too far in the future"};
         }
 
