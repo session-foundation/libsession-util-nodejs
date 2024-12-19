@@ -17,6 +17,7 @@ declare module 'libsession_util_nodejs' {
    *
    * **Invite statuses**
    * - INVITE_UNKNOWN: fallback invite case
+   * - INVITE_SENDING : when we are actively sending the invite (not synced)
    * - INVITE_NOT_SENT: as soon as we've scheduled that member to be invited, but before we've tried sending the invite message
    * - INVITE_FAILED: we know the invite failed to be sent to the member
    * - INVITE_SENT: we know the invite has been sent to the member
@@ -24,6 +25,7 @@ declare module 'libsession_util_nodejs' {
    *
    * **Promotion statuses**
    * - PROMOTION_UNKNOWN: promotion fallback case
+   * - PROMOTION_SENDING : when we are actively sending the promotion (not synced)
    * - PROMOTION_NOT_SENT: as soon as we've scheduled that guy to be an admin, but before we've tried sending the promotion message
    * - PROMOTION_FAILED: we know the promotion failed to be sent to the member
    * - PROMOTION_SENT: we know the promotion message was sent to the member
@@ -36,11 +38,13 @@ declare module 'libsession_util_nodejs' {
    */
   type MemberStateGroupV2 =
     | 'INVITE_UNKNOWN'
+    | 'INVITE_SENDING'
     | 'INVITE_NOT_SENT'
     | 'INVITE_FAILED'
     | 'INVITE_SENT'
     | 'INVITE_ACCEPTED'
     | 'PROMOTION_UNKNOWN'
+    | 'PROMOTION_SENDING'
     | 'PROMOTION_NOT_SENT'
     | 'PROMOTION_FAILED'
     | 'PROMOTION_SENT'
