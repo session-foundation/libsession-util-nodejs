@@ -9,6 +9,68 @@
 
 namespace session::nodeapi {
 
+Napi::Object member_to_js(const Napi::Env& env, const member& info, const member::Status& status) {
+    auto obj = Napi::Object::New(env);
+
+    obj["pubkeyHex"] = toJs(env, info.session_id);
+    obj["name"] = toJs(env, info.name);
+    obj["profilePicture"] = toJs(env, info.profile_picture);
+
+    switch (status) {
+        // invite statuses
+        case member::Status::invite_unknown:
+            obj["memberStatus"] = toJs(env, "INVITE_UNKNOWN");
+            break;
+        case member::Status::invite_not_sent:
+            obj["memberStatus"] = toJs(env, "INVITE_NOT_SENT");
+            break;
+        case member::Status::invite_sending:
+            obj["memberStatus"] = toJs(env, "INVITE_SENDING");
+            break;
+        case member::Status::invite_failed: obj["memberStatus"] = toJs(env, "INVITE_FAILED"); break;
+        case member::Status::invite_sent: obj["memberStatus"] = toJs(env, "INVITE_SENT"); break;
+        case member::Status::invite_accepted:
+            obj["memberStatus"] = toJs(env, "INVITE_ACCEPTED");
+            break;
+
+        // promotion statuses
+        case member::Status::promotion_unknown:
+            obj["memberStatus"] = toJs(env, "PROMOTION_UNKNOWN");
+            break;
+        case member::Status::promotion_not_sent:
+            obj["memberStatus"] = toJs(env, "PROMOTION_NOT_SENT");
+            break;
+        case member::Status::promotion_sending:
+            obj["memberStatus"] = toJs(env, "PROMOTION_SENDING");
+            break;
+        case member::Status::promotion_failed:
+            obj["memberStatus"] = toJs(env, "PROMOTION_FAILED");
+            break;
+        case member::Status::promotion_sent:
+            obj["memberStatus"] = toJs(env, "PROMOTION_SENT");
+            break;
+        case member::Status::promotion_accepted:
+            obj["memberStatus"] = toJs(env, "PROMOTION_ACCEPTED");
+            break;
+
+        // removed statuses
+        case member::Status::removed_unknown:
+            obj["memberStatus"] = toJs(env, "REMOVED_UNKNOWN");
+            break;
+        case member::Status::removed: obj["memberStatus"] = toJs(env, "REMOVED_MEMBER"); break;
+        case member::Status::removed_including_messages:
+            obj["memberStatus"] = toJs(env, "REMOVED_MEMBER_AND_MESSAGES");
+            break;
+
+        default: throw std::runtime_error{"Invalid member status got as an enum"};
+    }
+
+    // we display the "crown" on top of the member's avatar when this field is true
+    obj["nominatedAdmin"] = toJs(env, info.admin);
+
+    return obj;
+};
+
 MetaGroupWrapper::MetaGroupWrapper(const Napi::CallbackInfo& info) :
         meta_group{std::move(MetaBaseWrapper::constructGroupWrapper(info, "MetaGroupWrapper"))},
         Napi::ObjectWrap<MetaGroupWrapper>{info} {}
@@ -388,26 +450,28 @@ Napi::Value MetaGroupWrapper::infoDestroy(const Napi::CallbackInfo& info) {
 
 Napi::Value MetaGroupWrapper::memberGetAll(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
-        std::vector<session::config::groups::member> allMembers;
+        std::vector<Napi::Object> allMembersJs;
         for (auto& member : *this->meta_group->members) {
-            allMembers.push_back(member);
+            allMembersJs.push_back(
+                    member_to_js(info.Env(), member, meta_group->members->get_status(member)));
         }
-        return allMembers;
+        return allMembersJs;
     });
 }
 
 Napi::Value MetaGroupWrapper::memberGetAllPendingRemovals(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
-        std::vector<session::config::groups::member> allMembersRemoved;
+        std::vector<Napi::Object> allMembersRemovedJs;
         for (auto& member : *this->meta_group->members) {
-            auto memberStatus = member.status();
+            auto memberStatus = this->meta_group->members->get_status(member);
             if (memberStatus == member::Status::removed_unknown ||
                 memberStatus == member::Status::removed ||
                 memberStatus == member::Status::removed_including_messages) {
-                allMembersRemoved.push_back(member);
+                allMembersRemovedJs.push_back(
+                        member_to_js(info.Env(), member, meta_group->members->get_status(member)));
             }
         }
-        return allMembersRemoved;
+        return allMembersRemovedJs;
     });
 }
 
@@ -417,7 +481,11 @@ Napi::Value MetaGroupWrapper::memberGet(const Napi::CallbackInfo& info) {
         assertIsString(info[0]);
 
         auto pubkeyHex = toCppString(info[0], "memberGet");
-        return meta_group->members->get(pubkeyHex);
+        auto existing = meta_group->members->get(pubkeyHex);
+
+        return existing ? member_to_js(
+                                  info.Env(), *existing, meta_group->members->get_status(*existing))
+                        : info.Env().Null();
     });
 }
 
@@ -427,7 +495,8 @@ Napi::Value MetaGroupWrapper::memberGetOrConstruct(const Napi::CallbackInfo& inf
         assertIsString(info[0]);
 
         auto pubkeyHex = toCppString(info[0], "memberGetOrConstruct");
-        return meta_group->members->get_or_construct(pubkeyHex);
+        auto created = meta_group->members->get_or_construct(pubkeyHex);
+        return member_to_js(info.Env(), created, meta_group->members->get_status(created));
     });
 }
 
@@ -439,7 +508,7 @@ Napi::Value MetaGroupWrapper::memberConstructAndSet(const Napi::CallbackInfo& in
         auto pubkeyHex = toCppString(info[0], "memberConstructAndSet");
         auto created = meta_group->members->get_or_construct(pubkeyHex);
         meta_group->members->set(created);
-        return created;
+        return member_to_js(info.Env(), created, meta_group->members->get_status(created));
     });
 }
 
