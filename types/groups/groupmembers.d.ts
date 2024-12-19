@@ -92,6 +92,12 @@ declare module 'libsession_util_nodejs' {
      * Use this function to mark that you've sent one successfully.
      **/
     memberSetInviteSent: (pubkeyHex: PubkeyType) => void;
+
+    /**
+     * Reset a member's invite state to not_sent. This will mark it as "sending" on the current device
+     * and "not sent" on any others.
+     */
+    memberSetInviteNotSent: (pubkeyHex: PubkeyType) => void;
     /** User has accepted an invitation and is now a regular member of the group */
     memberSetInviteAccepted: (pubkeyHex: PubkeyType) => void;
 

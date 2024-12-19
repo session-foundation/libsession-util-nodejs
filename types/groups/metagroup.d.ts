@@ -99,6 +99,7 @@ declare module 'libsession_util_nodejs' {
     public memberSetPromotionSent: MetaGroupWrapper['memberSetPromotionSent'];
     public memberSetPromotionFailed: MetaGroupWrapper['memberSetPromotionFailed'];
     public memberSetInviteSent: MetaGroupWrapper['memberSetInviteSent'];
+    public memberSetInviteNotSent: MetaGroupWrapper['memberSetInviteNotSent'];
     public memberSetInviteFailed: MetaGroupWrapper['memberSetInviteFailed'];
     public memberEraseAndRekey: MetaGroupWrapper['memberEraseAndRekey'];
     public membersMarkPendingRemoval: MetaGroupWrapper['membersMarkPendingRemoval'];
@@ -147,6 +148,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MetaGroupWrapper, 'memberSetPromotionSent'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetPromotionAccepted'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetInviteSent'>
+    | MakeActionCall<MetaGroupWrapper, 'memberSetInviteNotSent'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetInviteFailed'>
     | MakeActionCall<MetaGroupWrapper, 'memberEraseAndRekey'>
     | MakeActionCall<MetaGroupWrapper, 'membersMarkPendingRemoval'>
