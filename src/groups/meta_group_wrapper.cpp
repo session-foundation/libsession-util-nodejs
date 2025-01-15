@@ -337,8 +337,10 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
                         toCppBufferView(itemObject.Get("data"), "meta.merge"));
             }
 
-            auto info_merged = this->meta_group->info->merge(conf_strs);
-            count_merged += info_merged.size();
+            if(conf_strs.size()){
+                auto info_merged = this->meta_group->info->merge(conf_strs);
+                count_merged += info_merged.size();
+            }
         }
 
         if (!groupMember.IsNull() && !groupMember.IsUndefined()) {
@@ -362,9 +364,10 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
                         toCppBufferView(itemObject.Get("data"), "meta.merge"));
             }
 
-            auto member_merged = this->meta_group->members->merge(conf_strs);
-
-            count_merged += member_merged.size();
+            if(conf_strs.size()){
+                auto member_merged = this->meta_group->members->merge(conf_strs);
+                count_merged += member_merged.size();
+            }
         }
 
         if (this->meta_group->keys->needs_rekey()) {
