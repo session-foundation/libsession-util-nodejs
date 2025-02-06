@@ -110,8 +110,10 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                             &MetaGroupWrapper::membersMarkPendingRemoval),
                     InstanceMethod(
                             "memberSetNameTruncated", &MetaGroupWrapper::memberSetNameTruncated),
+                    InstanceMethod("memberSetSupplement", &MetaGroupWrapper::memberSetSupplement),
                     InstanceMethod("memberSetInviteSent", &MetaGroupWrapper::memberSetInviteSent),
-                    InstanceMethod("memberSetInviteNotSent", &MetaGroupWrapper::memberSetInviteNotSent),
+                    InstanceMethod(
+                            "memberSetInviteNotSent", &MetaGroupWrapper::memberSetInviteNotSent),
                     InstanceMethod(
                             "memberSetInviteFailed", &MetaGroupWrapper::memberSetInviteFailed),
                     InstanceMethod(
@@ -532,6 +534,19 @@ void MetaGroupWrapper::memberSetNameTruncated(const Napi::CallbackInfo& info) {
     });
 }
 
+void MetaGroupWrapper::memberSetSupplement(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertIsString(info[0]);
+
+        auto pubkeyHex = toCppString(info[0], "memberSetSupplement pubkeyHex");
+        auto m = this->meta_group->members->get(pubkeyHex);
+        if (m) {
+            m->supplement = true;
+            this->meta_group->members->set(*m);
+        }
+    });
+}
+
 void MetaGroupWrapper::memberSetInviteFailed(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertIsString(info[0]);
@@ -557,7 +572,6 @@ void MetaGroupWrapper::memberSetInviteSent(const Napi::CallbackInfo& info) {
         }
     });
 }
-
 
 void MetaGroupWrapper::memberSetInviteNotSent(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {

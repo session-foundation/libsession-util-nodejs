@@ -72,6 +72,7 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     void memberSetPromotionFailed(const Napi::CallbackInfo& info);
     void memberSetPromotionAccepted(const Napi::CallbackInfo& info);
     void memberSetProfilePicture(const Napi::CallbackInfo& info);
+    void memberSetSupplement(const Napi::CallbackInfo& info);
     Napi::Value memberEraseAndRekey(const Napi::CallbackInfo& info);
     void membersMarkPendingRemoval(const Napi::CallbackInfo& info);
 
