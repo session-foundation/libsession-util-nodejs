@@ -15,6 +15,7 @@ Napi::Object member_to_js(const Napi::Env& env, const member& info, const member
     obj["pubkeyHex"] = toJs(env, info.session_id);
     obj["name"] = toJs(env, info.name);
     obj["profilePicture"] = toJs(env, info.profile_picture);
+    obj["supplement"] = toJs(env, info.supplement);
 
     switch (status) {
         // invite statuses

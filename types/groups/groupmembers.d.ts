@@ -55,6 +55,11 @@ declare module 'libsession_util_nodejs' {
 
   export type GroupMemberGet = GroupMemberShared & {
     memberStatus: MemberStateGroupV2;
+    /**
+     * True if the member was invited with a supplemental key (i.e. sharing message history).
+     * On invite resend, we should check this field to know if we should again, generate a supplemental key for that user.
+     */
+    supplement: boolean;
 
     /**
      * True if the member is scheduled to get the keys (`.admin` field of libsession).
