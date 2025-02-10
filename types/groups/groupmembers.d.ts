@@ -116,6 +116,7 @@ declare module 'libsession_util_nodejs' {
     memberSetPromotionAccepted: (pubkeyHex: PubkeyType) => void;
 
     memberSetProfilePicture: (pubkeyHex: PubkeyType, profilePicture: ProfilePicture) => void;
+    memberResetAllSendingState: () => boolean;
     memberSetSupplement: (pubkeyHex: PubkeyType) => void;
     membersMarkPendingRemoval: (members: Array<PubkeyType>, withMessages: boolean) => void;
 
