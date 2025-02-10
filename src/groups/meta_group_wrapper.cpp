@@ -129,6 +129,9 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                             &MetaGroupWrapper::memberSetPromotionAccepted),
                     InstanceMethod(
                             "memberSetProfilePicture", &MetaGroupWrapper::memberSetProfilePicture),
+                    InstanceMethod(
+                            "memberResetAllSendingState",
+                            &MetaGroupWrapper::memberResetAllSendingState),
                     InstanceMethod("memberEraseAndRekey", &MetaGroupWrapper::memberEraseAndRekey),
 
                     // keys exposed functions
@@ -340,7 +343,7 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
                         toCppBufferView(itemObject.Get("data"), "meta.merge"));
             }
 
-            if(conf_strs.size()){
+            if (conf_strs.size()) {
                 auto info_merged = this->meta_group->info->merge(conf_strs);
                 count_merged += info_merged.size();
             }
@@ -367,7 +370,7 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
                         toCppBufferView(itemObject.Get("data"), "meta.merge"));
             }
 
-            if(conf_strs.size()){
+            if (conf_strs.size()) {
                 auto member_merged = this->meta_group->members->merge(conf_strs);
                 count_merged += member_merged.size();
             }
@@ -666,6 +669,20 @@ void MetaGroupWrapper::memberSetProfilePicture(const Napi::CallbackInfo& info) {
             m->profile_picture = profilePicture;
             this->meta_group->members->set(*m);
         }
+    });
+}
+
+Napi::Value MetaGroupWrapper::memberResetAllSendingState(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        bool changed = false;
+        for (auto& member : *this->meta_group->members) {
+            auto sending = this->meta_group->members->has_pending_send(member.session_id);
+            if (sending) {
+                this->meta_group->members->set_pending_send(member.session_id, false);
+                changed = true;
+            }
+        }
+        return changed;
     });
 }
 
