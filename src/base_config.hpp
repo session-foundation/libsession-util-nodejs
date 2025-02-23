@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 #include "session/config/base.hpp"
+#include "session/logging.hpp"
 #include "session/types.hpp"
 #include "utilities.hpp"
 
@@ -105,6 +106,18 @@ class ConfigBaseImpl {
             std::shared_ptr<Config> config = std::make_shared<Config>(secretKey, dump);
 
             Napi::Env env = info.Env();
+
+            session::add_logger([env, class_name](auto msg) {
+                std::string toLog = "libsession-util:" + std::string(class_name) + ": " +
+                                    std::string(msg) + "\n";
+
+                Napi::Function consoleLog = env.Global()
+                                                    .Get("console")
+                                                    .As<Napi::Object>()
+                                                    .Get("log")
+                                                    .As<Napi::Function>();
+                consoleLog.Call({Napi::String::New(env, toLog)});
+            });
 
             return config;
         });

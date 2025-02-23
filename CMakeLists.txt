@@ -18,7 +18,6 @@ else()
 endif()
 message(STATUS "Number of processors detected: ${N}")
 
-
 add_definitions(-DNAPI_VERSION=8)
 set(CMAKE_CONFIGURATION_TYPES Release)
 
@@ -31,6 +30,10 @@ SET(WITH_TESTS OFF)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(ENABLE_ONIONREQ OFF)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(OXENC_EXTRA_WARNINGS OFF)
+endif()
 
 # when building from a release of libsession on desktop, it complains that ios-cmake is not up to date
 # as it is not part of the archive. We actually don't care about it on session-desktop
