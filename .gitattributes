@@ -7,3 +7,5 @@ libsession-util/tests export-ignore
 libsession-util/external/nlohmann-json/tests export-ignore
 libsession-util/external/nlohmann-json/docs export-ignore
 libsession-util/external/oxen-encoding/tests export-ignore
+libsession-util/external/oxen-libquic export-ignore
+libsession-util/external/oxen-libquic export-ignore
