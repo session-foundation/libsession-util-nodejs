@@ -59,6 +59,7 @@ source venv/bin/activate
 pip install git-archive-all
 PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[", ]//g')
 echo $PACKAGE_VERSION
+# NOTE: before you build the archive, below check test.yml for the sed command to apply locally. Will be fixed soon :tm:
 python3 build_release_archive.py libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz
 gh release create v$PACKAGE_VERSION -t v$PACKAGE_VERSION --latest --generate-notes
 gh release upload v$PACKAGE_VERSION libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz

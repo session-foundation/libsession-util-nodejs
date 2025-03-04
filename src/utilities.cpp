@@ -2,6 +2,8 @@
 
 #include <oxenc/hex.h>
 
+#include <chrono>
+
 #include "session/config/namespaces.hpp"
 
 namespace session::nodeapi {
