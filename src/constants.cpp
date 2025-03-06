@@ -4,6 +4,7 @@
 #include "session/config/groups/info.hpp"
 #include "session/config/user_groups.hpp"
 #include "session/version.h"
+#include "version.h"
 
 namespace session::nodeapi {
 ConstantsWrapper::ConstantsWrapper(const Napi::CallbackInfo& info) :
@@ -35,6 +36,14 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
              ObjectWrap::StaticValue(
                      "LIBSESSION_UTIL_VERSION",
                      Napi::String::New(env, LIBSESSION_UTIL_VERSION_FULL),
+                     napi_enumerable),
+             ObjectWrap::StaticValue(
+                     "LIBSESSION_NODEJS_VERSION",
+                     Napi::String::New(env, LIBSESSION_NODEJS_VERSION),
+                     napi_enumerable),
+             ObjectWrap::StaticValue(
+                     "LIBSESSION_NODEJS_COMMIT",
+                     Napi::String::New(env, LIBSESSION_NODEJS_COMMIT),
                      napi_enumerable)});
 
     // export object as javascript module
