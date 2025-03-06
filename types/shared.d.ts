@@ -156,6 +156,18 @@ declare module 'libsession_util_nodejs' {
      * BASE_URL_MAX_LENGTH + '/r/' + ROOM_MAX_LENGTH + qs_pubkey.size() + hex pubkey + null terminator
      */
     COMMUNITY_FULL_URL_MAX_LENGTH: number;
+    /**
+     * A string that looks like libsession-util v1.2.0-nogit
+     */
+    LIBSESSION_UTIL_VERSION: string;
+    /**
+     * A string that looks like "0.4.24"
+     */
+    LIBSESSION_NODEJS_VERSION: string;
+    /**
+     * A string corresponding to the full hash of the commit
+     */
+    LIBSESSION_NODEJS_COMMIT: string;
   };
 
   export const CONSTANTS: ConstantsType;

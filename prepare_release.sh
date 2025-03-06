@@ -29,12 +29,13 @@ echo "Continuing..."
 yarn dirty_sed
 
 echo "Building tar archive of source..."
-python3 build_release_archive.py libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz
+python3 build_release_archive.py libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz --include src/version.h
+
 echo "tar archive size:"
 du -sh libsession_util_nodejs*.tar.gz
 
 echo "Creating draft release on github $PACKAGE_VERSION..."
-GH_RELEASE_URL=$(gh release create v$PACKAGE_VERSION -t v$PACKAGE_VERSION --draft --latest --generate-notes)
+GH_RELEASE_URL=$(gh release create v$PACKAGE_VERSION -t v$PACKAGE_VERSION --latest --generate-notes)
 echo "Uploading tar archive to release $PACKAGE_VERSION..."
 gh release upload v$PACKAGE_VERSION libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz
 echo "GH_RELEASE_URL: $GH_RELEASE_URL"

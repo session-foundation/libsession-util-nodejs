@@ -55,6 +55,11 @@ jobs:
           yarn dirty_sed
           cat libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
 
+      - name: generate fake src/version.h so we can try to build
+        shell: bash
+        run: yarn update_version
+
+
       - name: build libsession-util-nodejs
         shell: bash
         run: yarn install --frozen-lockfile
