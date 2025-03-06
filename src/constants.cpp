@@ -3,6 +3,7 @@
 #include "session/config/contacts.hpp"
 #include "session/config/groups/info.hpp"
 #include "session/config/user_groups.hpp"
+#include "session/version.h"
 
 namespace session::nodeapi {
 ConstantsWrapper::ConstantsWrapper(const Napi::CallbackInfo& info) :
@@ -30,6 +31,10 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
              ObjectWrap::StaticValue(
                      "COMMUNITY_FULL_URL_MAX_LENGTH",
                      Napi::Number::New(env, session::config::community::FULL_URL_MAX_LENGTH),
+                     napi_enumerable),
+             ObjectWrap::StaticValue(
+                     "LIBSESSION_UTIL_VERSION",
+                     Napi::String::New(env, LIBSESSION_UTIL_VERSION_FULL),
                      napi_enumerable)});
 
     // export object as javascript module

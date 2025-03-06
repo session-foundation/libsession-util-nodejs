@@ -12,4 +12,4 @@
 .yarn/
 *.cjs
 *.mjs
-
+src/version.ts

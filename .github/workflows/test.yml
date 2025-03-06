@@ -52,7 +52,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          sed -i "s/target_compile_options(oxen-logging-warnings INTERFACE/#target_compile_options(oxen-logging-warnings INTERFACE/" libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
+          yarn dirty_sed
           cat libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
 
       - name: build libsession-util-nodejs
