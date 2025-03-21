@@ -3,6 +3,8 @@
 #include <napi.h>
 
 #include <memory>
+#include <span>
+#include <vector>
 
 #include "oxenc/bt_producer.h"
 #include "session/types.hpp"
@@ -208,12 +210,12 @@ Napi::Value MetaGroupWrapper::metaDump(const Napi::CallbackInfo& info) {
         oxenc::bt_dict_producer combined;
 
         // NOTE: the keys have to be in ascii-sorted order:
-        combined.append("info", session::from_unsigned_sv(this->meta_group->info->dump()));
-        combined.append("keys", session::from_unsigned_sv(this->meta_group->keys->dump()));
-        combined.append("members", session::from_unsigned_sv(this->meta_group->members->dump()));
+        combined.append("info", session::to_string(this->meta_group->info->dump()));
+        combined.append("keys", session::to_string(this->meta_group->keys->dump()));
+        combined.append("members", session::to_string(this->meta_group->members->dump()));
         auto to_dump = std::move(combined).str();
 
-        return session::ustring{to_unsigned_sv(to_dump)};
+        return session::to_vector(to_dump);
     });
 }
 
@@ -222,13 +224,13 @@ Napi::Value MetaGroupWrapper::metaMakeDump(const Napi::CallbackInfo& info) {
         oxenc::bt_dict_producer combined;
 
         // NOTE: the keys have to be in ascii-sorted order:
-        combined.append("info", session::from_unsigned_sv(this->meta_group->info->make_dump()));
-        combined.append("keys", session::from_unsigned_sv(this->meta_group->keys->make_dump()));
+        combined.append("info", session::to_string(this->meta_group->info->make_dump()));
+        combined.append("keys", session::to_string(this->meta_group->keys->make_dump()));
         combined.append(
-                "members", session::from_unsigned_sv(this->meta_group->members->make_dump()));
+                "members", session::to_string(this->meta_group->members->make_dump()));
         auto to_dump = std::move(combined).str();
 
-        return ustring{to_unsigned_sv(to_dump)};
+        return session::to_vector(to_dump);
     });
 }
 
@@ -326,7 +328,7 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
             assertIsArray(groupInfo);
             auto asArr = groupInfo.As<Napi::Array>();
 
-            std::vector<std::pair<std::string, ustring_view>> conf_strs;
+            std::vector<std::pair<std::string, std::span<const unsigned char>>> conf_strs;
             conf_strs.reserve(asArr.Length());
 
             for (uint32_t i = 0; i < asArr.Length(); i++) {
@@ -353,7 +355,7 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
             assertIsArray(groupMember);
             auto asArr = groupMember.As<Napi::Array>();
 
-            std::vector<std::pair<std::string, ustring_view>> conf_strs;
+            std::vector<std::pair<std::string, std::span<const unsigned char>>> conf_strs;
             conf_strs.reserve(asArr.Length());
 
             for (uint32_t i = 0; i < asArr.Length(); i++) {
@@ -790,7 +792,7 @@ Napi::Value MetaGroupWrapper::encryptMessages(const Napi::CallbackInfo& info) {
 
         auto plaintextsJS = info[0].As<Napi::Array>();
         uint32_t arrayLength = plaintextsJS.Length();
-        std::vector<session::ustring> encryptedMessages;
+        std::vector<std::vector<unsigned char>> encryptedMessages;
         encryptedMessages.reserve(arrayLength);
 
         for (uint32_t i = 0; i < plaintextsJS.Length(); i++) {
@@ -820,10 +822,10 @@ Napi::Value MetaGroupWrapper::makeSwarmSubAccount(const Napi::CallbackInfo& info
         assertIsString(info[0]);
 
         auto memberPk = toCppString(info[0], "makeSwarmSubAccount");
-        ustring subaccount = this->meta_group->keys->swarm_make_subaccount(memberPk);
+        std::vector<unsigned char> subaccount = this->meta_group->keys->swarm_make_subaccount(memberPk);
 
         session::nodeapi::checkOrThrow(
-                subaccount.length() == 100, "expected subaccount to be 100 bytes long");
+                subaccount.size() == 100, "expected subaccount to be 100 bytes long");
 
         return subaccount;
     });
@@ -835,12 +837,12 @@ Napi::Value MetaGroupWrapper::swarmSubAccountToken(const Napi::CallbackInfo& inf
         assertIsString(info[0]);
 
         auto memberPk = toCppString(info[0], "swarmSubAccountToken");
-        ustring subaccount = this->meta_group->keys->swarm_subaccount_token(memberPk);
+        std::vector<unsigned char> subaccount = this->meta_group->keys->swarm_subaccount_token(memberPk);
 
         session::nodeapi::checkOrThrow(
-                subaccount.length() == 36, "expected subaccount token to be 36 bytes long");
+                subaccount.size() == 36, "expected subaccount token to be 36 bytes long");
 
-        return oxenc::to_hex(subaccount);
+        return oxenc::to_hex(subaccount.begin(), subaccount.end());
     });
 }
 
