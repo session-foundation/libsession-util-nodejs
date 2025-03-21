@@ -61,7 +61,7 @@ Napi::Value ConfigBaseImpl::merge(const Napi::CallbackInfo& info) {
         assertIsArray(info[0]);
         Napi::Array asArray = info[0].As<Napi::Array>();
 
-        std::vector<std::pair<std::string, ustring_view>> conf_strs;
+        std::vector<std::pair<std::string, std::span<const unsigned char>>> conf_strs;
         conf_strs.reserve(asArray.Length());
 
         for (uint32_t i = 0; i < asArray.Length(); i++) {
