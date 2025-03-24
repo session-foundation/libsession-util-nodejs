@@ -22,16 +22,14 @@ declare module 'libsession_util_nodejs' {
   export type DisappearingMessageConversationModeType =
     | 'off'
     | 'deleteAfterRead'
-    | 'deleteAfterSend'
-    // TODO legacy messages support will be removed in a future release
-    | 'legacy';
+    | 'deleteAfterSend';
 
   type ContactInfoShared = WithPriority & {
     id: string;
     name?: string;
     nickname?: string;
     profilePicture?: ProfilePicture;
-    createdAtSeconds: number; // can only be set the first time a contact is created, a new change won't overide the value in the wrapper.
+    createdAtSeconds: number; // can only be set the first time a contact is created, a new change won't override the value in the wrapper.
     expirationMode?: DisappearingMessageConversationModeType;
     expirationTimerSeconds?: number;
   };
