@@ -40,5 +40,5 @@ echo "Uploading tar archive to release $PACKAGE_VERSION..."
 gh release upload v$PACKAGE_VERSION libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz
 echo "GH_RELEASE_URL: $GH_RELEASE_URL"
 echo "Update session-desktop with this new libsession-nodejs version with: "
-echo "yarn upgrade https://github.com/session-foundation/libsession-util-nodejs/releases/download/v$PACKAGE_VERSION/libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz"
+echo "yarn remove libsession_util_nodejs --ignore-scripts; yarn add https://github.com/session-foundation/libsession-util-nodejs/releases/download/v$PACKAGE_VERSION/libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz"
 echo "Done"
