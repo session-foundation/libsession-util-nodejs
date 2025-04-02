@@ -10,8 +10,8 @@ read_char() {
 
 
 rm -f ./libsession_util_nodejs*.tar.gz
-virtualenv venv
-. venv/bin/activate
+python -m venv .venv
+. .venv/bin/activate
 pip install git-archive-all
 PACKAGE_VERSION=$(node -p "require('./package.json').version")
 yarn update_version

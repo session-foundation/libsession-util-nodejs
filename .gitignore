@@ -12,5 +12,6 @@
 .yarn/
 *.cjs
 *.mjs
+.venv
 
 /src/version.h
