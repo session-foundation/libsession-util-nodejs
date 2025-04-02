@@ -12,7 +12,7 @@
     "update_version": "sh update_version.sh",
     "clean": "rimraf .cache build",
     "install": "cmake-js compile --runtime=electron --runtime-version=34.2.0 --CDSUBMODULE_CHECK=OFF --CDLOCAL_MIRROR=https://oxen.rocks/deps --CDENABLE_ONIONREQ=OFF --CDWITH_TESTS=OFF",
-    "naughty-patch": "git apply patches/*.patch",
+    "naughty-patch": "git apply patches/oxen-libquic.patch",
     "prepare_release": "sh prepare_release.sh"
   },
   "devDependencies": {
