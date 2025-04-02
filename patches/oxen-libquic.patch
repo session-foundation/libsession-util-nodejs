@@ -1,0 +1,16 @@
+Submodule libsession-util contains modified content
+Submodule external/oxen-libquic contains modified content
+Submodule external/oxen-logging contains modified content
+diff --git a/libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt b/libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
+index c8d0960..3b2d573 100644
+--- a/libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
++++ b/libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
+@@ -91,7 +91,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_GRE
+ endif()
+ 
+ add_library(oxen-logging-warnings INTERFACE)
+-target_compile_options(oxen-logging-warnings INTERFACE "$<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:C>>:${warning_flags}>")
++#target_compile_options(oxen-logging-warnings INTERFACE "$<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:C>>:${warning_flags}>")
+ target_link_libraries(oxen-logging INTERFACE oxen-logging-warnings)
+ 
+ set(oxen_logging_source_roots "" CACHE INTERNAL "")

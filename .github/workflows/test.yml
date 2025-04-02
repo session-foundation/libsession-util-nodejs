@@ -44,16 +44,15 @@ jobs:
         uses: microsoft/setup-msbuild@v1.3.1
         if: runner.os == 'Windows'
 
-        # Note: we will be able to get rid of this once the whole tree of submodules has the latest fetch of oxen-logging
+        # Note: we will be able to get rid of this once the whole tree of submodules has the latest version of oxen-logging
         # We'd need oxen-libquic to be updated to have the commit `bc7167f90e71643b43c2ea9cf7d1fefa5045f8d4`, but we don't want to
         # update libquic that late.
         # We will soon, though :tm:
-      - name: sed it
+      - name: Apply patches
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          yarn dirty_sed
-          cat libsession-util/external/oxen-libquic/external/oxen-logging/CMakeLists.txt
+          yarn naughty-patch
 
       - name: generate fake src/version.h so we can try to build
         shell: bash

@@ -10,9 +10,11 @@ read_char() {
 
 
 rm -f ./libsession_util_nodejs*.tar.gz
-virtualenv venv
-. venv/bin/activate
+python -m venv .venv
+. .venv/bin/activate
 pip install git-archive-all
+# see .github/workflows/test.yml for more info
+yarn naughty-patch || true
 PACKAGE_VERSION=$(node -p "require('./package.json').version")
 yarn update_version
 echo "PACKAGE_VERSION: $PACKAGE_VERSION"
@@ -25,8 +27,6 @@ esac
 
 
 echo "Continuing..."
-# see test.yml for explanation of this sed command
-yarn dirty_sed
 
 echo "Building tar archive of source..."
 python3 build_release_archive.py libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz --include src/version.h

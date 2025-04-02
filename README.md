@@ -20,7 +20,7 @@ git clone --recursive git@github.com:session-foundation/libsession-util-nodejs.g
 ```
 
 Always do your changes in `[FOLDER_NOT_IN_SESSION_DESKTOP]/libsession-util-nodejs`, never in the one under session-desktop's `node_modules` as you might override your local changes.
-Then, you can quickly compile a non-electron build by running `yarn cmake-js` from that folder. This is a quick incremental build which can check for C++ compilation errors.
+Then, you can quickly compile a non-electron build by first running `yarn naughty-patch && yarn update_version` and then `yarn install` from that folder. You should only have to run `yarn naughty-patch && yarn update_version` manually once when you first setup the project. This is a quick incremental build which can check for C++ compilation errors.
 Once your changes are ready to be tested in the `session-desktop` you can compile an electron build using this command:
 
 ```
