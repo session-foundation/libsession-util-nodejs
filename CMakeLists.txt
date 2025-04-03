@@ -39,9 +39,6 @@ set(SUBMODULE_CHECK OFF)
 
 file(GLOB SOURCE_FILES src/*.cpp src/groups/*.cpp src/multi_encrypt/*.cpp)
 
-# For some reason fmt isn't getting included correctly so we need to explicitly include it before we add 'libsession-util'
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libsession-util/external/oxen-libquic/external/oxen-logging/fmt" fmt_build EXCLUDE_FROM_ALL)
-
 add_subdirectory(libsession-util)
 
 if(MSVC)
