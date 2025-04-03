@@ -13,8 +13,6 @@ rm -f ./libsession_util_nodejs*.tar.gz
 python -m venv .venv
 . .venv/bin/activate
 pip install git-archive-all
-# see .github/workflows/test.yml for more info
-yarn naughty-patch || true
 PACKAGE_VERSION=$(node -p "require('./package.json').version")
 yarn update_version
 echo "PACKAGE_VERSION: $PACKAGE_VERSION"

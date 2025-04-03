@@ -5,6 +5,7 @@
 #include <chrono>
 
 #include "session/config/namespaces.hpp"
+#include "session/util.hpp"
 
 namespace session::nodeapi {
 
@@ -87,9 +88,9 @@ std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string&
     throw std::invalid_argument{"maybeNonemptyString with invalid type, called from " + identifier};
 }
 
-// Converts to a ustring_view that views directly into the Uint8Array data of `x`.  Throws if x is
+// Converts to a std::span<const unsigned char> that views directly into the Uint8Array data of `x`.  Throws if x is
 // not a Uint8Array.  The view must not be used beyond the lifetime of `x`.
-ustring_view toCppBufferView(Napi::Value x, const std::string& identifier) {
+std::span<const unsigned char> toCppBufferView(Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         throw std::invalid_argument(
                 "toCppBuffer called with null or undefined with identifier: " + identifier);
@@ -101,15 +102,15 @@ ustring_view toCppBufferView(Napi::Value x, const std::string& identifier) {
     return {u8Array.Data(), u8Array.ByteLength()};
 }
 
-ustring toCppBuffer(Napi::Value x, const std::string& identifier) {
-    return ustring{toCppBufferView(x, std::move(identifier))};
+std::vector<unsigned char> toCppBuffer(Napi::Value x, const std::string& identifier) {
+    return session::to_vector(toCppBufferView(x, std::move(identifier)));
 }
 
-std::optional<ustring> maybeNonemptyBuffer(Napi::Value x, const std::string& identifier) {
+std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         return std::nullopt;
 
-    std::optional<ustring> buf{toCppBuffer(x, identifier)};
+    std::optional<std::vector<unsigned char>> buf{toCppBuffer(x, identifier)};
     if (buf->empty())
         buf.reset();
     return buf;
@@ -172,7 +173,7 @@ std::string printable(const char* x, size_t n) {
     return printable(std::string_view{x, n});
 }
 
-std::string printable(ustring_view x) {
+std::string printable(std::span<const unsigned char> x) {
     return printable(reinterpret_cast<const char*>(x.data()), x.size());
 }
 
@@ -208,7 +209,7 @@ Napi::Object push_result_to_JS(
 
 Napi::Object push_key_entry_to_JS(
         const Napi::Env& env,
-        const session::ustring_view& key_data,
+        const std::span<const unsigned char>& key_data,
         const session::config::Namespace& push_namespace) {
     auto obj = Napi::Object::New(env);
 
@@ -219,7 +220,7 @@ Napi::Object push_key_entry_to_JS(
 };
 
 Napi::Object decrypt_result_to_JS(
-        const Napi::Env& env, const std::pair<std::string, ustring> decrypted) {
+        const Napi::Env& env, const std::pair<std::string, std::vector<unsigned char>> decrypted) {
     auto obj = Napi::Object::New(env);
 
     obj["pubkeyHex"] = toJs(env, decrypted.first);

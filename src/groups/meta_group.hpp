@@ -1,6 +1,7 @@
 #pragma once
 
 #include <napi.h>
+#include <vector>
 
 #include "session/config/groups/info.hpp"
 #include "session/config/groups/keys.hpp"
@@ -32,12 +33,12 @@ class MetaGroup {
             shared_ptr<config::groups::Info> info,
             shared_ptr<config::groups::Members> members,
             shared_ptr<config::groups::Keys> keys,
-            session::ustring edGroupPubKey,
-            std::optional<session::ustring> edGroupSecKey) :
-            info{info}, members{members}, keys{keys}, edGroupPubKey{oxenc::to_hex(edGroupPubKey)} {
+            std::vector<unsigned char> edGroupPubKey,
+            std::optional<std::vector<unsigned char>> edGroupSecKey) :
+            info{info}, members{members}, keys{keys}, edGroupPubKey{oxenc::to_hex(edGroupPubKey.begin(), edGroupPubKey.end())} {
 
         if (edGroupSecKey.has_value()) {
-            this->edGroupSecKey = oxenc::to_hex(*edGroupSecKey);
+            this->edGroupSecKey = oxenc::to_hex(edGroupSecKey->begin(), edGroupSecKey->end());
         } else {
             this->edGroupSecKey = std::nullopt;
         }

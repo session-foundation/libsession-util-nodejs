@@ -1,6 +1,8 @@
 #pragma once
 
 #include <napi.h>
+#include <span>
+#include <vector>
 
 #include <algorithm>
 
@@ -58,7 +60,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             auto messagesJSValue = obj.Get("messages");
             assertIsArray(messagesJSValue);
             auto messagesJS = messagesJSValue.As<Napi::Array>();
-            std::vector<ustring> messages;
+            std::vector<std::vector<unsigned char>> messages;
             messages.reserve(messagesJS.Length());
             for (uint32_t i = 0; i < messagesJS.Length(); i++) {
                 auto itemValue = messagesJS.Get(i);
@@ -71,7 +73,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             auto recipientsJSValue = obj.Get("recipients");
             assertIsArray(recipientsJSValue);
             auto recipientsJS = recipientsJSValue.As<Napi::Array>();
-            std::vector<ustring> recipients;
+            std::vector<std::vector<unsigned char>> recipients;
             recipients.reserve(recipientsJS.Length());
             for (uint32_t i = 0; i < recipientsJS.Length(); i++) {
                 auto itemValue = recipientsJS.Get(i);
@@ -79,10 +81,10 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                 auto item = toCppBuffer(itemValue, "multiEncrypt.itemValue.recipient");
                 recipients.push_back(item);
             }
-            ustring random_nonce = session::random::random(24);
+            std::vector<unsigned char> random_nonce = session::random::random(24);
 
-            std::vector<ustring_view> messages_sv(messages.begin(), messages.end());
-            std::vector<ustring_view> recipients_sv(recipients.begin(), recipients.end());
+            std::vector<std::span<const unsigned char>> messages_sv(messages.begin(), messages.end());
+            std::vector<std::span<const unsigned char>> recipients_sv(recipients.begin(), recipients.end());
 
             // Note: this function needs the first 2 args to be vector of sv explicitly
             return session::encrypt_for_multiple_simple(

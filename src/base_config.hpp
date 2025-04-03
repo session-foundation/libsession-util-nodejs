@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <unordered_set>
 
@@ -12,8 +13,6 @@
 #include "session/logging.hpp"
 #include "session/types.hpp"
 #include "utilities.hpp"
-
-using ustring_view = std::basic_string_view<unsigned char>;
 
 namespace session::nodeapi {
 
@@ -95,9 +94,9 @@ class ConfigBaseImpl {
             // we should get secret key as first arg and optional dumped as second argument
             assertIsUInt8Array(info[0], "base construct");
             assertIsUInt8ArrayOrNull(info[1]);
-            ustring_view secretKey = toCppBufferView(info[0], class_name + ".new");
+            std::span<const unsigned char> secretKey = toCppBufferView(info[0], class_name + ".new");
 
-            std::optional<ustring_view> dump;
+            std::optional<std::span<const unsigned char>> dump;
             auto second = info[1];
             if (!second.IsEmpty() && !second.IsNull() && !second.IsUndefined())
                 dump = toCppBufferView(second, class_name + ".new");

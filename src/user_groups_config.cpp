@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <optional>
+#include <vector>
 
 #include "base_config.hpp"
 #include "community.hpp"
@@ -158,7 +159,7 @@ Napi::Value UserGroupsWrapper::buildFullUrlFromDetails(const Napi::CallbackInfo&
     return wrapResult(env, [&]() {
         auto [baseUrl, roomId, pubkeyHex] = getStringArgs<3>(info);
 
-        ustring pubkey_bytes;
+        std::vector<unsigned char> pubkey_bytes;
         if (!oxenc::is_hex(pubkeyHex.begin(), pubkeyHex.end()))
             throw std::invalid_argument{"community pubkey is not hex!"};
         oxenc::from_hex(pubkeyHex.begin(), pubkeyHex.end(), std::back_inserter(pubkey_bytes));
