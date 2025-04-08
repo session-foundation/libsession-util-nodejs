@@ -88,8 +88,8 @@ std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string&
     throw std::invalid_argument{"maybeNonemptyString with invalid type, called from " + identifier};
 }
 
-// Converts to a std::span<const unsigned char> that views directly into the Uint8Array data of `x`.  Throws if x is
-// not a Uint8Array.  The view must not be used beyond the lifetime of `x`.
+// Converts to a std::span<const unsigned char> that views directly into the Uint8Array data of `x`.
+// Throws if x is not a Uint8Array.  The view must not be used beyond the lifetime of `x`.
 std::span<const unsigned char> toCppBufferView(Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         throw std::invalid_argument(
@@ -106,7 +106,8 @@ std::vector<unsigned char> toCppBuffer(Napi::Value x, const std::string& identif
     return session::to_vector(toCppBufferView(x, std::move(identifier)));
 }
 
-std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(Napi::Value x, const std::string& identifier) {
+std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(
+        Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         return std::nullopt;
 

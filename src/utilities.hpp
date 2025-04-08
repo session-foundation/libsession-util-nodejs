@@ -68,7 +68,8 @@ std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string&
 
 // If the object is null/undef/empty returns nullopt, otherwise if a Uint8Array returns a
 // std::vector<unsigned char> of the value.  Throws if something else.
-std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(Napi::Value x, const std::string& identifier);
+std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(
+        Napi::Value x, const std::string& identifier);
 
 // Implementation struct of toJs(); we add specializations of this for any C++ types we want to be
 // able to convert into JS types.
@@ -121,10 +122,20 @@ struct toJs_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string_view>>
 };
 
 template <typename T>
-struct toJs_impl<T, std::enable_if_t<
-    std::is_convertible_v<T, std::span<const unsigned char>> &&
-    !std::is_same_v<std::remove_cv_t<T>, std::vector<unsigned char>>>> {
+struct toJs_impl<
+        T,
+        std::enable_if_t<
+                std::is_convertible_v<T, std::span<const unsigned char>> &&
+                !std::is_same_v<std::remove_cv_t<T>, std::vector<unsigned char>>>> {
     auto operator()(const Napi::Env& env, std::span<const unsigned char> b) const {
+        return Napi::Buffer<uint8_t>::Copy(env, b.data(), b.size());
+    }
+};
+
+// this wrap std::vector<unsigned char> to Uint8array in the js world
+template <>
+struct toJs_impl<std::vector<unsigned char>> {
+    auto operator()(const Napi::Env& env, std::vector<unsigned char> b) const {
         return Napi::Buffer<uint8_t>::Copy(env, b.data(), b.size());
     }
 };
