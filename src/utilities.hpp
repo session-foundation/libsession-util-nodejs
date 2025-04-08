@@ -3,6 +3,7 @@
 #include <napi.h>
 
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
@@ -53,8 +54,8 @@ auto getStringArgs(const Napi::CallbackInfo& info) {
 }
 
 std::string toCppString(Napi::Value x, const std::string& identifier);
-ustring toCppBuffer(Napi::Value x, const std::string& identifier);
-ustring_view toCppBufferView(Napi::Value x, const std::string& identifier);
+std::vector<unsigned char> toCppBuffer(Napi::Value x, const std::string& identifier);
+std::span<const unsigned char> toCppBufferView(Napi::Value x, const std::string& identifier);
 int64_t toCppInteger(Napi::Value x, const std::string& identifier, bool allowUndefined = false);
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier);
 std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& identifier);
@@ -65,9 +66,10 @@ bool toCppBoolean(Napi::Value x, const std::string& identifier);
 // the value.  Throws if something else.
 std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string& identifier);
 
-// If the object is null/undef/empty returns nullopt, otherwise if a Uint8Array returns a ustring of
-// the value.  Throws if something else.
-std::optional<ustring> maybeNonemptyBuffer(Napi::Value x, const std::string& identifier);
+// If the object is null/undef/empty returns nullopt, otherwise if a Uint8Array returns a
+// std::vector<unsigned char> of the value.  Throws if something else.
+std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(
+        Napi::Value x, const std::string& identifier);
 
 // Implementation struct of toJs(); we add specializations of this for any C++ types we want to be
 // able to convert into JS types.
@@ -83,7 +85,7 @@ struct toJs_impl {
 // - bool -> Boolean
 // - other arithmetic types -> Number
 // - string, string_view -> String
-// - ustring, ustring_view -> Buffer
+// - std::vector<unsigned char>, std::span<const unsigned char> -> Buffer
 // - std::vector<T> -> Array, where elements are created via toJs calls on the vector elements.
 // - std::optional<T> -> Null if empty, otherwise the result of toJs on the contained value
 // - Napi::Value (or derived) -> itself (this is mainly so that you can return a std::vector or
@@ -120,8 +122,20 @@ struct toJs_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string_view>>
 };
 
 template <typename T>
-struct toJs_impl<T, std::enable_if_t<std::is_convertible_v<T, ustring_view>>> {
-    auto operator()(const Napi::Env& env, ustring_view b) const {
+struct toJs_impl<
+        T,
+        std::enable_if_t<
+                std::is_convertible_v<T, std::span<const unsigned char>> &&
+                !std::is_same_v<std::remove_cv_t<T>, std::vector<unsigned char>>>> {
+    auto operator()(const Napi::Env& env, std::span<const unsigned char> b) const {
+        return Napi::Buffer<uint8_t>::Copy(env, b.data(), b.size());
+    }
+};
+
+// this wrap std::vector<unsigned char> to Uint8array in the js world
+template <>
+struct toJs_impl<std::vector<unsigned char>> {
+    auto operator()(const Napi::Env& env, std::vector<unsigned char> b) const {
         return Napi::Buffer<uint8_t>::Copy(env, b.data(), b.size());
     }
 };
@@ -192,7 +206,7 @@ inline std::optional<std::string_view> maybe_string(std::string_view val) {
 // - The return value will be returned as-is if it is already a Napi::Value (or subtype)
 // - The return will be void if void
 // - Otherwise the return value will be passed through toJs() to convert it to a Napi::Value.
-// See toJs below, but generally this supports numeric types, bools, strings, ustrings, and vectors
+// See toJs below, but generally this supports numeric types, bools, strings, spans, and vectors
 // of any of those primitives.
 //
 // General use is:
@@ -242,7 +256,7 @@ auto wrapExceptions(const Napi::CallbackInfo& info, Call&& call) {
 std::string printable(std::string_view x);
 std::string printable(const char* x) = delete;
 std::string printable(const char* x, size_t n);
-std::string printable(ustring_view x);
+std::string printable(std::span<const unsigned char> x);
 
 /**
  * Keep the current priority if a wrapper
@@ -253,7 +267,7 @@ int64_t unix_timestamp_now();
 
 using push_entry_t = std::tuple<
         session::config::seqno_t,
-        session::ustring,
+        std::vector<unsigned char>,
         std::vector<std::string, std::allocator<std::string>>>;
 
 Napi::Object push_result_to_JS(
@@ -263,10 +277,10 @@ Napi::Object push_result_to_JS(
 
 Napi::Object push_key_entry_to_JS(
         const Napi::Env& env,
-        const session::ustring_view& key_data,
+        const std::span<const unsigned char>& key_data,
         const session::config::Namespace& push_namespace);
 
 Napi::Object decrypt_result_to_JS(
-        const Napi::Env& env, const std::pair<std::string, ustring> decrypted);
+        const Napi::Env& env, const std::pair<std::string, std::vector<unsigned char>> decrypted);
 
 }  // namespace session::nodeapi

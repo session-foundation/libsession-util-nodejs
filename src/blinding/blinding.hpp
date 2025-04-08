@@ -3,6 +3,7 @@
 #include <napi.h>
 
 #include <algorithm>
+#include <vector>
 
 #include "../meta/meta_base_wrapper.hpp"
 #include "../utilities.hpp"
@@ -58,8 +59,7 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
 
             auto keypair = session::blind_version_key_pair(ed25519_secret_key);
             session::uc32 pk_arr = std::get<0>(keypair);
-            ustring blinded_pk = session::ustring(
-                    session::to_unsigned_sv(std::string(pk_arr.begin(), pk_arr.end())));
+            std::vector<unsigned char> blinded_pk = session::to_vector(pk_arr);
             std::string blinded_pk_hex;
             blinded_pk_hex.reserve(66);
             blinded_pk_hex += "07";
