@@ -94,12 +94,12 @@ class ConfigBaseImpl {
             // we should get secret key as first arg and optional dumped as second argument
             assertIsUInt8Array(info[0], "base construct");
             assertIsUInt8ArrayOrNull(info[1]);
-            std::span<const unsigned char> secretKey = toCppBufferView(info[0], class_name + ".new");
+            std::vector<unsigned char> secretKey = toCppBuffer(info[0], class_name + ".new");
 
-            std::optional<std::span<const unsigned char>> dump;
+            std::optional<std::vector<unsigned char>> dump;
             auto second = info[1];
             if (!second.IsEmpty() && !second.IsNull() && !second.IsUndefined())
-                dump = toCppBufferView(second, class_name + ".new");
+                dump = toCppBuffer(second, class_name + ".new");
 
             // return std::make_shared<Config>(secretKey, dump);
             std::shared_ptr<Config> config = std::make_shared<Config>(secretKey, dump);
