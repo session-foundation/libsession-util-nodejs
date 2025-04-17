@@ -58,7 +58,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
             // handle the messages conversion
             auto messagesJSValue = obj.Get("messages");
-            assertIsArray(messagesJSValue);
+            assertIsArray(messagesJSValue, "multiEncrypt");
             auto messagesJS = messagesJSValue.As<Napi::Array>();
             std::vector<std::vector<unsigned char>> messages;
             messages.reserve(messagesJS.Length());
@@ -71,7 +71,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
             // handle the recipients conversion
             auto recipientsJSValue = obj.Get("recipients");
-            assertIsArray(recipientsJSValue);
+            assertIsArray(recipientsJSValue, "multiEncrypt");
             auto recipientsJS = recipientsJSValue.As<Napi::Array>();
             std::vector<std::vector<unsigned char>> recipients;
             recipients.reserve(recipientsJS.Length());

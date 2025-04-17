@@ -15,8 +15,12 @@ Napi::Value ConfigBaseImpl::needsPush(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] { return get_config<ConfigBase>().needs_push(); });
 }
 
-Napi::Value ConfigBaseImpl::currentHashes(const Napi::CallbackInfo& info) {
-    return wrapResult(info, [&] { return (get_config<ConfigBase>().current_hashes()); });
+Napi::Value ConfigBaseImpl::activeHashes(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        std::unordered_set<std::string> hashes = get_config<ConfigBase>().active_hashes();
+        std::vector<std::string> hashesVec(hashes.begin(), hashes.end());
+        return hashesVec;
+    });
 }
 
 Napi::Value ConfigBaseImpl::push(const Napi::CallbackInfo& info) {
@@ -45,20 +49,21 @@ Napi::Value ConfigBaseImpl::makeDump(const Napi::CallbackInfo& info) {
 
 void ConfigBaseImpl::confirmPushed(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&]() {
-        assertInfoLength(info, 2);
-        assertIsNumber(info[0], "confirmPushed");
-        assertIsString(info[1]);
+        assertInfoLength(info, 1);
+        assertIsObject(info[0]);
+        auto obj = info[0].As<Napi::Object>();
+
+        auto confirmed_pushed_entry = confirm_pushed_entry_from_JS(info.Env(), obj);
 
         get_config<ConfigBase>().confirm_pushed(
-                toCppInteger(info[0], "confirmPushed", false),
-                toCppString(info[1], "confirmPushed"));
+                std::get<0>(confirmed_pushed_entry), std::get<1>(confirmed_pushed_entry));
     });
 }
 
 Napi::Value ConfigBaseImpl::merge(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&]() {
         assertInfoLength(info, 1);
-        assertIsArray(info[0]);
+        assertIsArray(info[0], "ConfigBaseImpl::merge");
         Napi::Array asArray = info[0].As<Napi::Array>();
 
         std::vector<std::pair<std::string, std::vector<unsigned char>>> conf_strs;
@@ -75,8 +80,9 @@ Napi::Value ConfigBaseImpl::merge(const Napi::CallbackInfo& info) {
                     toCppString(itemObject.Get("hash"), "base.merge"),
                     toCppBuffer(itemObject.Get("data"), "base.merge"));
         }
-
-        return get_config<ConfigBase>().merge(conf_strs);
+        std::unordered_set<std::string> merged = get_config<ConfigBase>().merge(conf_strs);
+        std::vector<std::string> mergedVec(merged.begin(), merged.end());
+        return mergedVec;
     });
 }
 
