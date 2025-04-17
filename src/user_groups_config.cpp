@@ -213,7 +213,7 @@ void UserGroupsWrapper::setLegacyGroup(const Napi::CallbackInfo& info) {
                 true)};
 
         auto membersJSValue = obj.Get("members");
-        assertIsArray(membersJSValue);
+        assertIsArray(membersJSValue, "setLegacyGroup.membersJSValue");
         auto membersJS = membersJSValue.As<Napi::Array>();
         uint32_t arrayLength = membersJS.Length();
         std::vector<std::pair<std::string, bool>> membersToAddOrUpdate;

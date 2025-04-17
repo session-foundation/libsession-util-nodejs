@@ -83,7 +83,7 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     Napi::Value keyGetAll(const Napi::CallbackInfo& info);
     Napi::Value loadKeyMessage(const Napi::CallbackInfo& info);
     Napi::Value keyGetCurrentGen(const Napi::CallbackInfo& info);
-    Napi::Value currentHashes(const Napi::CallbackInfo& info);
+    Napi::Value activeHashes(const Napi::CallbackInfo& info);
     Napi::Value encryptMessages(const Napi::CallbackInfo& info);
     Napi::Value decryptMessage(const Napi::CallbackInfo& info);
     Napi::Value makeSwarmSubAccount(const Napi::CallbackInfo& info);

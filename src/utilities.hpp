@@ -29,7 +29,7 @@ void assertInfoMinLength(const Napi::CallbackInfo& info, const int minLength);
 
 void assertIsStringOrNull(const Napi::Value& value);
 void assertIsNumber(const Napi::Value& value, const std::string& identifier);
-void assertIsArray(const Napi::Value& value);
+void assertIsArray(const Napi::Value& value, const std::string& identifier);
 void assertIsObject(const Napi::Value& value);
 void assertIsUInt8ArrayOrNull(const Napi::Value& value);
 void assertIsUInt8Array(const Napi::Value& value, const std::string& identifier);
@@ -55,7 +55,6 @@ auto getStringArgs(const Napi::CallbackInfo& info) {
 
 std::string toCppString(Napi::Value x, const std::string& identifier);
 std::vector<unsigned char> toCppBuffer(Napi::Value x, const std::string& identifier);
-
 
 int64_t toCppInteger(Napi::Value x, const std::string& identifier, bool allowUndefined = false);
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier);
@@ -268,8 +267,11 @@ int64_t unix_timestamp_now();
 
 using push_entry_t = std::tuple<
         session::config::seqno_t,
-        std::vector<unsigned char>,
-        std::vector<std::string, std::allocator<std::string>>>;
+        std::vector<std::vector<unsigned char>>,
+        std::vector<std::string>>;
+
+using confirm_pushed_entry_t =
+        std::tuple<session::config::seqno_t, std::unordered_set<std::string>>;
 
 Napi::Object push_result_to_JS(
         const Napi::Env& env,
@@ -283,5 +285,7 @@ Napi::Object push_key_entry_to_JS(
 
 Napi::Object decrypt_result_to_JS(
         const Napi::Env& env, const std::pair<std::string, std::vector<unsigned char>> decrypted);
+
+confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const Napi::Object& obj);
 
 }  // namespace session::nodeapi

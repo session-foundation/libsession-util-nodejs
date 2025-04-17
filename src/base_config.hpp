@@ -33,7 +33,7 @@ class ConfigBaseImpl {
     // These are exposed as read-only accessors rather than methods:
     Napi::Value needsDump(const Napi::CallbackInfo& info);
     Napi::Value needsPush(const Napi::CallbackInfo& info);
-    Napi::Value currentHashes(const Napi::CallbackInfo& info);
+    Napi::Value activeHashes(const Napi::CallbackInfo& info);
 
     Napi::Value push(const Napi::CallbackInfo& info);
     Napi::Value dump(const Napi::CallbackInfo& info);
@@ -53,7 +53,7 @@ class ConfigBaseImpl {
 
         properties.push_back(T::InstanceMethod("needsDump", &T::needsDump));
         properties.push_back(T::InstanceMethod("needsPush", &T::needsPush));
-        properties.push_back(T::InstanceMethod("currentHashes", &T::currentHashes));
+        properties.push_back(T::InstanceMethod("activeHashes", &T::activeHashes));
         properties.push_back(T::InstanceMethod("push", &T::push));
         properties.push_back(T::InstanceMethod("dump", &T::dump));
         properties.push_back(T::InstanceMethod("makeDump", &T::makeDump));

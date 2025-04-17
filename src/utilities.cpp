@@ -27,8 +27,9 @@ void assertIsNumber(const Napi::Value& val, const std::string& identifier) {
             std::string("Wrong arguments: expected number" + identifier).c_str());
 }
 
-void assertIsArray(const Napi::Value& val) {
-    checkOrThrow(val.IsArray(), "Wrong arguments: expected array");
+void assertIsArray(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsArray(), std::string("Wrong arguments: expected array:" + identifier).c_str());
 }
 
 void assertIsObject(const Napi::Value& val) {
@@ -228,6 +229,26 @@ Napi::Object decrypt_result_to_JS(
     obj["plaintext"] = toJs(env, decrypted.second);
 
     return obj;
+}
+
+confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const Napi::Object& obj) {
+
+    auto seqnoJsValue = obj.Get("seqno");
+    assertIsNumber(seqnoJsValue, "confirm_pushed_entry_from_JS.seqno");
+    int64_t seqno = toCppInteger(seqnoJsValue, "confirm_pushed_entry_from_JS.seqno", false);
+    auto hashesJsValue = obj.Get("hashes");
+    assertIsArray(hashesJsValue, "confirm_pushed_entry_from_JS.hashes");
+
+    auto hashesJs = hashesJsValue.As<Napi::Array>();
+    std::unordered_set<std::string> hashes;
+    for (uint32_t i = 0; i < hashesJs.Length(); i++) {
+        auto hashValue = hashesJs.Get(i);
+        assertIsString(hashValue);
+        std::string hash = toCppString(hashValue, "confirm_pushed_entry_from_JS.hashes.hash");
+        hashes.insert(hash);
+    }
+    confirm_pushed_entry_t confirmed_pushed_entry{seqno, hashes};
+    return confirmed_pushed_entry;
 }
 
 }  // namespace session::nodeapi
