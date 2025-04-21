@@ -232,7 +232,6 @@ Napi::Object decrypt_result_to_JS(
 }
 
 confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const Napi::Object& obj) {
-
     auto seqnoJsValue = obj.Get("seqno");
     assertIsNumber(seqnoJsValue, "confirm_pushed_entry_from_JS.seqno");
     int64_t seqno = toCppInteger(seqnoJsValue, "confirm_pushed_entry_from_JS.seqno", false);

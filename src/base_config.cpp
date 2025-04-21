@@ -48,11 +48,10 @@ Napi::Value ConfigBaseImpl::makeDump(const Napi::CallbackInfo& info) {
 }
 
 void ConfigBaseImpl::confirmPushed(const Napi::CallbackInfo& info) {
-    return wrapResult(info, [&]() {
+    return wrapExceptions(info, [&]() {
         assertInfoLength(info, 1);
         assertIsObject(info[0]);
         auto obj = info[0].As<Napi::Object>();
-
         auto confirmed_pushed_entry = confirm_pushed_entry_from_JS(info.Env(), obj);
 
         get_config<ConfigBase>().confirm_pushed(

@@ -97,7 +97,7 @@ declare module 'libsession_util_nodejs' {
   export type PubkeyType = `05${string}`; // type of a string which starts by the 05 prefixed used for **legacy** closed group and session ids
   export type BlindedPubkeyType = `15${string}`;
 
-  type MakeGroupActionCall<A extends BaseConfigWrapper, B extends keyof A> = [
+  type MakeGroupActionCall<A extends RecordOfFunctions, B extends keyof A> = [
     B,
     ...Parameters<A[B]>
   ]; // all of the groupActionCalls need the pubkey of the group we are targeting
