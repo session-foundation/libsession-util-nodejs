@@ -36,7 +36,11 @@ declare module 'libsession_util_nodejs' {
       push: () => {
         groupInfo: PushConfigResult | null;
         groupMember: PushConfigResult | null;
-        groupKeys: PushKeyConfigResult | null;
+        // groupKeys is very custom, and not an array of Uint8Array
+        groupKeys: {
+          data: Uint8Array;
+          namespace: number;
+        } | null;
       };
       needsDump: () => boolean;
       metaDump: () => Uint8Array;
@@ -79,7 +83,7 @@ declare module 'libsession_util_nodejs' {
     public metaMakeDump: MetaGroupWrapper['metaMakeDump'];
     public metaConfirmPushed: MetaGroupWrapper['metaConfirmPushed'];
     public metaMerge: MetaGroupWrapper['metaMerge'];
-    public currentHashes: MetaGroupWrapper['currentHashes'];
+    public activeHashes: MetaGroupWrapper['activeHashes'];
 
     // info
     public infoGet: MetaGroupWrapper['infoGet'];
@@ -165,7 +169,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MetaGroupWrapper, 'loadKeyMessage'>
     | MakeActionCall<MetaGroupWrapper, 'keysAdmin'>
     | MakeActionCall<MetaGroupWrapper, 'keyGetCurrentGen'>
-    | MakeActionCall<MetaGroupWrapper, 'currentHashes'>
+    | MakeActionCall<MetaGroupWrapper, 'activeHashes'>
     | MakeActionCall<MetaGroupWrapper, 'encryptMessages'>
     | MakeActionCall<MetaGroupWrapper, 'decryptMessage'>
     | MakeActionCall<MetaGroupWrapper, 'makeSwarmSubAccount'>

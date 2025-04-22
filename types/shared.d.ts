@@ -32,7 +32,7 @@ declare module 'libsession_util_nodejs' {
   };
 
   export type PushConfigResult = {
-    data: Uint8Array;
+    data: Array<Uint8Array>;
     seqno: number;
     hashes: Array<string>;
     namespace: number;
@@ -40,7 +40,7 @@ declare module 'libsession_util_nodejs' {
 
   export type PushKeyConfigResult = Pick<PushConfigResult, 'data' | 'namespace'>;
 
-  export type ConfirmPush = [seqno: number, hash: string];
+  export type ConfirmPush = { seqno: number; hashes: Array<string> };
   export type MergeSingle = { hash: string; data: Uint8Array };
 
   type MakeActionCall<A extends RecordOfFunctions, B extends keyof A> = [B, ...Parameters<A[B]>];
@@ -57,10 +57,10 @@ declare module 'libsession_util_nodejs' {
     push: () => PushConfigResult;
     dump: () => Uint8Array;
     makeDump: () => Uint8Array;
-    confirmPushed: (seqno: number, hash: string) => void;
+    confirmPushed: (pushed: ConfirmPush) => void;
     merge: (toMerge: Array<MergeSingle>) => Array<string>; // merge returns the array of hashes that merged correctly
     storageNamespace: () => number;
-    currentHashes: () => Array<string>;
+    activeHashes: () => Array<string>;
   };
 
   export type GenericWrapperActionsCall<A extends string, B extends keyof BaseConfigWrapper> = (
@@ -77,7 +77,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<BaseConfigWrapper, 'confirmPushed'>
     | MakeActionCall<BaseConfigWrapper, 'merge'>
     | MakeActionCall<BaseConfigWrapper, 'storageNamespace'>
-    | MakeActionCall<BaseConfigWrapper, 'currentHashes'>;
+    | MakeActionCall<BaseConfigWrapper, 'activeHashes'>;
 
   export abstract class BaseConfigWrapperNode {
     public needsDump: BaseConfigWrapper['needsDump'];
@@ -88,7 +88,7 @@ declare module 'libsession_util_nodejs' {
     public confirmPushed: BaseConfigWrapper['confirmPushed'];
     public merge: BaseConfigWrapper['merge'];
     public storageNamespace: BaseConfigWrapper['storageNamespace'];
-    public currentHashes: BaseConfigWrapper['currentHashes'];
+    public activeHashes: BaseConfigWrapper['activeHashes'];
   }
 
   export type BaseWrapperActionsCalls = MakeWrapperActionCalls<BaseConfigWrapper>;
@@ -97,7 +97,7 @@ declare module 'libsession_util_nodejs' {
   export type PubkeyType = `05${string}`; // type of a string which starts by the 05 prefixed used for **legacy** closed group and session ids
   export type BlindedPubkeyType = `15${string}`;
 
-  type MakeGroupActionCall<A extends BaseConfigWrapper, B extends keyof A> = [
+  type MakeGroupActionCall<A extends RecordOfFunctions, B extends keyof A> = [
     B,
     ...Parameters<A[B]>
   ]; // all of the groupActionCalls need the pubkey of the group we are targeting

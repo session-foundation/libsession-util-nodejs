@@ -140,7 +140,7 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("keysNeedsRekey", &MetaGroupWrapper::keysNeedsRekey),
                     InstanceMethod("keyRekey", &MetaGroupWrapper::keyRekey),
                     InstanceMethod("keyGetAll", &MetaGroupWrapper::keyGetAll),
-                    InstanceMethod("currentHashes", &MetaGroupWrapper::currentHashes),
+                    InstanceMethod("activeHashes", &MetaGroupWrapper::activeHashes),
                     InstanceMethod("loadKeyMessage", &MetaGroupWrapper::loadKeyMessage),
                     InstanceMethod("keyGetCurrentGen", &MetaGroupWrapper::keyGetCurrentGen),
                     InstanceMethod("encryptMessages", &MetaGroupWrapper::encryptMessages),
@@ -244,35 +244,21 @@ void MetaGroupWrapper::metaConfirmPushed(const Napi::CallbackInfo& info) {
         auto groupMember = obj.Get("groupMember");
 
         if (!groupInfo.IsNull() && !groupInfo.IsUndefined()) {
-            assertIsArray(groupInfo);
-            auto groupInfoArr = groupInfo.As<Napi::Array>();
-            if (groupInfoArr.Length() != 2) {
-                throw std::invalid_argument("groupInfoArr length was not 2");
-            }
+            assertIsObject(groupInfo);
+            auto groupInfoObj = groupInfo.As<Napi::Object>();
+            auto groupInfoConfirmed = confirm_pushed_entry_from_JS(info.Env(), groupInfoObj);
 
-            auto seqno = maybeNonemptyInt(
-                    groupInfoArr.Get("0"), "MetaGroupWrapper::metaConfirmPushed groupInfo seqno");
-            auto hash = maybeNonemptyString(
-                    groupInfoArr.Get("1"), "MetaGroupWrapper::metaConfirmPushed groupInfo hash");
-            if (seqno && hash)
-                this->meta_group->info->confirm_pushed(*seqno, *hash);
+            this->meta_group->info->confirm_pushed(
+                    std::get<0>(groupInfoConfirmed), std::get<1>(groupInfoConfirmed));
         }
 
         if (!groupMember.IsNull() && !groupMember.IsUndefined()) {
-            assertIsArray(groupMember);
-            auto groupMemberArr = groupMember.As<Napi::Array>();
-            if (groupMemberArr.Length() != 2) {
-                throw std::invalid_argument("groupMemberArr length was not 2");
-            }
+            assertIsObject(groupMember);
+            auto groupMemberObj = groupMember.As<Napi::Object>();
+            auto groupMemberConfirmed = confirm_pushed_entry_from_JS(info.Env(), groupMemberObj);
 
-            auto seqno = maybeNonemptyInt(
-                    groupMemberArr.Get("0"),
-                    "MetaGroupWrapper::metaConfirmPushed groupMemberArr seqno");
-            auto hash = maybeNonemptyString(
-                    groupMemberArr.Get("1"),
-                    "MetaGroupWrapper::metaConfirmPushed groupMemberArr hash");
-            if (seqno && hash)
-                this->meta_group->members->confirm_pushed(*seqno, *hash);
+            this->meta_group->members->confirm_pushed(
+                    std::get<0>(groupMemberConfirmed), std::get<1>(groupMemberConfirmed));
         }
     });
 };
@@ -283,17 +269,17 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
         auto arg = info[0];
         assertIsObject(arg);
         auto obj = arg.As<Napi::Object>();
-
         auto groupInfo = obj.Get("groupInfo");
         auto groupMember = obj.Get("groupMember");
         auto groupKeys = obj.Get("groupKeys");
 
         auto count_merged = 0;
 
+
         // Note: we need to process keys first as they might allow us the incoming info+members
         // details
         if (!groupKeys.IsNull() && !groupKeys.IsUndefined()) {
-            assertIsArray(groupKeys);
+            assertIsArray(groupKeys, "metaMerge groupKeys");
             auto asArr = groupKeys.As<Napi::Array>();
 
             for (uint32_t i = 0; i < asArr.Length(); i++) {
@@ -318,13 +304,13 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
                         timestamp_ms,
                         *(this->meta_group->info),
                         *(this->meta_group->members));
-                count_merged++;  // load_key_message doesn't necessarely merge something as not
+                count_merged++;  // load_key_message doesn't necessarily merge something as not
                                  // all keys are for us.
             }
         }
 
         if (!groupInfo.IsNull() && !groupInfo.IsUndefined()) {
-            assertIsArray(groupInfo);
+            assertIsArray(groupInfo, "metaMerge groupInfo");
             auto asArr = groupInfo.As<Napi::Array>();
 
             std::vector<std::pair<std::string, std::vector<unsigned char>>> conf_strs;
@@ -349,9 +335,8 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
                 count_merged += info_merged.size();
             }
         }
-
         if (!groupMember.IsNull() && !groupMember.IsUndefined()) {
-            assertIsArray(groupMember);
+            assertIsArray(groupMember, "metaMerge groupMember");
             auto asArr = groupMember.As<Napi::Array>();
 
             std::vector<std::pair<std::string, std::vector<unsigned char>>> conf_strs;
@@ -376,7 +361,6 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
                 count_merged += member_merged.size();
             }
         }
-
         if (this->meta_group->keys->needs_rekey()) {
             this->meta_group->keys->rekey(*(this->meta_group->info), *(this->meta_group->members));
         }
@@ -693,7 +677,7 @@ void MetaGroupWrapper::membersMarkPendingRemoval(const Napi::CallbackInfo& info)
         auto toUpdateJSValue = info[0];
         auto withMessageJSValue = info[1];
 
-        assertIsArray(toUpdateJSValue);
+        assertIsArray(toUpdateJSValue, "membersMarkPendingRemoval");
         assertIsBoolean(withMessageJSValue);
         bool withMessages = toCppBoolean(withMessageJSValue, "membersMarkPendingRemoval");
 
@@ -714,7 +698,7 @@ Napi::Value MetaGroupWrapper::memberEraseAndRekey(const Napi::CallbackInfo& info
         assertInfoLength(info, 1);
         auto toRemoveJSValue = info[0];
 
-        assertIsArray(toRemoveJSValue);
+        assertIsArray(toRemoveJSValue, "memberEraseAndRekey");
 
         auto toRemoveJS = toRemoveJSValue.As<Napi::Array>();
         auto rekeyed = false;
@@ -771,15 +755,16 @@ Napi::Value MetaGroupWrapper::keyGetCurrentGen(const Napi::CallbackInfo& info) {
     });
 }
 
-Napi::Value MetaGroupWrapper::currentHashes(const Napi::CallbackInfo& info) {
+Napi::Value MetaGroupWrapper::activeHashes(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
-        auto keysHashes = meta_group->keys->current_hashes();
-        auto infoHashes = meta_group->info->current_hashes();
-        auto memberHashes = meta_group->members->current_hashes();
+        auto keysHashes = meta_group->keys->active_hashes();
+        auto infoHashes = meta_group->info->active_hashes();
+        auto memberHashes = meta_group->members->active_hashes();
         std::vector<std::string> merged;
         std::copy(std::begin(keysHashes), std::end(keysHashes), std::back_inserter(merged));
         std::copy(std::begin(infoHashes), std::end(infoHashes), std::back_inserter(merged));
         std::copy(std::begin(memberHashes), std::end(memberHashes), std::back_inserter(merged));
+
         return merged;
     });
 }
@@ -787,7 +772,7 @@ Napi::Value MetaGroupWrapper::currentHashes(const Napi::CallbackInfo& info) {
 Napi::Value MetaGroupWrapper::encryptMessages(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         assertInfoLength(info, 1);
-        assertIsArray(info[0]);
+        assertIsArray(info[0], "encryptMessages");
 
         auto plaintextsJS = info[0].As<Napi::Array>();
         uint32_t arrayLength = plaintextsJS.Length();
@@ -880,7 +865,7 @@ Napi::Value MetaGroupWrapper::generateSupplementKeys(const Napi::CallbackInfo& i
     return wrapResult(info, [&] {
         assertInfoLength(info, 1);
         auto membersJSValue = info[0];
-        assertIsArray(membersJSValue);
+        assertIsArray(membersJSValue, "generateSupplementKeys");
 
         auto membersJS = membersJSValue.As<Napi::Array>();
         uint32_t arrayLength = membersJS.Length();

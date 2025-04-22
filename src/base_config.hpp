@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <memory>
+#include <oxen/log.hpp>
 #include <span>
 #include <stdexcept>
 #include <unordered_set>
@@ -33,7 +34,7 @@ class ConfigBaseImpl {
     // These are exposed as read-only accessors rather than methods:
     Napi::Value needsDump(const Napi::CallbackInfo& info);
     Napi::Value needsPush(const Napi::CallbackInfo& info);
-    Napi::Value currentHashes(const Napi::CallbackInfo& info);
+    Napi::Value activeHashes(const Napi::CallbackInfo& info);
 
     Napi::Value push(const Napi::CallbackInfo& info);
     Napi::Value dump(const Napi::CallbackInfo& info);
@@ -53,7 +54,7 @@ class ConfigBaseImpl {
 
         properties.push_back(T::InstanceMethod("needsDump", &T::needsDump));
         properties.push_back(T::InstanceMethod("needsPush", &T::needsPush));
-        properties.push_back(T::InstanceMethod("currentHashes", &T::currentHashes));
+        properties.push_back(T::InstanceMethod("activeHashes", &T::activeHashes));
         properties.push_back(T::InstanceMethod("push", &T::push));
         properties.push_back(T::InstanceMethod("dump", &T::dump));
         properties.push_back(T::InstanceMethod("makeDump", &T::makeDump));
@@ -101,24 +102,7 @@ class ConfigBaseImpl {
             if (!second.IsEmpty() && !second.IsNull() && !second.IsUndefined())
                 dump = toCppBuffer(second, class_name + ".new");
 
-            // return std::make_shared<Config>(secretKey, dump);
-            std::shared_ptr<Config> config = std::make_shared<Config>(secretKey, dump);
-
-            Napi::Env env = info.Env();
-
-            session::add_logger([env, class_name](auto msg) {
-                std::string toLog =
-                        "libsession-util:" + std::string(class_name) + ": " + std::string(msg) + "\n";
-
-                Napi::Function consoleLog = env.Global()
-                                                    .Get("console")
-                                                    .As<Napi::Object>()
-                                                    .Get("log")
-                                                    .As<Napi::Function>();
-                consoleLog.Call({Napi::String::New(env, toLog)});
-            });
-
-            return config;
+            return std::make_shared<Config>(secretKey, dump);
         });
     }
 
