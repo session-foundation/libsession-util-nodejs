@@ -6,6 +6,7 @@
 #include "community.hpp"
 #include "session/config/convo_info_volatile.hpp"
 #include "session/types.hpp"
+#include "utilities.hpp"
 
 namespace session::nodeapi {
 

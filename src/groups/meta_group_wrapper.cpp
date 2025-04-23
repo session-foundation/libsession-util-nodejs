@@ -275,7 +275,6 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
 
         auto count_merged = 0;
 
-
         // Note: we need to process keys first as they might allow us the incoming info+members
         // details
         if (!groupKeys.IsNull() && !groupKeys.IsUndefined()) {

@@ -7,7 +7,6 @@
 
 #include "../base_config.hpp"
 #include "../groups/meta_group.hpp"
-
 namespace session::nodeapi {
 
 class MetaBaseWrapper {
