@@ -1,4 +1,4 @@
-#include "meta_group_wrapper.hpp"
+#include "groups/meta_group_wrapper.hpp"
 
 #include <napi.h>
 
