@@ -1,0 +1,35 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/include/**",
+        "${workspaceFolder}/libsession-util/include/**",
+        "${workspaceFolder}/node_modules/node-addon-api/",
+        "${workspaceFolder}/node_modules/node-api-headers/include/"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "linux-clang-x64"
+    },
+    {
+      "name": "Mac",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/include/**",
+        "${workspaceFolder}/libsession-util/include/**",
+        "${workspaceFolder}/node_modules/node-addon-api/",
+        "${workspaceFolder}/node_modules/node-api-headers/include/"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "macos-clang-arm64"
+    }
+  ],
+  "version": 4
+}

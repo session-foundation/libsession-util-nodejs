@@ -1,13 +1,13 @@
 #include "groups/meta_group_wrapper.hpp"
 
 #include <napi.h>
+#include <oxenc/bt_producer.h>
 
 #include <memory>
+#include <session/types.hpp>
+#include <session/util.hpp>
 #include <span>
 #include <vector>
-
-#include "oxenc/bt_producer.h"
-#include "session/types.hpp"
 
 namespace session::nodeapi {
 

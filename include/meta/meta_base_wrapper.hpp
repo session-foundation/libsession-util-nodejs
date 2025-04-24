@@ -2,6 +2,7 @@
 
 #include <napi.h>
 
+#include <optional>
 #include <span>
 #include <vector>
 
