@@ -1,13 +1,13 @@
-#include "meta_group_wrapper.hpp"
+#include "groups/meta_group_wrapper.hpp"
 
 #include <napi.h>
+#include <oxenc/bt_producer.h>
 
 #include <memory>
+#include <session/types.hpp>
+#include <session/util.hpp>
 #include <span>
 #include <vector>
-
-#include "oxenc/bt_producer.h"
-#include "session/types.hpp"
 
 namespace session::nodeapi {
 
@@ -274,7 +274,6 @@ Napi::Value MetaGroupWrapper::metaMerge(const Napi::CallbackInfo& info) {
         auto groupKeys = obj.Get("groupKeys");
 
         auto count_merged = 0;
-
 
         // Note: we need to process keys first as they might allow us the incoming info+members
         // details

@@ -1,5 +1,7 @@
 #include <napi.h>
 
+#include <oxen/log.hpp>
+
 #include "blinding/blinding.hpp"
 #include "constants.hpp"
 #include "contacts_config.hpp"
@@ -9,18 +11,34 @@
 #include "user_config.hpp"
 #include "user_groups_config.hpp"
 
+Napi::ThreadSafeFunction tsfn;
+
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     using namespace session::nodeapi;
 
-    session::add_logger([env](std::string_view msg) {
-        std::string toLog = std::string("libsession-util: ") + std::string(msg) + "\n";
+    tsfn = Napi::ThreadSafeFunction::New(
+            env,
+            Napi::Function::New(env, [](const Napi::CallbackInfo& info) {}),
+            "LoggerCallback",
+            0,
+            1);
 
-        Napi::Function consoleLog =
-                env.Global().Get("console").As<Napi::Object>().Get("log").As<Napi::Function>();
-        consoleLog.Call({Napi::String::New(env, toLog)});
+    session::add_logger([](std::string_view msg) {
+        tsfn.BlockingCall(
+                new std::string(msg),
+                [](Napi::Env env, Napi::Function jsCallback, std::string* msg) {
+                    Napi::HandleScope scope(env);
+                    Napi::Function consoleLog = env.Global()
+                                                        .Get("console")
+                                                        .As<Napi::Object>()
+                                                        .Get("log")
+                                                        .As<Napi::Function>();
+                    Napi::String jsStr = Napi::String::New(env, "libsession-util: " + *msg);
+                    consoleLog.Call({jsStr});
+                    delete msg;
+                });
     });
-
-    // session::logger_set_level_default(session::LogLevel::debug);
+    oxen::log::set_level_default(oxen::log::Level::info);
 
     ConstantsWrapper::Init(env, exports);
 

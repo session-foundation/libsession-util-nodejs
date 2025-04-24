@@ -2,7 +2,7 @@
   "main": "index.js",
   "name": "libsession_util_nodejs",
   "description": "Wrappers for the Session Util Library",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "license": "GPL-3.0",
   "author": {
     "name": "Oxen Project",
@@ -11,16 +11,18 @@
   "scripts": {
     "update_version": "sh update_version.sh",
     "clean": "rimraf .cache build",
+    "lint:cpp": "cppcheck --std=c++20 -j8 --quiet src libsession-util/src",
     "install": "cmake-js build --runtime=electron --runtime-version=34.2.0 --CDSUBMODULE_CHECK=OFF --CDLOCAL_MIRROR=https://oxen.rocks/deps --CDENABLE_ONIONREQ=OFF --CDWITH_TESTS=OFF",
-    "prepare_release": "sh prepare_release.sh"
+    "prepare_release": "sh prepare_release.sh",
+    "dedup": "npx --yes yarn-deduplicate yarn.lock"
   },
   "devDependencies": {
     "clang-format": "^1.8.0",
     "rimraf": "2.6.2"
   },
   "dependencies": {
-    "cmake-js": "7.2.1",
-    "node-addon-api": "^6.1.0"
+    "cmake-js": "7.3.1",
+    "node-addon-api": "^8.3.1"
   },
   "typings": "index.d.ts",
   "packageManager": "yarn@1.22.19"
