@@ -389,6 +389,7 @@ Napi::Value MetaGroupWrapper::infoGet(const Napi::CallbackInfo& info) {
 
         obj["isDestroyed"] = toJs(env, this->meta_group->info->is_destroyed());
         obj["profilePicture"] = toJs(env, this->meta_group->info->get_profile_pic());
+        obj["description"] = toJs(env, this->meta_group->info->get_description().value_or(""));
 
         return obj;
     });
@@ -425,6 +426,11 @@ Napi::Value MetaGroupWrapper::infoSet(const Napi::CallbackInfo& info) {
         if (auto profilePicture = obj.Get("profilePicture")) {
             auto profilePic = profile_pic_from_object(profilePicture);
             this->meta_group->info->set_profile_pic(profilePic);
+        }
+
+        if (auto description = maybeNonemptyString(
+                    obj.Get("description"), "MetaGroupWrapper::setInfo description")) {
+            this->meta_group->info->set_description_truncated(*description);
         }
 
         return this->infoGet(info);

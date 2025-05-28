@@ -122,6 +122,10 @@ declare module 'libsession_util_nodejs' {
     deleteBeforeSeconds: number | null;
     expirySeconds: number | null;
     profilePicture: ProfilePicture | null;
+    /**
+     * The group description. Defaults to "" if unset
+     */
+    description: string;
   };
 
   export type GroupInfoGet = GroupInfoShared & {
