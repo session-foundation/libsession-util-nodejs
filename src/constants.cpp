@@ -30,6 +30,10 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                      Napi::Number::New(env, session::config::groups::Info::NAME_MAX_LENGTH),
                      napi_enumerable),
              ObjectWrap::StaticValue(
+                     "GROUP_INFO_DESCRIPTION_MAX_LENGTH",
+                     Napi::Number::New(env, session::config::groups::Info::DESCRIPTION_MAX_LENGTH),
+                     napi_enumerable),
+             ObjectWrap::StaticValue(
                      "COMMUNITY_FULL_URL_MAX_LENGTH",
                      Napi::Number::New(env, session::config::community::FULL_URL_MAX_LENGTH),
                      napi_enumerable),

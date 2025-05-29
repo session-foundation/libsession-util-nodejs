@@ -122,6 +122,10 @@ declare module 'libsession_util_nodejs' {
     deleteBeforeSeconds: number | null;
     expirySeconds: number | null;
     profilePicture: ProfilePicture | null;
+    /**
+     * The group description. Defaults to "" if unset
+     */
+    description: string;
   };
 
   export type GroupInfoGet = GroupInfoShared & {
@@ -151,6 +155,8 @@ declare module 'libsession_util_nodejs' {
     BASE_GROUP_MAX_NAME_LENGTH: number;
     /** 100 bytes */
     GROUP_INFO_MAX_NAME_LENGTH: number;
+    /** 600 bytes */
+    GROUP_INFO_DESCRIPTION_MAX_LENGTH: number;
     /** 411 bytes
      *
      * BASE_URL_MAX_LENGTH + '/r/' + ROOM_MAX_LENGTH + qs_pubkey.size() + hex pubkey + null terminator
