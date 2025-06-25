@@ -428,9 +428,16 @@ Napi::Value MetaGroupWrapper::infoSet(const Napi::CallbackInfo& info) {
             this->meta_group->info->set_profile_pic(profilePic);
         }
 
-        if (auto description = maybeNonemptyString(
-                    obj.Get("description"), "MetaGroupWrapper::setInfo description")) {
-            this->meta_group->info->set_description_truncated(*description);
+        // Note: maybeNonemptyString returns nullopt when the string is null, undefined or empty.
+        // in the context of infoSet, `description` is a bit of a custom one as:
+        //  - null/undefined means no change to the current value stored,
+        //  - empty string means set to empty string (i.e. clear it).
+        // Because of this custom behavior, we need those manual checks in place.
+        if (auto description = obj.Get("description")) {
+            if (description.IsString()) {
+                this->meta_group->info->set_description_truncated(
+                        description.ToString().Utf8Value());
+            }
         }
 
         return this->infoGet(info);
