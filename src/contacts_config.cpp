@@ -44,6 +44,7 @@ struct toJs_impl<contact_info> {
         obj["nickname"] = toJs(env, maybe_string(contact.nickname));
         obj["approved"] = toJs(env, contact.approved);
         obj["approvedMe"] = toJs(env, contact.approved_me);
+        obj["profileUpdatedSeconds"] = toJs(env, contact.profile_updated);
         obj["blocked"] = toJs(env, contact.blocked);
         obj["priority"] = toJs(env, contact.priority);
         obj["createdAtSeconds"] = toJs(env, contact.created);
@@ -64,7 +65,11 @@ void ContactsConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("get", &ContactsConfigWrapper::get),
                     InstanceMethod("getAll", &ContactsConfigWrapper::getAll),
                     InstanceMethod("set", &ContactsConfigWrapper::set),
+                    InstanceMethod(
+                            "setProfileUpdatedSeconds",
+                            &ContactsConfigWrapper::setProfileUpdatedSeconds),
                     InstanceMethod("erase", &ContactsConfigWrapper::erase),
+
             });
 }
 
@@ -147,6 +152,32 @@ void ContactsConfigWrapper::set(const Napi::CallbackInfo& info) {
         // reset that user profile picture
 
         config.set(contact);
+    });
+}
+
+Napi::Value ContactsConfigWrapper::setProfileUpdatedSeconds(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        assertInfoLength(info, 1);
+
+        auto arg = info[0];
+        assertIsObject(arg);
+        auto obj = arg.As<Napi::Object>();
+
+        if (obj.IsEmpty())
+            throw std::invalid_argument("setProfileUpdatedSeconds received empty");
+
+        auto sessionID = toCppString(obj.Get("id"), "contacts.setProfileUpdatedSeconds, id");
+        auto contact = config.get(sessionID);
+
+        auto seconds = maybeNonemptySysSeconds(
+                obj.Get("profileUpdatedSeconds"),
+                "contacts.setProfileUpdatedSeconds, profileUpdatedSeconds");
+        if (contact && seconds) {
+            config.set_profile_updated(sessionID, seconds.value());
+            config.set(*contact);
+            return true;
+        }
+        return false;
     });
 }
 

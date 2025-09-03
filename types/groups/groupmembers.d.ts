@@ -61,6 +61,8 @@ declare module 'libsession_util_nodejs' {
      */
     supplement: boolean;
 
+    profileUpdatedSeconds: number;
+
     /**
      * True if the member is scheduled to get the keys (`.admin` field of libsession).
      * This is equivalent of memberStatus being one of:
@@ -116,6 +118,7 @@ declare module 'libsession_util_nodejs' {
     memberSetPromotionAccepted: (pubkeyHex: PubkeyType) => void;
 
     memberSetProfilePicture: (pubkeyHex: PubkeyType, profilePicture: ProfilePicture) => void;
+    memberSetProfileUpdatedSeconds: (pubkeyHex: PubkeyType, profileUpdatedSeconds: number) => void;
     memberResetAllSendingState: () => boolean;
     memberSetSupplement: (pubkeyHex: PubkeyType) => void;
     membersMarkPendingRemoval: (members: Array<PubkeyType>, withMessages: boolean) => void;

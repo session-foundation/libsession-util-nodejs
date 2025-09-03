@@ -17,7 +17,17 @@ declare module 'libsession_util_nodejs' {
     setPriority: (priority: number) => void;
     setName: (name: string) => void;
     setNameTruncated: (name: string) => void;
-    setProfilePic: (pic: ProfilePicture) => void;
+    /**
+     * Call this when uploading a new profile picture (i.e. not an auto reupload)
+     */
+    setNewProfilePic: (pic: ProfilePicture) => void;
+    /**
+     * Call this when reuploading a the previous profile picture
+     */
+    setReuploadProfilePic: (pic: ProfilePicture) => void;
+
+    getProfileUpdatedSeconds: () => number;
+
     setEnableBlindedMsgRequest: (msgRequest: boolean) => void;
     getEnableBlindedMsgRequest: () => boolean | undefined;
     setNoteToSelfExpiry: (expirySeconds: number) => void;
@@ -40,7 +50,9 @@ declare module 'libsession_util_nodejs' {
     public setPriority: UserConfigWrapper['setPriority'];
     public setName: UserConfigWrapper['setName'];
     public setNameTruncated: UserConfigWrapper['setNameTruncated'];
-    public setProfilePic: UserConfigWrapper['setProfilePic'];
+    public setNewProfilePic: UserConfigWrapper['setNewProfilePic'];
+    public setReuploadProfilePic: UserConfigWrapper['setReuploadProfilePic'];
+    public getProfileUpdatedSeconds: UserConfigWrapper['getProfileUpdatedSeconds'];
     public getEnableBlindedMsgRequest: UserConfigWrapper['getEnableBlindedMsgRequest'];
     public setEnableBlindedMsgRequest: UserConfigWrapper['setEnableBlindedMsgRequest'];
     public getNoteToSelfExpiry: UserConfigWrapper['getNoteToSelfExpiry'];
@@ -61,7 +73,9 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'setPriority'>
     | MakeActionCall<UserConfigWrapper, 'setName'>
     | MakeActionCall<UserConfigWrapper, 'setNameTruncated'>
-    | MakeActionCall<UserConfigWrapper, 'setProfilePic'>
+    | MakeActionCall<UserConfigWrapper, 'setNewProfilePic'>
+    | MakeActionCall<UserConfigWrapper, 'setReuploadProfilePic'>
+    | MakeActionCall<UserConfigWrapper, 'getProfileUpdatedSeconds'>
     | MakeActionCall<UserConfigWrapper, 'getEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'setEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'getNoteToSelfExpiry'>

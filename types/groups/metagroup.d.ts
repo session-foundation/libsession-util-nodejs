@@ -108,6 +108,7 @@ declare module 'libsession_util_nodejs' {
     public memberEraseAndRekey: MetaGroupWrapper['memberEraseAndRekey'];
     public membersMarkPendingRemoval: MetaGroupWrapper['membersMarkPendingRemoval'];
     public memberSetProfilePicture: MetaGroupWrapper['memberSetProfilePicture'];
+    public memberSetProfileUpdatedSeconds: MetaGroupWrapper['memberSetProfileUpdatedSeconds'];
     public memberResetAllSendingState: MetaGroupWrapper['memberResetAllSendingState'];
     public memberSetSupplement: MetaGroupWrapper['memberSetSupplement'];
 
@@ -159,6 +160,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MetaGroupWrapper, 'memberEraseAndRekey'>
     | MakeActionCall<MetaGroupWrapper, 'membersMarkPendingRemoval'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetProfilePicture'>
+    | MakeActionCall<MetaGroupWrapper, 'memberSetProfileUpdatedSeconds'>
     | MakeActionCall<MetaGroupWrapper, 'memberResetAllSendingState'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetSupplement'>
 

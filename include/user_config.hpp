@@ -23,7 +23,9 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     void setPriority(const Napi::CallbackInfo& info);
     void setName(const Napi::CallbackInfo& info);
     void setNameTruncated(const Napi::CallbackInfo& info);
-    void setProfilePic(const Napi::CallbackInfo& info);
+    void setNewProfilePic(const Napi::CallbackInfo& info);
+    void setReuploadProfilePic(const Napi::CallbackInfo& info);
+    Napi::Value getProfileUpdatedSeconds(const Napi::CallbackInfo& info);
 
     Napi::Value getEnableBlindedMsgRequest(const Napi::CallbackInfo& info);
     void setEnableBlindedMsgRequest(const Napi::CallbackInfo& info);

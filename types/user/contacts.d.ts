@@ -12,6 +12,7 @@ declare module 'libsession_util_nodejs' {
     free: () => void;
     get: (pubkeyHex: string) => ContactInfo | null;
     set: (contact: ContactInfoSet) => void;
+    setProfileUpdatedSeconds: (pubkeyHex: string, profileUpdatedSeconds: number) => void;
     getAll: () => Array<ContactInfo>;
     erase: (pubkeyHex: string) => void;
   };
@@ -29,7 +30,10 @@ declare module 'libsession_util_nodejs' {
     name?: string;
     nickname?: string;
     profilePicture?: ProfilePicture;
-    createdAtSeconds: number; // can only be set the first time a contact is created, a new change won't override the value in the wrapper.
+    /**
+     * Can only be set the first time a contact is created, a new change won't override the value in the wrapper.
+     */
+    createdAtSeconds: number;
     expirationMode?: DisappearingMessageConversationModeType;
     expirationTimerSeconds?: number;
   };
@@ -44,12 +48,18 @@ declare module 'libsession_util_nodejs' {
     approved: boolean;
     approvedMe: boolean;
     blocked: boolean;
+    /**
+     * This should be bumped whenever the contact profile is updated through
+     * `setProfileUpdatedSeconds`.
+     */
+    profileUpdatedSeconds: number;
   };
 
   export class ContactsConfigWrapperNode extends BaseConfigWrapperNode {
     constructor(secretKey: Uint8Array, dump: Uint8Array | null);
     public get: ContactsWrapper['get'];
     public set: ContactsWrapper['set'];
+    public setProfileUpdatedSeconds: ContactsWrapper['setProfileUpdatedSeconds'];
     public getAll: ContactsWrapper['getAll'];
     public erase: ContactsWrapper['erase'];
   }
@@ -59,6 +69,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<ContactsWrapper, 'free'>
     | MakeActionCall<ContactsWrapper, 'get'>
     | MakeActionCall<ContactsWrapper, 'set'>
+    | MakeActionCall<ContactsWrapper, 'setProfileUpdatedSeconds'>
     | MakeActionCall<ContactsWrapper, 'getAll'>
     | MakeActionCall<ContactsWrapper, 'erase'>;
 }

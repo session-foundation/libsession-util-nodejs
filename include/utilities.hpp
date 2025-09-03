@@ -59,6 +59,8 @@ std::vector<unsigned char> toCppBuffer(Napi::Value x, const std::string& identif
 int64_t toCppInteger(Napi::Value x, const std::string& identifier, bool allowUndefined = false);
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier);
 std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& identifier);
+std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
+        Napi::Value x, const std::string& identifier);
 
 bool toCppBoolean(Napi::Value x, const std::string& identifier);
 
@@ -106,6 +108,13 @@ template <>
 struct toJs_impl<session::config::Namespace> {
     auto operator()(const Napi::Env& env, session::config::Namespace b) const {
         return Napi::Number::New(env, static_cast<int16_t>(b));
+    }
+};
+
+template <>
+struct toJs_impl<std::chrono::sys_seconds> {
+    auto operator()(const Napi::Env& env, std::chrono::sys_seconds t) const {
+        return Napi::Number::New(env, t.time_since_epoch().count());
     }
 };
 

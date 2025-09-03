@@ -138,6 +138,18 @@ std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identi
     throw std::invalid_argument{"maybeNonemptyInt with invalid type, called from " + identifier};
 }
 
+std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(Napi::Value x, const std::string& identifier) {
+    if (x.IsNull() || x.IsUndefined())
+        return std::nullopt;
+
+    if (x.IsNumber()) {
+        auto num = x.As<Napi::Number>().Int64Value();
+        return std::chrono::sys_seconds{std::chrono::seconds{num}};
+    }
+
+    throw std::invalid_argument{"maybeNonemptyTime with invalid type, called from " + identifier};
+}
+
 std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         return std::nullopt;

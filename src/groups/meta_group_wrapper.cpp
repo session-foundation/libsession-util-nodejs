@@ -17,6 +17,7 @@ Napi::Object member_to_js(const Napi::Env& env, const member& info, const member
     obj["pubkeyHex"] = toJs(env, info.session_id);
     obj["name"] = toJs(env, info.name);
     obj["profilePicture"] = toJs(env, info.profile_picture);
+    obj["profileUpdatedSeconds"] = toJs(env, info.profile_updated);
     obj["supplement"] = toJs(env, info.supplement);
 
     switch (status) {
@@ -131,6 +132,9 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                             &MetaGroupWrapper::memberSetPromotionAccepted),
                     InstanceMethod(
                             "memberSetProfilePicture", &MetaGroupWrapper::memberSetProfilePicture),
+                    InstanceMethod(
+                            "memberSetProfileUpdatedSeconds",
+                            &MetaGroupWrapper::memberSetProfileUpdatedSeconds),
                     InstanceMethod(
                             "memberResetAllSendingState",
                             &MetaGroupWrapper::memberResetAllSendingState),
@@ -664,6 +668,23 @@ void MetaGroupWrapper::memberSetProfilePicture(const Napi::CallbackInfo& info) {
         auto m = this->meta_group->members->get(pubkeyHex);
         if (m) {
             m->profile_picture = profilePicture;
+            this->meta_group->members->set(*m);
+        }
+    });
+}
+
+void MetaGroupWrapper::memberSetProfileUpdatedSeconds(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 2);
+        assertIsString(info[0]);
+        assertIsObject(info[1]);
+
+        auto pubkeyHex = toCppString(info[0], "memberSetProfiUpdatedSeconds");
+        auto updatedAtSeconds = maybeNonemptySysSeconds(info[1], "memberSetProfiUpdatedSeconds");
+
+        auto m = this->meta_group->members->get(pubkeyHex);
+        if (m) {
+            m->profile_updated = updatedAtSeconds.value();
             this->meta_group->members->set(*m);
         }
     });
