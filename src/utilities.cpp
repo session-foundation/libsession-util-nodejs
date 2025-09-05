@@ -5,6 +5,7 @@
 #include <chrono>
 
 #include "session/config/namespaces.hpp"
+#include "session/config/profile_pic.hpp"
 #include "session/util.hpp"
 
 namespace session::nodeapi {
@@ -138,7 +139,8 @@ std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identi
     throw std::invalid_argument{"maybeNonemptyInt with invalid type, called from " + identifier};
 }
 
-std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(Napi::Value x, const std::string& identifier) {
+std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
+        Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         return std::nullopt;
 
@@ -149,6 +151,39 @@ std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(Napi::Value x, c
 
     throw std::invalid_argument{"maybeNonemptyTime with invalid type, called from " + identifier};
 }
+
+std::optional<session::config::profile_pic> maybeNonemptyProfilePic(
+        Napi::Value x, const std::string& identifier) {
+    if (x.IsNull() || x.IsUndefined())
+        return std::nullopt;
+    /**
+     * We want to allow url and key to be empty strings here,
+     * as this means to remove the profile pic altogether.
+     * However, if they are undefined/null, we want to return nullopt, as no changes should be
+     * made.
+     */
+
+    if (!x.IsObject()) {
+        throw std::invalid_argument{
+                "maybeNonemptyProfilePic with invalid type, called from " + identifier};
+    }
+    auto obj = x.As<Napi::Object>();
+    if (obj.IsEmpty()) {
+        return std::nullopt;
+    }
+
+    auto url = maybeNonemptyString(obj.Get("url"), "maybeNonemptyProfilePic url");
+    auto key = maybeNonemptyBuffer(obj.Get("key"), "maybeNonemptyProfilePic key");
+
+    if (!url || !key) {
+        // when the `x` obj is provided (i.e. not null), it should have those 2 fields set.
+        // They can be empty (meaning to remove the profile pic), but not undefined/null, as the
+        // object itself should have been undefined/null
+        throw new std::invalid_argument{"maybeNonemptyProfilePic with invalid input"};
+    }
+    return session::config::profile_pic{*url, *key};
+
+}  // namespace session::nodeapi
 
 std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
@@ -193,6 +228,16 @@ std::string printable(std::span<const unsigned char> x) {
 
 int64_t toPriority(Napi::Value x, int64_t currentPriority) {
     auto newPriority = toCppInteger(x, "toPriority", true);
+    if (newPriority > 0)
+        // keep the existing priority if it is already set
+        return std::max<int64_t>(currentPriority, 1);
+
+    // newPriority being < 0 means that that conversation is hidden (and so
+    // unpinned)
+    return newPriority;
+}
+
+int64_t toPriority(int64_t newPriority, int64_t currentPriority) {
     if (newPriority > 0)
         // keep the existing priority if it is already set
         return std::max<int64_t>(currentPriority, 1);
@@ -261,5 +306,4 @@ confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const 
     confirm_pushed_entry_t confirmed_pushed_entry{seqno, hashes};
     return confirmed_pushed_entry;
 }
-
 }  // namespace session::nodeapi

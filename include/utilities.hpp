@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "session/config/namespaces.hpp"
+#include "session/config/profile_pic.hpp"
 #include "session/types.hpp"
 #include "utilities.hpp"
 
@@ -111,13 +112,6 @@ struct toJs_impl<session::config::Namespace> {
     }
 };
 
-template <>
-struct toJs_impl<std::chrono::sys_seconds> {
-    auto operator()(const Napi::Env& env, std::chrono::sys_seconds t) const {
-        return Napi::Number::New(env, t.time_since_epoch().count());
-    }
-};
-
 template <typename T>
 struct toJs_impl<T, std::enable_if_t<std::is_arithmetic_v<T>>> {
     auto operator()(const Napi::Env& env, T n) const { return Napi::Number::New(env, n); }
@@ -182,6 +176,30 @@ struct toJs_impl<std::optional<T>> {
         if (val)
             return toJs(env, *val);
         return env.Null();
+    }
+};
+
+template <>
+struct toJs_impl<std::chrono::sys_seconds> {
+    auto operator()(const Napi::Env& env, std::chrono::sys_seconds t) const {
+        return Napi::Number::New(env, t.time_since_epoch().count());
+    }
+};
+
+// Returns {"url": "...", "key": buffer} object; both values will be Null if the pic is not set.
+
+template <>
+struct toJs_impl<config::profile_pic> {
+    auto operator()(const Napi::Env& env, const config::profile_pic& pic) const {
+        auto obj = Napi::Object::New(env);
+        if (pic) {
+            obj["url"] = toJs(env, pic.url);
+            obj["key"] = toJs(env, pic.key);
+        } else {
+            obj["url"] = env.Null();
+            obj["key"] = env.Null();
+        }
+        return obj;
     }
 };
 
@@ -271,6 +289,10 @@ std::string printable(std::span<const unsigned char> x);
  * Keep the current priority if a wrapper
  */
 int64_t toPriority(Napi::Value x, int64_t currentPriority);
+int64_t toPriority(int64_t newPriority, int64_t currentPriority);
+
+std::optional<session::config::profile_pic> maybeNonemptyProfilePic(
+        Napi::Value x, const std::string& identifier);
 
 int64_t unix_timestamp_now();
 

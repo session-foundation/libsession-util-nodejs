@@ -24,6 +24,8 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     void setName(const Napi::CallbackInfo& info);
     void setNameTruncated(const Napi::CallbackInfo& info);
     void setNewProfilePic(const Napi::CallbackInfo& info);
+    void setUserConfig(const Napi::CallbackInfo& info);
+
     void setReuploadProfilePic(const Napi::CallbackInfo& info);
     Napi::Value getProfileUpdatedSeconds(const Napi::CallbackInfo& info);
 
