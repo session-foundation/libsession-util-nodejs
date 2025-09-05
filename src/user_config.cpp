@@ -21,6 +21,8 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("getName", &UserConfigWrapper::getName),
                     InstanceMethod("getProfilePic", &UserConfigWrapper::getProfilePic),
                     InstanceMethod(
+                            "getProfilePicWithKeyHex", &UserConfigWrapper::getProfilePicWithKeyHex),
+                    InstanceMethod(
                             "getProfileUpdatedSeconds",
                             &UserConfigWrapper::getProfileUpdatedSeconds),
                     InstanceMethod(
@@ -194,6 +196,19 @@ Napi::Value UserConfigWrapper::getProfileUpdatedSeconds(const Napi::CallbackInfo
     return wrapResult(info, [&] {
         auto env = info.Env();
         return config.get_profile_updated();
+    });
+}
+
+Napi::Value UserConfigWrapper::getProfilePicWithKeyHex(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&]() -> std::optional<std::string> {
+        auto env = info.Env();
+        auto pic = config.get_profile_pic();
+        // if pic.key and url are set, return a combined string with both merged by a hash, and the
+        // key in hex
+        if (!pic.url.empty() && !pic.key.empty()) {
+            return std::string(pic.url + "#" + to_hex(pic.key));
+        }
+        return std::nullopt;
     });
 }
 
