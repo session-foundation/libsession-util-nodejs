@@ -17,24 +17,7 @@ declare module 'libsession_util_nodejs' {
     setPriority: (priority: number) => void;
     setName: (name: string) => void;
     setNameTruncated: (name: string) => void;
-    /**
-     *
-     * Batch set user config fields.
-     * Set a field to null to not change it
-     * for example,
-     * - set newProfilePic to null to not change the profile picture
-     * - set newProfilePic to url: null, key: null to erase it
-     *
-     * `name` set to null means to not change it, but `name` set to `''` means to erase it
-     */
-    setUserConfig: (details: {
-      priority: number | null;
-      name: string | null;
-      newProfilePic: ProfilePicture | null;
-      reuploadProfilePic: ProfilePicture | null;
-      enableBlindedMsgRequest: boolean | null;
-      noteToSelfExpiry: number | null;
-    }) => void;
+
     /**
      * Call this when uploading a new profile picture (i.e. not an auto reupload)
      */
@@ -77,7 +60,6 @@ declare module 'libsession_util_nodejs' {
     public setNameTruncated: UserConfigWrapper['setNameTruncated'];
     public setNewProfilePic: UserConfigWrapper['setNewProfilePic'];
     public setReuploadProfilePic: UserConfigWrapper['setReuploadProfilePic'];
-    public setUserConfig: UserConfigWrapper['setUserConfig'];
     public getProfileUpdatedSeconds: UserConfigWrapper['getProfileUpdatedSeconds'];
     public getProfilePicWithKeyHex: UserConfigWrapper['getProfilePicWithKeyHex'];
     public getEnableBlindedMsgRequest: UserConfigWrapper['getEnableBlindedMsgRequest'];
@@ -102,7 +84,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'setNameTruncated'>
     | MakeActionCall<UserConfigWrapper, 'setNewProfilePic'>
     | MakeActionCall<UserConfigWrapper, 'setReuploadProfilePic'>
-    | MakeActionCall<UserConfigWrapper, 'setUserConfig'>
     | MakeActionCall<UserConfigWrapper, 'getProfileUpdatedSeconds'>
     | MakeActionCall<UserConfigWrapper, 'getProfilePicWithKeyHex'>
     | MakeActionCall<UserConfigWrapper, 'getEnableBlindedMsgRequest'>

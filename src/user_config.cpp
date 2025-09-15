@@ -30,7 +30,6 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("setPriority", &UserConfigWrapper::setPriority),
                     InstanceMethod("setName", &UserConfigWrapper::setName),
                     InstanceMethod("setNameTruncated", &UserConfigWrapper::setNameTruncated),
-                    InstanceMethod("setUserConfig", &UserConfigWrapper::setUserConfig),
                     InstanceMethod("setNewProfilePic", &UserConfigWrapper::setNewProfilePic),
                     InstanceMethod(
                             "getEnableBlindedMsgRequest",
@@ -74,61 +73,6 @@ Napi::Value UserConfigWrapper::getProfilePic(const Napi::CallbackInfo& info) {
             obj["key"] = env.Null();
         }
         return obj;
-    });
-}
-
-void UserConfigWrapper::setUserConfig(const Napi::CallbackInfo& info) {
-    return wrapExceptions(info, [&] {
-        auto env = info.Env();
-        assertInfoLength(info, 1);
-        auto configObj = info[0];
-        assertIsObject(configObj);
-
-        auto obj = configObj.As<Napi::Object>();
-        if (obj.IsEmpty()) {
-            return;
-        }
-        // Handle priority field
-        if (auto priority = maybeNonemptyInt(
-                    obj.Get("priority"), "UserConfigWrapper::setUserConfig - priority")) {
-            auto new_priority = toPriority(priority.value(), config.get_nts_priority());
-            config.set_nts_priority(new_priority);
-        }
-
-        // Handle nameTruncated field
-        if (auto new_name = maybeNonemptyString(
-                    obj.Get("name"), "UserConfigWrapper::setUserConfig - name")) {
-            config.set_name_truncated(*new_name);  // truncates silently if too long
-        }
-
-        // Handle newProfilePic field
-        if (auto newProfilePic = maybeNonemptyProfilePic(
-                    obj.Get("newProfilePic"), "UserConfigWrapper::setUserConfig - newProfilePic")) {
-            config.set_profile_pic(*newProfilePic);
-        }
-
-        // Handle reuploadProfilePic field
-        if (auto reuploadProfilePic = maybeNonemptyProfilePic(
-                    obj.Get("reuploadProfilePic"),
-                    "UserConfigWrapper::setUserConfig - reuploadProfilePic")) {
-            config.set_reupload_profile_pic(*reuploadProfilePic);
-        }
-
-        // Handle enableBlindedMsgRequest field
-        if (auto blindedMsgReqCpp = maybeNonemptyBoolean(
-                    obj.Get("enableBlindedMsgRequest"),
-                    "UserConfigWrapper::setUserConfig - enableBlindedMsgRequest")) {
-            config.set_blinded_msgreqs(*blindedMsgReqCpp);
-        }
-
-        // Handle noteToSelfExpiry field
-        if (auto new_nts_expiry_seconds = maybeNonemptyInt(
-                    obj.Get("noteToSelfExpirySeconds"),
-                    "UserConfigWrapper::setUserConfig - noteToSelfExpiry")) {
-            auto expiry = obj.Get("noteToSelfExpiry");
-
-            config.set_nts_expiry(std::chrono::seconds{*new_nts_expiry_seconds});
-        }
     });
 }
 
