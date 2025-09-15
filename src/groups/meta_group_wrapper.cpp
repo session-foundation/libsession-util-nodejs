@@ -111,8 +111,6 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod(
                             "membersMarkPendingRemoval",
                             &MetaGroupWrapper::membersMarkPendingRemoval),
-                    InstanceMethod(
-                            "memberSetNameTruncated", &MetaGroupWrapper::memberSetNameTruncated),
                     InstanceMethod("memberSetSupplement", &MetaGroupWrapper::memberSetSupplement),
                     InstanceMethod("memberSetInviteSent", &MetaGroupWrapper::memberSetInviteSent),
                     InstanceMethod(
@@ -131,10 +129,7 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                             "memberSetPromotionAccepted",
                             &MetaGroupWrapper::memberSetPromotionAccepted),
                     InstanceMethod(
-                            "memberSetProfilePicture", &MetaGroupWrapper::memberSetProfilePicture),
-                    InstanceMethod(
-                            "memberSetProfileUpdatedSeconds",
-                            &MetaGroupWrapper::memberSetProfileUpdatedSeconds),
+                            "memberSetProfileDetails", &MetaGroupWrapper::memberSetProfileDetails),
                     InstanceMethod(
                             "memberResetAllSendingState",
                             &MetaGroupWrapper::memberResetAllSendingState),
@@ -523,21 +518,6 @@ Napi::Value MetaGroupWrapper::memberConstructAndSet(const Napi::CallbackInfo& in
     });
 }
 
-void MetaGroupWrapper::memberSetNameTruncated(const Napi::CallbackInfo& info) {
-    wrapExceptions(info, [&] {
-        assertIsString(info[0]);
-        assertIsString(info[1]);
-
-        auto pubkeyHex = toCppString(info[0], "memberSetNameTruncated pubkeyHex");
-        auto newName = toCppString(info[1], "memberSetNameTruncated newName");
-        auto m = this->meta_group->members->get(pubkeyHex);
-        if (m) {
-            m->set_name(newName);
-            this->meta_group->members->set(*m);
-        }
-    });
-}
-
 void MetaGroupWrapper::memberSetSupplement(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertIsString(info[0]);
@@ -656,35 +636,30 @@ void MetaGroupWrapper::memberSetPromotionAccepted(const Napi::CallbackInfo& info
     });
 }
 
-void MetaGroupWrapper::memberSetProfilePicture(const Napi::CallbackInfo& info) {
+void MetaGroupWrapper::memberSetProfileDetails(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertInfoLength(info, 2);
         assertIsString(info[0]);
         assertIsObject(info[1]);
 
-        auto pubkeyHex = toCppString(info[0], "memberSetProfilePicture");
-        auto profilePicture = profile_pic_from_object(info[1]);
+        auto pubkeyHex = toCppString(info[0], "memberSetProfileDetails");
 
         auto m = this->meta_group->members->get(pubkeyHex);
-        if (m) {
+        auto argsAsObj = info[1].As<Napi::Object>();
+        auto updatedAtSeconds =
+                toCppSysSeconds(argsAsObj.Get("profileUpdatedSeconds"), "memberSetProfileDetails");
+
+        // if the profile details provided are more recent that the ones saved, update them
+        if (m && updatedAtSeconds > m->profile_updated) {
+            m->profile_updated = updatedAtSeconds;
+
+            auto profilePicture = profile_pic_from_object(argsAsObj.Get("profilePicture"));
             m->profile_picture = profilePicture;
-            this->meta_group->members->set(*m);
-        }
-    });
-}
 
-void MetaGroupWrapper::memberSetProfileUpdatedSeconds(const Napi::CallbackInfo& info) {
-    wrapExceptions(info, [&] {
-        assertInfoLength(info, 2);
-        assertIsString(info[0]);
-        assertIsObject(info[1]);
+            // this will truncate silently if the name is too long
+            auto newName = toCppString(argsAsObj.Get("name"), "memberSetProfileDetails newName");
+            m->set_name_truncated(newName);
 
-        auto pubkeyHex = toCppString(info[0], "memberSetProfiUpdatedSeconds");
-        auto updatedAtSeconds = maybeNonemptySysSeconds(info[1], "memberSetProfiUpdatedSeconds");
-
-        auto m = this->meta_group->members->get(pubkeyHex);
-        if (m) {
-            m->profile_updated = updatedAtSeconds.value();
             this->meta_group->members->set(*m);
         }
     });

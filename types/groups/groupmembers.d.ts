@@ -87,7 +87,6 @@ declare module 'libsession_util_nodejs' {
     memberGetAllPendingRemovals: () => Array<GroupMemberGet>;
 
     // setters
-    memberSetNameTruncated: (pubkeyHex: PubkeyType, newName: string) => void;
 
     /**
      * A member's invite state defaults to invite-not-sent.
@@ -117,8 +116,14 @@ declare module 'libsession_util_nodejs' {
     /** Called when the member accepted the promotion */
     memberSetPromotionAccepted: (pubkeyHex: PubkeyType) => void;
 
-    memberSetProfilePicture: (pubkeyHex: PubkeyType, profilePicture: ProfilePicture) => void;
-    memberSetProfileUpdatedSeconds: (pubkeyHex: PubkeyType, profileUpdatedSeconds: number) => void;
+    memberSetProfileDetails: (
+      pubkeyHex: PubkeyType,
+      profileDetails: {
+        profileUpdatedSeconds: number;
+        name: string;
+        profilePicture: ProfilePicture;
+      }
+    ) => void;
     memberResetAllSendingState: () => boolean;
     memberSetSupplement: (pubkeyHex: PubkeyType) => void;
     membersMarkPendingRemoval: (members: Array<PubkeyType>, withMessages: boolean) => void;

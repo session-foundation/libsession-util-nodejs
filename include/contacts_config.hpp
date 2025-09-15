@@ -20,7 +20,6 @@ class ContactsConfigWrapper : public ConfigBaseImpl,
     Napi::Value get(const Napi::CallbackInfo& info);
     Napi::Value getAll(const Napi::CallbackInfo& info);
     void set(const Napi::CallbackInfo& info);
-    Napi::Value setProfileUpdatedSeconds(const Napi::CallbackInfo& info);
     Napi::Value erase(const Napi::CallbackInfo& info);
 };
 

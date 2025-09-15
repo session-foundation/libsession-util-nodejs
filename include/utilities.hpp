@@ -63,10 +63,12 @@ std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& ident
 std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
         Napi::Value x, const std::string& identifier);
 
+std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier);
+
 bool toCppBoolean(Napi::Value x, const std::string& identifier);
 
-// If the object is null/undef/empty returns nullopt, otherwise if a String returns a std::string of
-// the value.  Throws if something else.
+// If the object is null/undef/empty returns nullopt, otherwise if a String returns a
+// std::string of the value.  Throws if something else.
 std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string& identifier);
 
 // If the object is null/undef/empty returns nullopt, otherwise if a Uint8Array returns a
@@ -74,8 +76,8 @@ std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string&
 std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(
         Napi::Value x, const std::string& identifier);
 
-// Implementation struct of toJs(); we add specializations of this for any C++ types we want to be
-// able to convert into JS types.
+// Implementation struct of toJs(); we add specializations of this for any C++ types we want to
+// be able to convert into JS types.
 template <typename T, typename SFINAE = void>
 struct toJs_impl {
     // If this gets instantiated it means we're missing a specialization and so fail to compile:
@@ -219,8 +221,8 @@ static Napi::Array get_all_impl(const Napi::CallbackInfo& info, size_t size, It 
     });
 }
 
-// Wraps a string in an optional<string_view> which will be nullopt if the input string is empty.
-// This is particularly useful with `toJs` to convert empty strings into Null.
+// Wraps a string in an optional<string_view> which will be nullopt if the input string is
+// empty. This is particularly useful with `toJs` to convert empty strings into Null.
 inline std::optional<std::string_view> maybe_string(std::string_view val) {
     if (val.empty())
         return std::nullopt;
@@ -258,8 +260,8 @@ auto wrapResult(const Napi::Env& env, Call&& call) {
     }
 }
 
-// Similar to wrapResult(), but a small shortcut to allow passing `info` instead of `info.Env()` as
-// the first argument.
+// Similar to wrapResult(), but a small shortcut to allow passing `info` instead of `info.Env()`
+// as the first argument.
 template <typename Call>
 auto wrapResult(const Napi::CallbackInfo& info, Call&& call) {
     return wrapResult(info.Env(), std::forward<Call>(call));

@@ -149,7 +149,18 @@ std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
         return std::chrono::sys_seconds{std::chrono::seconds{num}};
     }
 
-    throw std::invalid_argument{"maybeNonemptyTime with invalid type, called from " + identifier};
+    throw std::invalid_argument{
+            "maybeNonemptySysSeconds with invalid type, called from " + identifier};
+}
+
+std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier) {
+
+    if (x.IsNumber()) {
+        auto num = x.As<Napi::Number>().Int64Value();
+        return std::chrono::sys_seconds{std::chrono::seconds{num}};
+    }
+
+    throw std::invalid_argument{"toCppSysSeconds with invalid type, called from " + identifier};
 }
 
 std::optional<session::config::profile_pic> maybeNonemptyProfilePic(
