@@ -5,22 +5,6 @@
 
 namespace session::nodeapi {
 
-// Returns {"url": "...", "key": buffer} object; both values will be Null if the pic is not set.
-
-template <>
-struct toJs_impl<config::profile_pic> {
-    Napi::Object operator()(const Napi::Env& env, const config::profile_pic& pic) {
-        auto obj = Napi::Object::New(env);
-        if (pic) {
-            obj["url"] = toJs(env, pic.url);
-            obj["key"] = toJs(env, pic.key);
-        } else {
-            obj["url"] = env.Null();
-            obj["key"] = env.Null();
-        }
-        return obj;
-    }
-};
 
 // Constructs a profile_pic from a Napi::Value which must be either Null or an Object; if an
 // Object then it *must* contain "url" (string or null) and "key" (uint8array of size 32 or

@@ -44,6 +44,7 @@ struct toJs_impl<contact_info> {
         obj["nickname"] = toJs(env, maybe_string(contact.nickname));
         obj["approved"] = toJs(env, contact.approved);
         obj["approvedMe"] = toJs(env, contact.approved_me);
+        obj["profileUpdatedSeconds"] = toJs(env, contact.profile_updated);
         obj["blocked"] = toJs(env, contact.blocked);
         obj["priority"] = toJs(env, contact.priority);
         obj["createdAtSeconds"] = toJs(env, contact.created);
@@ -65,6 +66,7 @@ void ContactsConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("getAll", &ContactsConfigWrapper::getAll),
                     InstanceMethod("set", &ContactsConfigWrapper::set),
                     InstanceMethod("erase", &ContactsConfigWrapper::erase),
+
             });
 }
 
@@ -122,8 +124,6 @@ void ContactsConfigWrapper::set(const Napi::CallbackInfo& info) {
                   // created time)
                 contact.created = unix_timestamp_now();
 
-        if (auto name = maybeNonemptyString(obj.Get("name"), "contacts.set name"))
-            contact.set_name(std::move(*name));
         if (auto nickname = maybeNonemptyString(obj.Get("nickname"), "contacts.set nickname"))
             contact.set_nickname(std::move(*nickname));
         else
@@ -139,12 +139,25 @@ void ContactsConfigWrapper::set(const Napi::CallbackInfo& info) {
                 toCppString(obj.Get("expirationMode"), "contacts.set expirationMode"));
         contact.exp_timer = std::chrono::seconds{toCppInteger(
                 obj.Get("expirationTimerSeconds"), "contacts.set expirationTimerSeconds")};
-        if (auto pic = obj.Get("profilePicture"); !pic.IsUndefined())
-            contact.profile_picture = profile_pic_from_object(pic);
-        else
-            contact.profile_picture.clear();
-        // if no profile picture are given from the JS side,
-        // reset that user profile picture
+
+        auto newProfileUpdateSeconds = toCppSysSeconds(
+                obj.Get("profileUpdatedSeconds"), "contacts.set, profileUpdatedSeconds");
+
+        // if the saved profile info is older than the new one, update it and the profile fields
+        // provided
+        if (contact.profile_updated < newProfileUpdateSeconds) {
+            contact.profile_updated = newProfileUpdateSeconds;
+
+            if (auto name = maybeNonemptyString(obj.Get("name"), "contacts.set name"))
+                contact.set_name(std::move(*name));
+
+            // if no profile picture are given from the JS side,
+            // reset that user profile picture
+            if (auto pic = obj.Get("profilePicture"); !pic.IsUndefined())
+                contact.profile_picture = profile_pic_from_object(pic);
+            else
+                contact.profile_picture.clear();
+        }
 
         config.set(contact);
     });

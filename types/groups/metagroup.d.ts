@@ -97,7 +97,6 @@ declare module 'libsession_util_nodejs' {
     public memberGetAll: MetaGroupWrapper['memberGetAll'];
     public memberGetAllPendingRemovals: MetaGroupWrapper['memberGetAllPendingRemovals'];
     public memberSetInviteAccepted: MetaGroupWrapper['memberSetInviteAccepted'];
-    public memberSetNameTruncated: MetaGroupWrapper['memberSetNameTruncated'];
     public memberSetPromoted: MetaGroupWrapper['memberSetPromoted'];
     public memberSetPromotionAccepted: MetaGroupWrapper['memberSetPromotionAccepted'];
     public memberSetPromotionSent: MetaGroupWrapper['memberSetPromotionSent'];
@@ -107,7 +106,7 @@ declare module 'libsession_util_nodejs' {
     public memberSetInviteFailed: MetaGroupWrapper['memberSetInviteFailed'];
     public memberEraseAndRekey: MetaGroupWrapper['memberEraseAndRekey'];
     public membersMarkPendingRemoval: MetaGroupWrapper['membersMarkPendingRemoval'];
-    public memberSetProfilePicture: MetaGroupWrapper['memberSetProfilePicture'];
+    public memberSetProfileDetails: MetaGroupWrapper['memberSetProfileDetails'];
     public memberResetAllSendingState: MetaGroupWrapper['memberResetAllSendingState'];
     public memberSetSupplement: MetaGroupWrapper['memberSetSupplement'];
 
@@ -148,7 +147,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MetaGroupWrapper, 'memberGetAll'>
     | MakeActionCall<MetaGroupWrapper, 'memberGetAllPendingRemovals'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetInviteAccepted'>
-    | MakeActionCall<MetaGroupWrapper, 'memberSetNameTruncated'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetPromoted'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetPromotionFailed'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetPromotionSent'>
@@ -158,7 +156,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MetaGroupWrapper, 'memberSetInviteFailed'>
     | MakeActionCall<MetaGroupWrapper, 'memberEraseAndRekey'>
     | MakeActionCall<MetaGroupWrapper, 'membersMarkPendingRemoval'>
-    | MakeActionCall<MetaGroupWrapper, 'memberSetProfilePicture'>
+    | MakeActionCall<MetaGroupWrapper, 'memberSetProfileDetails'>
     | MakeActionCall<MetaGroupWrapper, 'memberResetAllSendingState'>
     | MakeActionCall<MetaGroupWrapper, 'memberSetSupplement'>
 

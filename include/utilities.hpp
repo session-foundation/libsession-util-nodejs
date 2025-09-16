@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "session/config/namespaces.hpp"
+#include "session/config/profile_pic.hpp"
 #include "session/types.hpp"
 #include "utilities.hpp"
 
@@ -59,11 +60,15 @@ std::vector<unsigned char> toCppBuffer(Napi::Value x, const std::string& identif
 int64_t toCppInteger(Napi::Value x, const std::string& identifier, bool allowUndefined = false);
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier);
 std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& identifier);
+std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
+        Napi::Value x, const std::string& identifier);
+
+std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier);
 
 bool toCppBoolean(Napi::Value x, const std::string& identifier);
 
-// If the object is null/undef/empty returns nullopt, otherwise if a String returns a std::string of
-// the value.  Throws if something else.
+// If the object is null/undef/empty returns nullopt, otherwise if a String returns a
+// std::string of the value.  Throws if something else.
 std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string& identifier);
 
 // If the object is null/undef/empty returns nullopt, otherwise if a Uint8Array returns a
@@ -71,8 +76,8 @@ std::optional<std::string> maybeNonemptyString(Napi::Value x, const std::string&
 std::optional<std::vector<unsigned char>> maybeNonemptyBuffer(
         Napi::Value x, const std::string& identifier);
 
-// Implementation struct of toJs(); we add specializations of this for any C++ types we want to be
-// able to convert into JS types.
+// Implementation struct of toJs(); we add specializations of this for any C++ types we want to
+// be able to convert into JS types.
 template <typename T, typename SFINAE = void>
 struct toJs_impl {
     // If this gets instantiated it means we're missing a specialization and so fail to compile:
@@ -176,6 +181,30 @@ struct toJs_impl<std::optional<T>> {
     }
 };
 
+template <>
+struct toJs_impl<std::chrono::sys_seconds> {
+    auto operator()(const Napi::Env& env, std::chrono::sys_seconds t) const {
+        return Napi::Number::New(env, t.time_since_epoch().count());
+    }
+};
+
+// Returns {"url": "...", "key": buffer} object; both values will be Null if the pic is not set.
+
+template <>
+struct toJs_impl<config::profile_pic> {
+    auto operator()(const Napi::Env& env, const config::profile_pic& pic) const {
+        auto obj = Napi::Object::New(env);
+        if (pic) {
+            obj["url"] = toJs(env, pic.url);
+            obj["key"] = toJs(env, pic.key);
+        } else {
+            obj["url"] = env.Null();
+            obj["key"] = env.Null();
+        }
+        return obj;
+    }
+};
+
 // Helper for various "get_all" functions that copy [it...end) into a Napi::Array via toJs().
 // Throws a Napi::Error on any exception.
 template <typename It, typename EndIt>
@@ -192,8 +221,8 @@ static Napi::Array get_all_impl(const Napi::CallbackInfo& info, size_t size, It 
     });
 }
 
-// Wraps a string in an optional<string_view> which will be nullopt if the input string is empty.
-// This is particularly useful with `toJs` to convert empty strings into Null.
+// Wraps a string in an optional<string_view> which will be nullopt if the input string is
+// empty. This is particularly useful with `toJs` to convert empty strings into Null.
 inline std::optional<std::string_view> maybe_string(std::string_view val) {
     if (val.empty())
         return std::nullopt;
@@ -231,8 +260,8 @@ auto wrapResult(const Napi::Env& env, Call&& call) {
     }
 }
 
-// Similar to wrapResult(), but a small shortcut to allow passing `info` instead of `info.Env()` as
-// the first argument.
+// Similar to wrapResult(), but a small shortcut to allow passing `info` instead of `info.Env()`
+// as the first argument.
 template <typename Call>
 auto wrapResult(const Napi::CallbackInfo& info, Call&& call) {
     return wrapResult(info.Env(), std::forward<Call>(call));
@@ -262,6 +291,10 @@ std::string printable(std::span<const unsigned char> x);
  * Keep the current priority if a wrapper
  */
 int64_t toPriority(Napi::Value x, int64_t currentPriority);
+int64_t toPriority(int64_t newPriority, int64_t currentPriority);
+
+std::optional<session::config::profile_pic> maybeNonemptyProfilePic(
+        Napi::Value x, const std::string& identifier);
 
 int64_t unix_timestamp_now();
 

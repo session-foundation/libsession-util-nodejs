@@ -10,9 +10,9 @@ declare module 'libsession_util_nodejs' {
     init: (secretKey: Uint8Array, dump: Uint8Array | null) => void;
     /** This function is used to free wrappers from memory only */
     free: () => void;
-    get: (pubkeyHex: string) => ContactInfo | null;
+    get: (pubkeyHex: string) => ContactInfoGet | null;
     set: (contact: ContactInfoSet) => void;
-    getAll: () => Array<ContactInfo>;
+    getAll: () => Array<ContactInfoGet>;
     erase: (pubkeyHex: string) => void;
   };
 
@@ -26,12 +26,25 @@ declare module 'libsession_util_nodejs' {
 
   type ContactInfoShared = WithPriority & {
     id: string;
-    name?: string;
     nickname?: string;
-    profilePicture?: ProfilePicture;
-    createdAtSeconds: number; // can only be set the first time a contact is created, a new change won't override the value in the wrapper.
+    /**
+     * Can only be set the first time a contact is created, a new change won't override the value in the wrapper.
+     */
+    createdAtSeconds: number;
     expirationMode?: DisappearingMessageConversationModeType;
     expirationTimerSeconds?: number;
+    /**
+     * A name & profile pic change won't be applied unless this value is more recent than the currently saved one.
+     */
+    profileUpdatedSeconds: number;
+    /**
+     * see `profileUpdatedSeconds` for more info.
+     */
+    name?: string;
+    /**
+     * see `profileUpdatedSeconds` for more info.
+     */
+    profilePicture?: ProfilePicture;
   };
 
   export type ContactInfoSet = ContactInfoShared & {
@@ -40,7 +53,7 @@ declare module 'libsession_util_nodejs' {
     blocked?: boolean;
   };
 
-  export type ContactInfo = ContactInfoShared & {
+  export type ContactInfoGet = ContactInfoShared & {
     approved: boolean;
     approvedMe: boolean;
     blocked: boolean;

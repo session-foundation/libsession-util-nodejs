@@ -34,7 +34,6 @@ declare module 'libsession_util_nodejs' {
    */
   export class BlindingWrapperNode {
     public static blindVersionPubkey: BlindingWrapper['blindVersionPubkey'];
-    public static blindVersionSignRequest: BlindingWrapper['blindVersionSignRequest'];
     public static blindVersionSign: BlindingWrapper['blindVersionSign'];
   }
 
