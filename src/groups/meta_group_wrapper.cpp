@@ -649,8 +649,11 @@ void MetaGroupWrapper::memberSetProfileDetails(const Napi::CallbackInfo& info) {
         auto updatedAtSeconds =
                 toCppSysSeconds(argsAsObj.Get("profileUpdatedSeconds"), "memberSetProfileDetails");
 
-        // if the profile details provided are more recent that the ones saved, update them
-        if (m && updatedAtSeconds > m->profile_updated) {
+        // if the profile details provided are more recent that the ones saved, update them.
+        // we also allow anything when our current value is 0, as it means we haven't got an updated
+        // profileDetails yet
+        if (m && (updatedAtSeconds > m->profile_updated ||
+                  m->profile_updated.time_since_epoch().count() == 0)) {
             m->profile_updated = updatedAtSeconds;
 
             auto profilePicture = profile_pic_from_object(argsAsObj.Get("profilePicture"));

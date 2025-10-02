@@ -145,7 +145,8 @@ void ContactsConfigWrapper::set(const Napi::CallbackInfo& info) {
 
         // if the saved profile info is older than the new one, update it and the profile fields
         // provided
-        if (contact.profile_updated < newProfileUpdateSeconds) {
+        if (contact.profile_updated.time_since_epoch().count() == 0 ||
+            contact.profile_updated < newProfileUpdateSeconds) {
             contact.profile_updated = newProfileUpdateSeconds;
 
             if (auto name = maybeNonemptyString(obj.Get("name"), "contacts.set name"))
