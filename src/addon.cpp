@@ -14,7 +14,6 @@
 Napi::ThreadSafeFunction tsfn;
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
-    using namespace session::nodeapi;
 
     tsfn = Napi::ThreadSafeFunction::New(
             env,
@@ -40,20 +39,20 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     });
     oxen::log::set_level_default(oxen::log::Level::info);
 
-    ConstantsWrapper::Init(env, exports);
+    session::nodeapi::ConstantsWrapper::Init(env, exports);
 
     // Group wrappers init
-    MetaGroupWrapper::Init(env, exports);
+    session::nodeapi::MetaGroupWrapper::Init(env, exports);
 
     // User wrappers init
-    UserConfigWrapper::Init(env, exports);
-    ContactsConfigWrapper::Init(env, exports);
-    UserGroupsWrapper::Init(env, exports);
-    ConvoInfoVolatileWrapper::Init(env, exports);
+    session::nodeapi::UserConfigWrapper::Init(env, exports);
+    session::nodeapi::ContactsConfigWrapper::Init(env, exports);
+    session::nodeapi::UserGroupsWrapper::Init(env, exports);
+    session::nodeapi::ConvoInfoVolatileWrapper::Init(env, exports);
 
     // Fully static wrappers init
-    MultiEncryptWrapper::Init(env, exports);
-    BlindingWrapper::Init(env, exports);
+    session::nodeapi::MultiEncryptWrapper::Init(env, exports);
+    session::nodeapi::BlindingWrapper::Init(env, exports);
 
     return exports;
 }

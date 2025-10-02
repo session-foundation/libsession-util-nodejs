@@ -20,6 +20,22 @@ declare module 'libsession_util_nodejs' {
       senderEd25519Pubkey: Uint8Array;
       domain: EncryptionDomain;
     }) => Uint8Array | null;
+    /**
+     * Throws if the encryption fails
+     */
+    attachmentEncrypt: (opts: {
+      seed: Uint8Array;
+      data: Uint8Array;
+      domain: 'attachment' | 'profilePic';
+      allowLarge: boolean;
+    }) => { encryptedData: Uint8Array; encryptionKey: Uint8Array };
+    /**
+     *
+     * Throws if the decryption fails
+     */
+    attachmentDecrypt: (opts: { encryptedData: Uint8Array; decryptionKey: Uint8Array }) => {
+      decryptedData: Uint8Array;
+    };
   };
 
   export type MultiEncryptActionsCalls = MakeWrapperActionCalls<MultiEncryptWrapper>;
@@ -30,6 +46,8 @@ declare module 'libsession_util_nodejs' {
   export class MultiEncryptWrapperNode {
     public static multiEncrypt: MultiEncryptWrapper['multiEncrypt'];
     public static multiDecryptEd25519: MultiEncryptWrapper['multiDecryptEd25519'];
+    public static attachmentDecrypt: MultiEncryptWrapper['attachmentDecrypt'];
+    public static attachmentEncrypt: MultiEncryptWrapper['attachmentEncrypt'];
   }
 
   /**
@@ -39,5 +57,7 @@ declare module 'libsession_util_nodejs' {
    */
   export type MultiEncryptActionsType =
     | MakeActionCall<MultiEncryptWrapper, 'multiEncrypt'>
-    | MakeActionCall<MultiEncryptWrapper, 'multiDecryptEd25519'>;
+    | MakeActionCall<MultiEncryptWrapper, 'multiDecryptEd25519'>
+    | MakeActionCall<MultiEncryptWrapper, 'attachmentDecrypt'>
+    | MakeActionCall<MultiEncryptWrapper, 'attachmentEncrypt'>;
 }
