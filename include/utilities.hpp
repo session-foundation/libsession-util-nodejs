@@ -149,9 +149,11 @@ struct toJs_impl<std::vector<unsigned char>> {
 template <>
 struct toJs_impl<std::vector<std::byte>> {
     auto operator()(const Napi::Env& env, std::vector<std::byte> b) const {
-        auto data = b.data();
-        auto data_uchar = reinterpret_cast<const unsigned char*>(data, b.size());
-        return Napi::Buffer<uint8_t>::Copy(env, data_uchar, b.size());
+        return Napi::Buffer<uint8_t>::Copy(
+            env,
+            reinterpret_cast<const unsigned char*>(b.data()),
+            b.size()
+        );
     }
 };
 

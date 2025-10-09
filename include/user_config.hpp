@@ -20,7 +20,6 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     Napi::Value getPriority(const Napi::CallbackInfo& info);
     Napi::Value getName(const Napi::CallbackInfo& info);
     Napi::Value getProfilePic(const Napi::CallbackInfo& info);
-    Napi::Value getProfilePicWithKeyHex(const Napi::CallbackInfo& info);
 
     void setPriority(const Napi::CallbackInfo& info);
     void setName(const Napi::CallbackInfo& info);
