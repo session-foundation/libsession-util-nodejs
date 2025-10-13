@@ -145,6 +145,38 @@ struct toJs_impl<std::vector<unsigned char>> {
     }
 };
 
+// this wrap std::vector<std::byte> to Uint8array in the js world
+template <>
+struct toJs_impl<std::vector<std::byte>> {
+    auto operator()(const Napi::Env& env, std::vector<std::byte> b) const {
+        return Napi::Buffer<uint8_t>::Copy(
+            env,
+            reinterpret_cast<const unsigned char*>(b.data()),
+            b.size()
+        );
+    }
+};
+
+// this wrap std::array<std::byte> to Uint8array in the js world
+template <std::size_t N>
+struct toJs_impl<std::array<std::byte, N>> {
+    auto operator()(const Napi::Env& env, const std::array<std::byte, N>& b) const {
+        const auto* data_uchar = reinterpret_cast<const uint8_t*>(b.data());
+        return Napi::Buffer<uint8_t>::Copy(env, data_uchar, b.size());
+    }
+};
+
+// this wrap std::span<std::byte> to Uint8array in the js world
+template <>
+struct toJs_impl<std::span<std::byte>> {
+    auto operator()(const Napi::Env& env, std::span<std::byte> b) const {
+        auto data = b.data();
+        auto data_uchar = reinterpret_cast<const unsigned char*>(data, b.size());
+
+        return Napi::Buffer<uint8_t>::Copy(env, data_uchar, b.size());
+    }
+};
+
 template <typename T>
 struct toJs_impl<T, std::enable_if_t<std::is_base_of_v<Napi::Value, T>>> {
     auto operator()(const Napi::Env& env, const T& val) { return val; }
