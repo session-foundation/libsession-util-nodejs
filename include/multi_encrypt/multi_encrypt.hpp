@@ -1,6 +1,7 @@
 #pragma once
 
 #include <napi.h>
+#include <oxenc/hex.h>
 
 #include <algorithm>
 #include <span>
@@ -13,6 +14,7 @@
 #include "session/random.hpp"
 
 namespace session::nodeapi {
+
 
 class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
   public:
@@ -36,6 +38,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                 "multiDecryptEd25519",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
+                        // Attachments encrypt/decrypt
                         StaticMethod<&MultiEncryptWrapper::attachmentDecrypt>(
                                 "attachmentDecrypt",
                                 static_cast<napi_property_attributes>(
@@ -44,6 +47,25 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                 "attachmentEncrypt",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
+
+                        // Destination encrypt
+                        StaticMethod<&MultiEncryptWrapper::encryptFor1o1>(
+                                "encryptFor1o1",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
+
+                        // StaticMethod<&MultiEncryptWrapper::encryptForCommunity>(
+                        //         "encryptForCommunity",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
+                        // StaticMethod<&MultiEncryptWrapper::encryptForCommunityInbox>(
+                        //         "encryptForCommunityInbox",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
+                        // StaticMethod<&MultiEncryptWrapper::encryptForGroup>(
+                        //         "encryptForGroup",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
                 });
     }
 
@@ -176,6 +198,69 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             auto ret = Napi::Object::New(info.Env());
             ret.Set("encryptedData", toJs(info.Env(), encrypted.first));
             ret.Set("encryptionKey", toJs(info.Env(), encrypted.second));
+
+            return ret;
+        });
+    };
+
+    static Napi::Value encryptFor1o1(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect an single argument which is an array of objects with the following
+            // properties:
+            // {
+            //   "plaintext": Uint8Array,
+            //   "sentTimestampMs": Number,
+            //   "ed25519Privkey": Hexstring,
+            //   "recipientPubkey": Hexstring,
+            //   "proRotatingEd25519Privkey": Hexstring | null,
+            // }
+            //
+
+            assertInfoLength(info, 1);
+            assertIsArray(info[0], "encryptFor1o1 info[0]");
+
+            auto array = info[0].As<Napi::Array>();
+
+            if (array.IsEmpty())
+                throw std::invalid_argument("encryptFor1o1 received empty");
+
+            std::vector<std::vector<uint8_t>> ready_to_send(array.Length());
+            for (uint32_t i = 0; i < array.Length(); i++) {
+                auto itemValue = array.Get(i);
+                if (!itemValue.IsObject()) {
+                    throw std::invalid_argument("encryptFor1o1 itemValue is not an object");
+                }
+                auto obj = itemValue.As<Napi::Object>();
+
+                assertIsUInt8Array(obj.Get("plaintext"), "encryptFor1o1.obj.message");
+                auto plaintext = toCppBuffer(obj.Get("plaintext"), "encryptFor1o1.obj.message");
+
+                assertIsNumber(obj.Get("sentTimestampMs"), "encryptFor1o1.obj.sentTimestampMs");
+                auto sentTimestampMs =
+                        toCppMs(obj.Get("sentTimestampMs"), "encryptFor1o1.obj.sentTimestampMs");
+
+                assertIsString(obj.Get("ed25519Privkey"));
+                auto ed25519PrivkeyHex =
+                        toCppString(obj.Get("ed25519Privkey"), "encryptFor1o1.obj.ed25519Privkey");
+
+                assertIsString(obj.Get("recipientPubkey"));
+                auto recipientPubkeyHex = toCppString(
+                        obj.Get("recipientPubkey"), "encryptFor1o1.obj.recipientPubkey");
+
+                assertIsStringOrNull(obj.Get("proRotatingEd25519Privkey"));
+                auto proRotatingEd25519PrivkeyHex = maybeNonemptyString(
+                        obj.Get("proRotatingEd25519Privkey"),
+                        "encryptFor1o1.obj.proRotatingEd25519Privkey");
+                ready_to_send[i] = session::encode_for_1o1(
+                        plaintext,
+                        from_hex_to_span(ed25519PrivkeyHex),
+                        sentTimestampMs,
+                        from_hex_to_array<33>(recipientPubkeyHex),
+                        from_hex_to_span(proRotatingEd25519PrivkeyHex.value_or("")));
+            }
+
+            auto ret = Napi::Object::New(info.Env());
+            ret.Set("encryptedData", toJs(info.Env(), ready_to_send));
 
             return ret;
         });

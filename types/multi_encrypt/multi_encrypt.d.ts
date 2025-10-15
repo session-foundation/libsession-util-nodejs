@@ -36,6 +36,16 @@ declare module 'libsession_util_nodejs' {
     attachmentDecrypt: (opts: { encryptedData: Uint8Array; decryptionKey: Uint8Array }) => {
       decryptedData: Uint8Array;
     };
+
+    encryptFor1o1: (
+      opts: Array<{
+        plaintext: Uint8Array;
+        sentTimestampMs: number;
+        ed25519Privkey: Uint8Array;
+        recipientPubkey: Uint8Array;
+        proRotatingEd25519Privkey?: Uint8Array;
+      }>
+    ) => Array<Uint8Array>;
   };
 
   export type MultiEncryptActionsCalls = MakeWrapperActionCalls<MultiEncryptWrapper>;
@@ -48,6 +58,7 @@ declare module 'libsession_util_nodejs' {
     public static multiDecryptEd25519: MultiEncryptWrapper['multiDecryptEd25519'];
     public static attachmentDecrypt: MultiEncryptWrapper['attachmentDecrypt'];
     public static attachmentEncrypt: MultiEncryptWrapper['attachmentEncrypt'];
+    public static encryptFor1o1: MultiEncryptWrapper['encryptFor1o1'];
   }
 
   /**
@@ -59,5 +70,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MultiEncryptWrapper, 'multiEncrypt'>
     | MakeActionCall<MultiEncryptWrapper, 'multiDecryptEd25519'>
     | MakeActionCall<MultiEncryptWrapper, 'attachmentDecrypt'>
-    | MakeActionCall<MultiEncryptWrapper, 'attachmentEncrypt'>;
+    | MakeActionCall<MultiEncryptWrapper, 'attachmentEncrypt'>
+    | MakeActionCall<MultiEncryptWrapper, 'encryptFor1o1'>;
 }

@@ -64,6 +64,7 @@ std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
         Napi::Value x, const std::string& identifier);
 
 std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier);
+std::chrono::milliseconds toCppMs(Napi::Value x, const std::string& identifier);
 
 bool toCppBoolean(Napi::Value x, const std::string& identifier);
 
@@ -150,10 +151,7 @@ template <>
 struct toJs_impl<std::vector<std::byte>> {
     auto operator()(const Napi::Env& env, std::vector<std::byte> b) const {
         return Napi::Buffer<uint8_t>::Copy(
-            env,
-            reinterpret_cast<const unsigned char*>(b.data()),
-            b.size()
-        );
+                env, reinterpret_cast<const unsigned char*>(b.data()), b.size());
     }
 };
 
@@ -352,5 +350,13 @@ Napi::Object decrypt_result_to_JS(
         const Napi::Env& env, const std::pair<std::string, std::vector<unsigned char>> decrypted);
 
 confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const Napi::Object& obj);
+
+std::span<const uint8_t> from_hex_to_span(std::string_view x);
+
+template <std::size_t N>
+std::array<uint8_t, N> spanToArray(std::span<const unsigned char> span);
+
+template <std::size_t N>
+std::array<uint8_t, N> from_hex_to_array(std::string_view x);
 
 }  // namespace session::nodeapi
