@@ -1,6 +1,16 @@
 /// <reference path="../shared.d.ts" />
 
 declare module 'libsession_util_nodejs' {
+  type WithEncryptedData = { encryptedData: Uint8Array };
+  type WithPlaintext = { plaintext: Uint8Array };
+  type WithSentTimestampMs = { sentTimestampMs: number };
+  type WithSenderEd25519Privkey = { senderEd25519Privkey: string };
+  type WithRecipientPubkey = { recipientPubkey: string };
+  type WithCommunityPubkey = { communityPubkey: string };
+  type WithGroupEd25519Pubkey = { groupEd25519Pubkey: string };
+  type WithGroupEncPrivKey = { groupEncPrivKey: string };
+  type WithProRotatingEd25519Privkey = { proRotatingEd25519Privkey: string | null };
+
   type MultiEncryptWrapper = {
     multiEncrypt: (opts: {
       /**
@@ -28,23 +38,49 @@ declare module 'libsession_util_nodejs' {
       data: Uint8Array;
       domain: 'attachment' | 'profilePic';
       allowLarge: boolean;
-    }) => { encryptedData: Uint8Array; encryptionKey: Uint8Array };
+    }) => WithEncryptedData & { encryptionKey: Uint8Array };
     /**
      *
      * Throws if the decryption fails
      */
-    attachmentDecrypt: (opts: { encryptedData: Uint8Array; decryptionKey: Uint8Array }) => {
+    attachmentDecrypt: (opts: WithEncryptedData & { decryptionKey: Uint8Array }) => {
       decryptedData: Uint8Array;
     };
 
     encryptFor1o1: (
-      opts: Array<{
-        plaintext: Uint8Array;
-        sentTimestampMs: number;
-        ed25519Privkey: Uint8Array;
-        recipientPubkey: Uint8Array;
-        proRotatingEd25519Privkey?: Uint8Array;
-      }>
+      opts: Array<
+        WithPlaintext &
+          WithSentTimestampMs &
+          WithSenderEd25519Privkey &
+          WithRecipientPubkey &
+          WithProRotatingEd25519Privkey
+      >
+    ) => Array<Uint8Array>;
+
+    encryptForCommunityInbox: (
+      opts: Array<
+        WithPlaintext &
+          WithSentTimestampMs &
+          WithSenderEd25519Privkey &
+          WithRecipientPubkey &
+          WithCommunityPubkey &
+          WithProRotatingEd25519Privkey
+      >
+    ) => Array<Uint8Array>;
+
+    encryptForCommunity: (
+      opts: Array<WithPlaintext & WithProRotatingEd25519Privkey>
+    ) => Array<Uint8Array>;
+
+    encryptForGroup: (
+      opts: Array<
+        WithPlaintext &
+          WithSenderEd25519Privkey &
+          WithRecipientPubkey &
+          WithGroupEd25519Pubkey &
+          WithGroupEncPrivKey &
+          WithProRotatingEd25519Privkey
+      >
     ) => Array<Uint8Array>;
   };
 

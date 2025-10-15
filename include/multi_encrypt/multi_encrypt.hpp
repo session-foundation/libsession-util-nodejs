@@ -15,6 +15,65 @@
 
 namespace session::nodeapi {
 
+inline std::vector<unsigned char> extractPlaintext(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsUInt8Array(obj.Get("plaintext"), identifier);
+    auto plaintext = toCppBuffer(obj.Get("plaintext"), identifier);
+    return plaintext;
+}
+
+inline std::chrono::milliseconds extractSentTimestampMs(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsNumber(obj.Get("sentTimestampMs"), identifier);
+    auto sentTimestampMs = toCppMs(obj.Get("sentTimestampMs"), identifier);
+    return sentTimestampMs;
+}
+
+inline std::span<const unsigned char> extractSenderEd25519PrivkeyAsSpan(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsString(obj.Get("senderEd25519Privkey"));
+    auto ed25519PrivkeyHex = toCppString(obj.Get("senderEd25519Privkey"), identifier);
+    return from_hex_to_span(ed25519PrivkeyHex);
+}
+
+inline session::array_uc33 extractRecipientPubkeyAsArray(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsString(obj.Get("recipientPubkey"));
+    auto recipientPubkeyHex = toCppString(obj.Get("recipientPubkey"), identifier);
+    return from_hex_to_array<33>(recipientPubkeyHex);
+}
+
+inline session::array_uc32 extractCommunityPubkeyAsArray(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsString(obj.Get("communityPubkey"));
+    auto communityPubkeyHex = toCppString(obj.Get("communityPubkey"), identifier);
+    return from_hex_to_array<32>(communityPubkeyHex);
+}
+
+inline session::array_uc33 extractGroupEd25519PubkeyAsArray(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsString(obj.Get("groupEd25519Pubkey"));
+    auto communityPubkeyHex = toCppString(obj.Get("groupEd25519Pubkey"), identifier);
+    return from_hex_to_array<33>(communityPubkeyHex);
+}
+
+inline cleared_uc32 extractGroupEncPrivKeyAsArray(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsString(obj.Get("groupEncPrivKey"));
+    auto groupEncPrivKeyHex = toCppString(obj.Get("groupEncPrivKey"), identifier);
+    auto arr = from_hex_to_array<32>(groupEncPrivKeyHex);
+    cleared_uc32 result;
+    std::copy(arr.begin(), arr.end(), result.begin());
+    return result;
+}
+
+inline std::span<const unsigned char> extractProRotatingEd25519PrivkeyAsSpan(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsStringOrNull(obj.Get("proRotatingEd25519Privkey"));
+    auto proRotatingEd25519PrivkeyHex =
+            maybeNonemptyString(obj.Get("proRotatingEd25519Privkey"), identifier);
+    return from_hex_to_span(proRotatingEd25519PrivkeyHex.value_or(""));
+}
 
 class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
   public:
@@ -54,18 +113,18 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
 
-                        // StaticMethod<&MultiEncryptWrapper::encryptForCommunity>(
-                        //         "encryptForCommunity",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
-                        // StaticMethod<&MultiEncryptWrapper::encryptForCommunityInbox>(
-                        //         "encryptForCommunityInbox",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
-                        // StaticMethod<&MultiEncryptWrapper::encryptForGroup>(
-                        //         "encryptForGroup",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
+                        StaticMethod<&MultiEncryptWrapper::encryptForCommunity>(
+                                "encryptForCommunity",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
+                        StaticMethod<&MultiEncryptWrapper::encryptForCommunityInbox>(
+                                "encryptForCommunityInbox",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
+                        StaticMethod<&MultiEncryptWrapper::encryptForGroup>(
+                                "encryptForGroup",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
                 });
     }
 
@@ -203,69 +262,6 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
         });
     };
 
-    static Napi::Value encryptFor1o1(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
-            // we expect an single argument which is an array of objects with the following
-            // properties:
-            // {
-            //   "plaintext": Uint8Array,
-            //   "sentTimestampMs": Number,
-            //   "ed25519Privkey": Hexstring,
-            //   "recipientPubkey": Hexstring,
-            //   "proRotatingEd25519Privkey": Hexstring | null,
-            // }
-            //
-
-            assertInfoLength(info, 1);
-            assertIsArray(info[0], "encryptFor1o1 info[0]");
-
-            auto array = info[0].As<Napi::Array>();
-
-            if (array.IsEmpty())
-                throw std::invalid_argument("encryptFor1o1 received empty");
-
-            std::vector<std::vector<uint8_t>> ready_to_send(array.Length());
-            for (uint32_t i = 0; i < array.Length(); i++) {
-                auto itemValue = array.Get(i);
-                if (!itemValue.IsObject()) {
-                    throw std::invalid_argument("encryptFor1o1 itemValue is not an object");
-                }
-                auto obj = itemValue.As<Napi::Object>();
-
-                assertIsUInt8Array(obj.Get("plaintext"), "encryptFor1o1.obj.message");
-                auto plaintext = toCppBuffer(obj.Get("plaintext"), "encryptFor1o1.obj.message");
-
-                assertIsNumber(obj.Get("sentTimestampMs"), "encryptFor1o1.obj.sentTimestampMs");
-                auto sentTimestampMs =
-                        toCppMs(obj.Get("sentTimestampMs"), "encryptFor1o1.obj.sentTimestampMs");
-
-                assertIsString(obj.Get("ed25519Privkey"));
-                auto ed25519PrivkeyHex =
-                        toCppString(obj.Get("ed25519Privkey"), "encryptFor1o1.obj.ed25519Privkey");
-
-                assertIsString(obj.Get("recipientPubkey"));
-                auto recipientPubkeyHex = toCppString(
-                        obj.Get("recipientPubkey"), "encryptFor1o1.obj.recipientPubkey");
-
-                assertIsStringOrNull(obj.Get("proRotatingEd25519Privkey"));
-                auto proRotatingEd25519PrivkeyHex = maybeNonemptyString(
-                        obj.Get("proRotatingEd25519Privkey"),
-                        "encryptFor1o1.obj.proRotatingEd25519Privkey");
-                ready_to_send[i] = session::encode_for_1o1(
-                        plaintext,
-                        from_hex_to_span(ed25519PrivkeyHex),
-                        sentTimestampMs,
-                        from_hex_to_array<33>(recipientPubkeyHex),
-                        from_hex_to_span(proRotatingEd25519PrivkeyHex.value_or("")));
-            }
-
-            auto ret = Napi::Object::New(info.Env());
-            ret.Set("encryptedData", toJs(info.Env(), ready_to_send));
-
-            return ret;
-        });
-    };
-
     static Napi::Value attachmentDecrypt(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             assertInfoLength(info, 1);
@@ -309,6 +305,190 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             return ret;
         });
     };
-};
 
+    static Napi::Value encryptFor1o1(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect an single argument which is an array of objects with the following
+            // properties:
+            // {
+            //   "plaintext": Uint8Array,
+            //   "sentTimestampMs": Number,
+            //   "senderEd25519Privkey": Hexstring,
+            //   "recipientPubkey": Hexstring,
+            //   "proRotatingEd25519Privkey": Hexstring | null,
+            // }
+            //
+
+            assertInfoLength(info, 1);
+            assertIsArray(info[0], "encryptFor1o1 info[0]");
+
+            auto array = info[0].As<Napi::Array>();
+
+            if (array.IsEmpty())
+                throw std::invalid_argument("encryptFor1o1 received empty");
+
+            std::vector<std::vector<uint8_t>> ready_to_send(array.Length());
+            for (uint32_t i = 0; i < array.Length(); i++) {
+                auto itemValue = array.Get(i);
+                if (!itemValue.IsObject()) {
+                    throw std::invalid_argument("encryptFor1o1 itemValue is not an object");
+                }
+                auto obj = itemValue.As<Napi::Object>();
+
+                ready_to_send[i] = session::encode_for_1o1(
+                        extractPlaintext(obj, "encryptFor1o1.obj.plaintext"),
+                        extractSenderEd25519PrivkeyAsSpan(
+                                obj, "encryptFor1o1.obj.senderEd25519Privkey"),
+                        extractSentTimestampMs(obj, "encryptFor1o1.obj.sentTimestampMs"),
+                        extractRecipientPubkeyAsArray(obj, "encryptFor1o1.obj.recipientPubkey"),
+                        extractProRotatingEd25519PrivkeyAsSpan(
+                                obj, "encryptFor1o1.obj.proRotatingEd25519Privkey"));
+            }
+
+            auto ret = Napi::Object::New(info.Env());
+            ret.Set("encryptedData", toJs(info.Env(), ready_to_send));
+
+            return ret;
+        });
+    };
+
+    static Napi::Value encryptForCommunityInbox(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect an single argument which is an array of objects with the following
+            // properties:
+            // {
+            //   "plaintext": Uint8Array,
+            //   "senderEd25519Privkey": Hexstring,
+            //   "sentTimestampMs": Number,
+            //   "recipientPubkey": Hexstring,
+            //   "communityPubkey": Hexstring,
+            //   "proRotatingEd25519Privkey": Hexstring | null,
+            // }
+            //
+
+            assertInfoLength(info, 1);
+            assertIsArray(info[0], "encryptForCommunityInbox info[0]");
+
+            auto array = info[0].As<Napi::Array>();
+
+            if (array.IsEmpty())
+                throw std::invalid_argument("encryptForCommunityInbox received empty");
+
+            std::vector<std::vector<uint8_t>> ready_to_send(array.Length());
+            for (uint32_t i = 0; i < array.Length(); i++) {
+                auto itemValue = array.Get(i);
+                if (!itemValue.IsObject()) {
+                    throw std::invalid_argument(
+                            "encryptForCommunityInbox itemValue is not an object");
+                }
+                auto obj = itemValue.As<Napi::Object>();
+
+                ready_to_send[i] = session::encode_for_community_inbox(
+                        extractPlaintext(obj, "encryptForCommunityInbox.obj.plaintext"),
+                        extractSenderEd25519PrivkeyAsSpan(
+                                obj, "encryptForCommunityInbox.obj.senderEd25519Privkey"),
+                        extractSentTimestampMs(obj, "encryptForCommunityInbox.obj.sentTimestampMs"),
+                        extractRecipientPubkeyAsArray(
+                                obj, "encryptForCommunityInbox.obj.recipientPubkey"),
+                        extractCommunityPubkeyAsArray(
+                                obj, "encryptForCommunityInbox.obj.communityPubkey"),
+                        extractProRotatingEd25519PrivkeyAsSpan(
+                                obj, "encryptForCommunityInbox.obj.proRotatingEd25519Privkey"));
+            }
+
+            auto ret = Napi::Object::New(info.Env());
+            ret.Set("encryptedData", toJs(info.Env(), ready_to_send));
+
+            return ret;
+        });
+    };
+
+    static Napi::Value encryptForCommunity(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect an single argument which is an array of objects with the following
+            // properties:
+            // {
+            //   "plaintext": Uint8Array,
+            //   "proRotatingEd25519Privkey": Hexstring | null,
+            // }
+            //
+
+            assertInfoLength(info, 1);
+            assertIsArray(info[0], "encryptForCommunity info[0]");
+
+            auto array = info[0].As<Napi::Array>();
+
+            if (array.IsEmpty())
+                throw std::invalid_argument("encryptForCommunity received empty");
+
+            std::vector<std::vector<uint8_t>> ready_to_send(array.Length());
+            for (uint32_t i = 0; i < array.Length(); i++) {
+                auto itemValue = array.Get(i);
+                if (!itemValue.IsObject()) {
+                    throw std::invalid_argument("encryptForCommunity itemValue is not an object");
+                }
+                auto obj = itemValue.As<Napi::Object>();
+
+                ready_to_send[i] = session::encode_for_community(
+                        extractPlaintext(obj, "encryptForCommunity.obj.plaintext"),
+                        extractProRotatingEd25519PrivkeyAsSpan(
+                                obj, "encryptForCommunity.obj.proRotatingEd25519Privkey"));
+            }
+
+            auto ret = Napi::Object::New(info.Env());
+            ret.Set("encryptedData", toJs(info.Env(), ready_to_send));
+
+            return ret;
+        });
+    };
+
+    static Napi::Value encryptForGroup(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect an single argument which is an array of objects with the following
+            // properties:
+            // {
+            //   "plaintext": Uint8Array,
+            //   "senderEd25519Privkey": Hexstring,
+            //   "sentTimestampMs": Number,
+            //   "groupEd25519Pubkey": Hexstring,
+            //   "groupEncPrivKey": Hexstring,
+            //   "proRotatingEd25519Privkey": Hexstring | null,
+            // }
+            //
+
+            assertInfoLength(info, 1);
+            assertIsArray(info[0], "encryptForGroup info[0]");
+
+            auto array = info[0].As<Napi::Array>();
+
+            if (array.IsEmpty())
+                throw std::invalid_argument("encryptForGroup received empty");
+
+            std::vector<std::vector<uint8_t>> ready_to_send(array.Length());
+            for (uint32_t i = 0; i < array.Length(); i++) {
+                auto itemValue = array.Get(i);
+                if (!itemValue.IsObject()) {
+                    throw std::invalid_argument("encryptForGroup itemValue is not an object");
+                }
+                auto obj = itemValue.As<Napi::Object>();
+
+                ready_to_send[i] = session::encode_for_group(
+                        extractPlaintext(obj, "encryptForGroup.obj.plaintext"),
+                        extractSenderEd25519PrivkeyAsSpan(
+                                obj, "encryptForGroup.obj.senderEd25519Privkey"),
+                        extractSentTimestampMs(obj, "encryptForGroup.obj.sentTimestampMs"),
+                        extractGroupEd25519PubkeyAsArray(
+                                obj, "encryptForGroup.obj.recipientPubkey"),
+                        extractGroupEncPrivKeyAsArray(obj, "encryptForGroup.obj.groupEncPrivKey"),
+                        extractProRotatingEd25519PrivkeyAsSpan(
+                                obj, "encryptForGroup.obj.proRotatingEd25519Privkey"));
+            }
+
+            auto ret = Napi::Object::New(info.Env());
+            ret.Set("encryptedData", toJs(info.Env(), ready_to_send));
+
+            return ret;
+        });
+    };
+};
 };  // namespace session::nodeapi
