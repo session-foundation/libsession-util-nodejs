@@ -41,7 +41,6 @@ file(GLOB SOURCE_FILES src/*.cpp src/groups/*.cpp src/multi_encrypt/*.cpp)
 
 add_subdirectory(libsession-util)
 
-
 if(MSVC)
   # Windows is horrible
   add_compile_definitions(NOMINMAX)

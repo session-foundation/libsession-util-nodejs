@@ -32,7 +32,7 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
                                                         .As<Napi::Object>()
                                                         .Get("log")
                                                         .As<Napi::Function>();
-                    Napi::String jsStr = Napi::String::New(env, "libsession-util: " + *msg);
+                    Napi::String jsStr = Napi::String::New(env, "libsession: " + *msg);
                     consoleLog.Call({jsStr});
                     delete msg;
                 });

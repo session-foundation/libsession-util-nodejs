@@ -200,7 +200,7 @@ std::optional<session::config::profile_pic> maybeNonemptyProfilePic(
         // when the `x` obj is provided (i.e. not null), it should have those 2 fields set.
         // They can be empty (meaning to remove the profile pic), but not undefined/null, as the
         // object itself should have been undefined/null
-        throw new std::invalid_argument{"maybeNonemptyProfilePic with invalid input"};
+        throw std::invalid_argument{"maybeNonemptyProfilePic with invalid input"};
     }
     return session::config::profile_pic{*url, *key};
 
@@ -343,8 +343,4 @@ std::array<uint8_t, N> spanToArray(std::span<const unsigned char> span) {
     return result;
 }
 
-template <std::size_t N>
-std::array<uint8_t, N> from_hex_to_array(std::string_view x) {
-    return spanToArray<N>(session::to_span(oxenc::from_hex(x)));
-}
 }  // namespace session::nodeapi

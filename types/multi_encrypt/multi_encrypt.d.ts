@@ -3,13 +3,21 @@
 declare module 'libsession_util_nodejs' {
   type WithEncryptedData = { encryptedData: Uint8Array };
   type WithPlaintext = { plaintext: Uint8Array };
-  type WithSentTimestampMs = { sentTimestampMs: number };
-  type WithSenderEd25519Privkey = { senderEd25519Privkey: string };
+  type WithSentTimestampMs = {
+    /** in milliseconds */
+    sentTimestampMs: number;
+  };
+  type WithSenderEd25519Seed = {
+    /**
+     * 32 bytes
+     */
+    senderEd25519Seed: Uint8Array;
+  };
   type WithRecipientPubkey = { recipientPubkey: string };
   type WithCommunityPubkey = { communityPubkey: string };
   type WithGroupEd25519Pubkey = { groupEd25519Pubkey: string };
-  type WithGroupEncPrivKey = { groupEncPrivKey: string };
-  type WithProRotatingEd25519Privkey = { proRotatingEd25519Privkey: string | null };
+  type WithGroupEncKey = { groupEncKey: string };
+  type WithProRotatingEd25519PrivKey = { proRotatingEd25519PrivKey: string | null };
 
   type MultiEncryptWrapper = {
     multiEncrypt: (opts: {
@@ -51,37 +59,37 @@ declare module 'libsession_util_nodejs' {
       opts: Array<
         WithPlaintext &
           WithSentTimestampMs &
-          WithSenderEd25519Privkey &
+          WithSenderEd25519Seed &
           WithRecipientPubkey &
-          WithProRotatingEd25519Privkey
+          WithProRotatingEd25519PrivKey
       >
-    ) => Array<Uint8Array>;
+    ) => { encryptedData: Array<Uint8Array> };
 
     encryptForCommunityInbox: (
       opts: Array<
         WithPlaintext &
           WithSentTimestampMs &
-          WithSenderEd25519Privkey &
+          WithSenderEd25519Seed &
           WithRecipientPubkey &
           WithCommunityPubkey &
-          WithProRotatingEd25519Privkey
+          WithProRotatingEd25519PrivKey
       >
-    ) => Array<Uint8Array>;
+    ) => { encryptedData: Array<Uint8Array> };
 
-    encryptForCommunity: (
-      opts: Array<WithPlaintext & WithProRotatingEd25519Privkey>
-    ) => Array<Uint8Array>;
+    encryptForCommunity: (opts: Array<WithPlaintext & WithProRotatingEd25519PrivKey>) => {
+      encryptedData: Array<Uint8Array>;
+    };
 
     encryptForGroup: (
       opts: Array<
         WithPlaintext &
-          WithSenderEd25519Privkey &
-          WithRecipientPubkey &
+          WithSenderEd25519Seed &
+          WithSentTimestampMs &
           WithGroupEd25519Pubkey &
-          WithGroupEncPrivKey &
-          WithProRotatingEd25519Privkey
+          WithGroupEncKey &
+          WithProRotatingEd25519PrivKey
       >
-    ) => Array<Uint8Array>;
+    ) => { encryptedData: Array<Uint8Array> };
   };
 
   export type MultiEncryptActionsCalls = MakeWrapperActionCalls<MultiEncryptWrapper>;
@@ -95,6 +103,9 @@ declare module 'libsession_util_nodejs' {
     public static attachmentDecrypt: MultiEncryptWrapper['attachmentDecrypt'];
     public static attachmentEncrypt: MultiEncryptWrapper['attachmentEncrypt'];
     public static encryptFor1o1: MultiEncryptWrapper['encryptFor1o1'];
+    public static encryptForCommunityInbox: MultiEncryptWrapper['encryptForCommunityInbox'];
+    public static encryptForCommunity: MultiEncryptWrapper['encryptForCommunity'];
+    public static encryptForGroup: MultiEncryptWrapper['encryptForGroup'];
   }
 
   /**
@@ -107,5 +118,8 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MultiEncryptWrapper, 'multiDecryptEd25519'>
     | MakeActionCall<MultiEncryptWrapper, 'attachmentDecrypt'>
     | MakeActionCall<MultiEncryptWrapper, 'attachmentEncrypt'>
-    | MakeActionCall<MultiEncryptWrapper, 'encryptFor1o1'>;
+    | MakeActionCall<MultiEncryptWrapper, 'encryptFor1o1'>
+    | MakeActionCall<MultiEncryptWrapper, 'encryptForCommunityInbox'>
+    | MakeActionCall<MultiEncryptWrapper, 'encryptForCommunity'>
+    | MakeActionCall<MultiEncryptWrapper, 'encryptForGroup'>;
 }
