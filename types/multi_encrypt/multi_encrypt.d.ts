@@ -19,6 +19,44 @@ declare module 'libsession_util_nodejs' {
   type WithGroupEncKey = { groupEncKey: string };
   type WithProRotatingEd25519PrivKey = { proRotatingEd25519PrivKey: string | null };
 
+  type WithContentOrEnvelope = { contentOrEnvelope: Uint8Array };
+  type WithContentPlaintext = {
+    contentPlaintextUnpadded: Uint8Array;
+  };
+  type WithNowMs = { nowMs: number };
+  type WithProBackendPubkey = {
+    /**
+     * HexString
+     */
+    proBackendPubkeyHex: string;
+  };
+
+  type ProProof = {
+    version: number;
+    genIndexHashB64: string;
+    rotatingPubkeyHex: string;
+    expiryMs: number;
+  };
+
+  type WithProProof = {
+    proProof: ProProof;
+  };
+  type Envelope = {
+    timestampMs: number;
+    /**
+     * HexString, 33 bytes, 66 chars
+     */
+    source: string | null;
+    /**
+     * HexString
+     */
+    proSigHex: string | null;
+  };
+
+  type WithDecryptedEnvelope = {
+    envelope: Envelope | null;
+  };
+
   type MultiEncryptWrapper = {
     multiEncrypt: (opts: {
       /**
@@ -90,6 +128,11 @@ declare module 'libsession_util_nodejs' {
           WithProRotatingEd25519PrivKey
       >
     ) => { encryptedData: Array<Uint8Array> };
+
+    decryptForCommunity: (
+      first: Array<WithContentOrEnvelope>,
+      second: WithNowMs & WithProBackendPubkey
+    ) => Array<WithProProof & WithDecryptedEnvelope & WithContentPlaintext>;
   };
 
   export type MultiEncryptActionsCalls = MakeWrapperActionCalls<MultiEncryptWrapper>;
@@ -106,6 +149,8 @@ declare module 'libsession_util_nodejs' {
     public static encryptForCommunityInbox: MultiEncryptWrapper['encryptForCommunityInbox'];
     public static encryptForCommunity: MultiEncryptWrapper['encryptForCommunity'];
     public static encryptForGroup: MultiEncryptWrapper['encryptForGroup'];
+
+    public static decryptForCommunity: MultiEncryptWrapper['decryptForCommunity'];
   }
 
   /**
@@ -121,5 +166,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MultiEncryptWrapper, 'encryptFor1o1'>
     | MakeActionCall<MultiEncryptWrapper, 'encryptForCommunityInbox'>
     | MakeActionCall<MultiEncryptWrapper, 'encryptForCommunity'>
-    | MakeActionCall<MultiEncryptWrapper, 'encryptForGroup'>;
+    | MakeActionCall<MultiEncryptWrapper, 'encryptForGroup'>
+    | MakeActionCall<MultiEncryptWrapper, 'decryptForCommunity'>;
 }

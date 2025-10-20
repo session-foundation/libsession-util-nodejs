@@ -163,6 +163,17 @@ std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& ident
     throw std::invalid_argument{"toCppSysSeconds with invalid type, called from " + identifier};
 }
 
+std::chrono::sys_time<std::chrono::milliseconds> toCppSysMs(
+        Napi::Value x, const std::string& identifier) {
+
+    if (x.IsNumber()) {
+        auto num = x.As<Napi::Number>().Int64Value();
+        return std::chrono::sys_time<std::chrono::milliseconds>{std::chrono::milliseconds{num}};
+    }
+
+    throw std::invalid_argument{"toCppSysMs with invalid type, called from " + identifier};
+}
+
 std::chrono::milliseconds toCppMs(Napi::Value x, const std::string& identifier) {
 
     if (x.IsNumber()) {
@@ -330,6 +341,10 @@ confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const 
 
 std::span<const uint8_t> from_hex_to_span(std::string_view x) {
     return session::to_span(oxenc::from_hex(x));
+}
+
+std::vector<unsigned char> from_hex_to_vector(std::string_view x) {
+    return session::to_vector(oxenc::from_hex(x));
 }
 
 template <std::size_t N>

@@ -65,6 +65,8 @@ std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
         Napi::Value x, const std::string& identifier);
 
 std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier);
+std::chrono::sys_time<std::chrono::milliseconds> toCppSysMs(
+        Napi::Value x, const std::string& identifier);
 std::chrono::milliseconds toCppMs(Napi::Value x, const std::string& identifier);
 
 bool toCppBoolean(Napi::Value x, const std::string& identifier);
@@ -372,6 +374,8 @@ std::array<uint8_t, N> from_hex_to_array(std::string x) {
     std::memcpy(result.data(), as_hex.data(), N);
     return result;
 }
+
+std::vector<unsigned char> from_hex_to_vector(std::string_view x);
 
 // Concept to match containers with a size() method
 template <typename T>
