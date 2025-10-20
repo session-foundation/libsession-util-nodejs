@@ -23,6 +23,9 @@ declare module 'libsession_util_nodejs' {
   type WithContentPlaintext = {
     contentPlaintextUnpadded: Uint8Array;
   };
+  type WithServerId = {
+    serverId: number;
+  };
   type WithNowMs = { nowMs: number };
   type WithProBackendPubkey = {
     /**
@@ -130,9 +133,9 @@ declare module 'libsession_util_nodejs' {
     ) => { encryptedData: Array<Uint8Array> };
 
     decryptForCommunity: (
-      first: Array<WithContentOrEnvelope>,
+      first: Array<WithContentOrEnvelope & WithServerId>,
       second: WithNowMs & WithProBackendPubkey
-    ) => Array<WithProProof & WithDecryptedEnvelope & WithContentPlaintext>;
+    ) => Array<WithProProof & WithDecryptedEnvelope & WithContentPlaintext & WithServerId>;
   };
 
   export type MultiEncryptActionsCalls = MakeWrapperActionCalls<MultiEncryptWrapper>;

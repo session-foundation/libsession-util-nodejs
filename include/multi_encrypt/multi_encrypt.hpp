@@ -142,9 +142,17 @@ inline std::optional<std::span<const unsigned char>> extractProRotatingEd25519Pr
 inline std::vector<unsigned char> extractContentOrEnvelope(
         const Napi::Object& obj, const std::string identifier) {
     assertIsUInt8Array(obj.Get("contentOrEnvelope"), identifier);
-    auto contentOrEnvelope = toCppBuffer(obj.Get("contentOrEnvelope"), identifier);
+    std::vector<unsigned char> contentOrEnvelope =
+            toCppBuffer(obj.Get("contentOrEnvelope"), identifier);
 
     return contentOrEnvelope;
+}
+
+inline uint32_t extractServerId(const Napi::Object& obj, const std::string identifier) {
+    assertIsNumber(obj.Get("serverId"), identifier);
+    auto serverId = toCppInteger(obj.Get("serverId"), identifier);
+
+    return serverId;
 }
 
 inline std::chrono::sys_time<std::chrono::milliseconds> extractNowSysMs(
@@ -628,6 +636,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             // we expect two arguments that match:
             // first: [{
             //   "contentOrEnvelope": Uint8Array,
+            //   "serverId": number,
             // }],
             // second: {
             //   "nowMs": number,
@@ -653,7 +662,8 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             auto proBackendPubkeyHex = extractProBackendPubkeyHex(
                     second, "decryptForCommunity.second.proBackendPubkeyHex");
 
-            std::vector<DecodedCommunityMessage> decrypted(first.Length());
+            std::vector<DecodedCommunityMessage> decrypted;
+            std::vector<uint32_t> decryptedServerIds;
 
             for (uint32_t i = 0; i < first.Length(); i++) {
                 auto itemValue = first.Get(i);
@@ -665,11 +675,14 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                 auto obj = itemValue.As<Napi::Object>();
 
                 try {
-                    decrypted[i] = session::decode_for_community(
-                            extractContentOrEnvelope(
-                                    obj, "decryptForCommunity.obj.contentOrEnvelope"),
-                            nowMs,
-                            proBackendPubkeyHex);
+                    uint32_t serverId = extractServerId(obj, "decryptForCommunity.obj.serverId");
+
+                    auto contentOrEnvelope = extractContentOrEnvelope(
+                            obj, "decryptForCommunity.obj.contentOrEnvelope");
+                    decrypted.push_back(
+                            session::decode_for_community(
+                                    contentOrEnvelope, nowMs, proBackendPubkeyHex));
+                    decryptedServerIds.push_back(serverId);
 
                 } catch (const std::exception& e) {
                     log::warning(
@@ -682,6 +695,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
             auto ret = Napi::Array::New(info.Env(), decrypted.size());
             uint32_t i = 0;
+
             for (auto& d : decrypted) {
                 auto to_insert = Napi::Object::New(info.Env());
                 std::span<unsigned char> content_plaintext_unpadded =
@@ -690,6 +704,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                 to_insert.Set(
                         "contentPlaintextUnpadded", toJs(info.Env(), content_plaintext_unpadded));
+                to_insert.Set("serverId", toJs(info.Env(), decryptedServerIds[i]));
                 to_insert.Set(
                         "envelope", d.envelope ? toJs(info.Env(), *d.envelope) : info.Env().Null());
 
