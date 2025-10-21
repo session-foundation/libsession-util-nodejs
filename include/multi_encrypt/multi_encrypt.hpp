@@ -261,6 +261,41 @@ inline session::array_uc32 extractEd25519PrivateKeyHex(
     return arr;
 }
 
+std::vector<unsigned char> extractEd25519GroupPubkeyHex(
+        const Napi::Object& obj, const std::string& identifier) {
+    assertIsString(obj.Get("ed25519GroupPubkeyHex"), identifier);
+    auto ed25519GroupPubkeyHex = toCppString(obj.Get("ed25519GroupPubkeyHex"), identifier);
+    assert_length(ed25519GroupPubkeyHex, 66, identifier);
+
+    auto arr = from_hex_to_vector(ed25519GroupPubkeyHex);
+
+    return arr;
+}
+
+std::vector<std::vector<unsigned char>> extractGroupEncKeys(
+        const Napi::Object& obj, const std::string& identifier) {
+    assertIsArray(obj.Get("groupEncKeys"), identifier);
+
+    auto asArray = obj.Get("groupEncKeys").As<Napi::Array>();
+    std::vector<std::vector<unsigned char>> groupEncKeys;
+    groupEncKeys.reserve(asArray.Length());
+
+    for (uint32_t i = 0; i < asArray.Length(); i++) {
+        auto itemValue = asArray.Get(i);
+        assertIsUInt8Array(itemValue, "extractGroupEncKeys");
+
+        auto encKey = itemValue.As<Napi::Uint8Array>();
+
+        std::vector<unsigned char> cppEncKey =
+                toCppBuffer(encKey, "extractGroupEncKeys.groupEncKey");
+        assert_length(cppEncKey, 32, "extractGroupEncKeys.groupEncKey");
+
+        groupEncKeys.emplace_back(cppEncKey);
+    }
+
+    return groupEncKeys;
+}
+
 class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
   public:
     MultiEncryptWrapper(const Napi::CallbackInfo& info) :
@@ -321,10 +356,10 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                 "decryptFor1o1",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
-                        // StaticMethod<&MultiEncryptWrapper::decryptForGroup>(
-                        //         "decryptForGroup",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
+                        StaticMethod<&MultiEncryptWrapper::decryptForGroup>(
+                                "decryptForGroup",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
                 });
     }
 
@@ -549,7 +584,8 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                 ready_to_send[i] = session::encode_for_1o1(
                         extractPlaintext(obj, "encryptFor1o1.obj.plaintext"),
-                        extractSenderEd25519SeedAsVector(obj, "encryptFor1o1.obj.senderEd25519Seed"),
+                        extractSenderEd25519SeedAsVector(
+                                obj, "encryptFor1o1.obj.senderEd25519Seed"),
                         extractSentTimestampMs(obj, "encryptFor1o1.obj.sentTimestampMs"),
                         extractRecipientPubkeyAsArray(obj, "encryptFor1o1.obj.recipientPubkey"),
                         extractProRotatingEd25519PrivKeyAsSpan(
@@ -877,6 +913,106 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                     log::warning(
                             cat,
                             "decryptFor1o1: Failed to decrypt "
+                            "message at index {}",
+                            i);
+                }
+            }
+
+            auto ret = Napi::Array::New(info.Env(), decrypted.size());
+            uint32_t i = 0;
+
+            for (auto& d : decrypted) {
+                auto to_insert = Napi::Object::New(info.Env());
+
+                to_insert.Set("decodedEnvelope", toJs(info.Env(), d));
+                to_insert.Set("messageHash", toJs(info.Env(), decryptedMessageHashes[i]));
+
+                ret.Set(i, to_insert);
+                i++;
+            }
+
+            return ret;
+        });
+    };
+
+    static Napi::Value decryptForGroup(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect two arguments that match:
+            // first: [{
+            //   "envelopePayload": Uint8Array,
+            //   "messageHash": string,
+            // }],
+            // second: {
+            //   "nowMs": number,
+            //   "proBackendPubkeyHex": Hexstring,
+            //   "ed25519GroupPubkeyHex": Hexstring,
+            //   "groupEncKeys": Array<Uint8Array>,
+            //  }
+            //
+
+            assertInfoLength(info, 2);
+            assertIsArray(info[0], "decryptForGroup info[0]");
+            assertIsObject(info[1]);
+
+            auto first = info[0].As<Napi::Array>();
+
+            if (first.IsEmpty())
+                throw std::invalid_argument("decryptForGroup first received empty");
+
+            auto second = info[1].As<Napi::Object>();
+
+            if (second.IsEmpty())
+                throw std::invalid_argument("decryptForGroup second received empty");
+
+            auto nowMs = extractNowSysMs(second, "decryptForGroup.second.nowMs");
+            auto proBackendPubkeyHex = extractProBackendPubkeyHex(
+                    second, "decryptForGroup.second.proBackendPubkeyHex");
+
+            std::vector<DecodedEnvelope> decrypted;
+            std::vector<std::string> decryptedMessageHashes;
+
+            DecodeEnvelopeKey keys{};
+            auto groupPk = extractEd25519GroupPubkeyHex(
+                    second, "decryptForGroup.second.ed25519GroupPubkeyHex");
+
+            // this has to be vector and not spans, the memory gets freed by the function
+            std::vector<std::vector<unsigned char>> groupEncKeysVec =
+                    extractGroupEncKeys(second, "decryptForGroup.second.groupEncKeys");
+
+            std::vector<std::span<const unsigned char>> span_group_enc_keys;
+            span_group_enc_keys.reserve(span_group_enc_keys.size());
+            for (const auto& inner : groupEncKeysVec) {
+                span_group_enc_keys.emplace_back(inner);
+            }
+
+            // Create a span of spans
+            std::span<std::span<const unsigned char>> groupEncKeys(span_group_enc_keys);
+
+            keys.decrypt_keys = groupEncKeys;
+
+            for (uint32_t i = 0; i < first.Length(); i++) {
+                auto itemValue = first.Get(i);
+                if (!itemValue.IsObject()) {
+                    throw std::invalid_argument(
+                            "decryptForGroup itemValue is not an "
+                            "object");
+                }
+                auto obj = itemValue.As<Napi::Object>();
+
+                try {
+                    std::string messageHash =
+                            extractMessageHash(obj, "decryptForGroup.obj.messageHash");
+
+                    auto envelopePayload =
+                            extractEnvelopePayload(obj, "decryptForGroup.obj.envelopePayload");
+                    decrypted.push_back(
+                            session::decode_envelope(
+                                    keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                    decryptedMessageHashes.push_back(messageHash);
+                } catch (const std::exception& e) {
+                    log::warning(
+                            cat,
+                            "decryptForGroup: Failed to decrypt "
                             "message at index {}",
                             i);
                 }

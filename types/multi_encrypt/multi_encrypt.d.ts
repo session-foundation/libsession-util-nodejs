@@ -200,10 +200,10 @@ declare module 'libsession_util_nodejs' {
       second: WithNowMs & WithProBackendPubkey & WithEd25519PrivateKeyHex
     ) => Array<WithDecodedEnvelope & WithMessageHash>;
 
-    // decryptForGroup: (
-    //   first: Array<WithEnvelopePayload>,
-    //   second: WithNowMs & WithProBackendPubkey & WithEd25519GroupPubkeyHex & WithGroupEncryptionKeys
-    // ) => Array<{}>;
+    decryptForGroup: (
+      first: Array<WithEnvelopePayload & WithMessageHash>,
+      second: WithNowMs & WithProBackendPubkey & WithEd25519GroupPubkeyHex & WithGroupEncryptionKeys
+    ) => Array<WithDecodedEnvelope & WithMessageHash>;
   };
 
   export type MultiEncryptActionsCalls = MakeWrapperActionCalls<MultiEncryptWrapper>;
@@ -223,7 +223,7 @@ declare module 'libsession_util_nodejs' {
 
     public static decryptForCommunity: MultiEncryptWrapper['decryptForCommunity'];
     public static decryptFor1o1: MultiEncryptWrapper['decryptFor1o1'];
-    // public static decryptForGroup: MultiEncryptWrapper['decryptForGroup'];
+    public static decryptForGroup: MultiEncryptWrapper['decryptForGroup'];
   }
 
   /**
@@ -241,6 +241,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MultiEncryptWrapper, 'encryptForCommunity'>
     | MakeActionCall<MultiEncryptWrapper, 'encryptForGroup'>
     | MakeActionCall<MultiEncryptWrapper, 'decryptForCommunity'>
-    | MakeActionCall<MultiEncryptWrapper, 'decryptFor1o1'>;
-  // | MakeActionCall<MultiEncryptWrapper, 'decryptForGroup'>;
+    | MakeActionCall<MultiEncryptWrapper, 'decryptFor1o1'>
+    | MakeActionCall<MultiEncryptWrapper, 'decryptForGroup'>;
 }
