@@ -18,8 +18,10 @@ void assertInfoMinLength(const Napi::CallbackInfo& info, const int minLength) {
     checkOrThrow(info.Length() < minLength, "Invalid number of min length arguments");
 }
 
-void assertIsStringOrNull(const Napi::Value& val) {
-    checkOrThrow(val.IsString() || val.IsNull(), "Wrong arguments: expected string or null");
+void assertIsStringOrNull(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsString() || val.IsNull(),
+            std::string("Wrong arguments: expected string or null" + identifier).c_str());
 }
 
 void assertIsNumber(const Napi::Value& val, const std::string& identifier) {
@@ -53,12 +55,14 @@ void assertIsUInt8Array(const Napi::Value& val, const std::string& identifier) {
             std::string("Wrong arguments: expected uint8Array" + identifier).c_str());
 }
 
-void assertIsString(const Napi::Value& val) {
-    checkOrThrow(val.IsString(), "Wrong arguments: expected string");
+void assertIsString(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsString(), std::string("Wrong arguments: expected string" + identifier).c_str());
 }
 
-void assertIsBoolean(const Napi::Value& val) {
-    checkOrThrow(val.IsBoolean(), "Wrong arguments: expected boolean");
+void assertIsBoolean(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsBoolean(), std::string("Wrong arguments: expected boolean" + identifier).c_str());
 }
 
 std::string toCppString(Napi::Value x, const std::string& identifier) {

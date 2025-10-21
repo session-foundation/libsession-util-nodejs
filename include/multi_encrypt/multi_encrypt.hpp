@@ -49,6 +49,65 @@ struct toJs_impl<session::Envelope> {
     }
 };
 
+template <>
+struct toJs_impl<session::DecodedEnvelope> {
+    Napi::Object operator()(const Napi::Env& env, const session::DecodedEnvelope decoded_envelope) {
+        auto obj = Napi::Object::New(env);
+
+        obj.Set("envelope", toJs(env, decoded_envelope.envelope));
+        obj.Set("contentPlaintextUnpadded", toJs(env, decoded_envelope.content_plaintext));
+        obj.Set("sessionId",
+                toJs(env, "05" + oxenc::to_hex(decoded_envelope.sender_x25519_pubkey)));
+        obj.Set("decodedPro", decoded_envelope.pro ? toJs(env, decoded_envelope.pro) : env.Null());
+
+        return obj;
+    }
+};
+
+template <>
+struct toJs_impl<SESSION_PROTOCOL_PRO_FEATURES> {
+    Napi::Object operator()(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
+        Napi::Array arr = Napi::Array::New(env);
+        uint32_t index = 0;
+
+        if (bitset == SESSION_PROTOCOL_PRO_FEATURES_NIL) {
+            return arr;
+        }
+
+        if (bitset & (SESSION_PROTOCOL_PRO_FEATURES_10K_CHARACTER_LIMIT)) {
+            arr[index] = Napi::String::New(env, "10K_CHARACTER_LIMIT");
+            index++;
+        }
+        if (bitset & SESSION_PROTOCOL_PRO_FEATURES_PRO_BADGE) {
+            arr[index++] = Napi::String::New(env, "PRO_BADGE");
+            index++;
+        }
+        if (bitset & SESSION_PROTOCOL_PRO_FEATURES_ANIMATED_AVATAR) {
+            arr[index++] = Napi::String::New(env, "ANIMATED_AVATAR");
+            index++;
+        }
+        return arr;
+    }
+};
+
+template <>
+struct toJs_impl<session::DecodedPro> {
+    Napi::Object operator()(const Napi::Env& env, const session::DecodedPro decoded_pro) {
+        auto obj = Napi::Object::New(env);
+
+        obj["proStatus"] =
+                toJs(env,
+                     decoded_pro.status == ProStatus::InvalidProBackendSig ? "InvalidProBackendSig"
+                     : decoded_pro.status == ProStatus::InvalidUserSig     ? "InvalidUserSig"
+                     : decoded_pro.status == ProStatus::Valid              ? "Valid"
+                                                                           : "Expired");
+        obj["proProof"] = toJs(env, decoded_pro.proof);
+        obj["proFeatures"] = toJs(env, decoded_pro.features);
+
+        return obj;
+    }
+};
+
 inline std::vector<unsigned char> extractPlaintext(
         const Napi::Object& obj, const std::string identifier) {
 
@@ -66,11 +125,11 @@ inline std::chrono::milliseconds extractSentTimestampMs(
     return sentTimestampMs;
 }
 
-inline std::span<const unsigned char> extractSenderEd25519SeedAsSpan(
+inline std::vector<unsigned char> extractSenderEd25519SeedAsVector(
         const Napi::Object& obj, const std::string identifier) {
 
     assertIsUInt8Array(
-            obj.Get("senderEd25519Seed"), "extractSenderEd25519SeedAsSpan.senderEd25519Seed");
+            obj.Get("senderEd25519Seed"), "extractSenderEd25519SeedAsVector.senderEd25519Seed");
 
     auto senderEd25519Seed = toCppBuffer(obj.Get("senderEd25519Seed"), identifier);
     assert_length(senderEd25519Seed, 32, identifier);
@@ -80,7 +139,7 @@ inline std::span<const unsigned char> extractSenderEd25519SeedAsSpan(
 
 inline session::array_uc33 extractRecipientPubkeyAsArray(
         const Napi::Object& obj, const std::string identifier) {
-    assertIsString(obj.Get("recipientPubkey"));
+    assertIsString(obj.Get("recipientPubkey"), identifier);
     auto recipientPubkeyHex = toCppString(obj.Get("recipientPubkey"), identifier);
     assert_length(recipientPubkeyHex, 66, identifier);
 
@@ -89,7 +148,7 @@ inline session::array_uc33 extractRecipientPubkeyAsArray(
 
 inline session::array_uc32 extractCommunityPubkeyAsArray(
         const Napi::Object& obj, const std::string identifier) {
-    assertIsString(obj.Get("communityPubkey"));
+    assertIsString(obj.Get("communityPubkey"), identifier);
     auto communityPubkeyHex = toCppString(obj.Get("communityPubkey"), identifier);
     assert_length(communityPubkeyHex, 64, identifier);
 
@@ -98,7 +157,7 @@ inline session::array_uc32 extractCommunityPubkeyAsArray(
 
 inline session::array_uc33 extractGroupEd25519PubkeyAsArray(
         const Napi::Object& obj, const std::string identifier) {
-    assertIsString(obj.Get("groupEd25519Pubkey"));
+    assertIsString(obj.Get("groupEd25519Pubkey"), identifier);
     std::string groupEd25519PubkeyHex = toCppString(obj.Get("groupEd25519Pubkey"), identifier);
 
     assert_length(groupEd25519PubkeyHex, 66, identifier);
@@ -109,7 +168,7 @@ inline session::array_uc33 extractGroupEd25519PubkeyAsArray(
 
 inline cleared_uc32 extractGroupEncKeyAsArray(
         const Napi::Object& obj, const std::string identifier) {
-    assertIsString(obj.Get("groupEncKey"));
+    assertIsString(obj.Get("groupEncKey"), identifier);
 
     auto groupEncKeyHex = toCppString(obj.Get("groupEncKey"), identifier);
     assert_length(groupEncKeyHex, 64, identifier);
@@ -122,16 +181,16 @@ inline cleared_uc32 extractGroupEncKeyAsArray(
     return result;
 }
 
-inline std::optional<std::span<const unsigned char>> extractProRotatingEd25519PrivKeyAsSpan(
+inline std::optional<std::vector<unsigned char>> extractProRotatingEd25519PrivKeyAsSpan(
         const Napi::Object& obj, const std::string identifier) {
-    assertIsStringOrNull(obj.Get("proRotatingEd25519PrivKey"));
+    assertIsStringOrNull(obj.Get("proRotatingEd25519PrivKey"), identifier);
     auto proRotatingEd25519PrivKeyHex =
             maybeNonemptyString(obj.Get("proRotatingEd25519PrivKey"), identifier);
 
     if (proRotatingEd25519PrivKeyHex.has_value() && proRotatingEd25519PrivKeyHex.value().size()) {
         assert_length(*proRotatingEd25519PrivKeyHex, 64, identifier);
 
-        auto ret = from_hex_to_span(*proRotatingEd25519PrivKeyHex);
+        auto ret = from_hex_to_vector(*proRotatingEd25519PrivKeyHex);
 
         return ret;
     }
@@ -155,6 +214,21 @@ inline uint32_t extractServerId(const Napi::Object& obj, const std::string ident
     return serverId;
 }
 
+inline std::string extractMessageHash(const Napi::Object& obj, const std::string identifier) {
+    assertIsString(obj.Get("messageHash"), identifier);
+    auto messageHash = toCppString(obj.Get("messageHash"), identifier);
+
+    return messageHash;
+}
+
+inline std::vector<unsigned char> extractEnvelopePayload(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsUInt8Array(obj.Get("envelopePayload"), identifier);
+    auto envelopePayload = toCppBuffer(obj.Get("envelopePayload"), identifier);
+
+    return envelopePayload;
+}
+
 inline std::chrono::sys_time<std::chrono::milliseconds> extractNowSysMs(
         const Napi::Object& obj, const std::string identifier) {
     assertIsNumber(obj.Get("nowMs"), identifier);
@@ -165,12 +239,24 @@ inline std::chrono::sys_time<std::chrono::milliseconds> extractNowSysMs(
 
 inline session::array_uc32 extractProBackendPubkeyHex(
         const Napi::Object& obj, const std::string identifier) {
-    assertIsString(obj.Get("proBackendPubkeyHex"));
+    assertIsString(obj.Get("proBackendPubkeyHex"), identifier);
 
     auto proBackendPubkeyHex = toCppString(obj.Get("proBackendPubkeyHex"), identifier);
     assert_length(proBackendPubkeyHex, 64, identifier);
 
     auto arr = from_hex_to_array<32>(proBackendPubkeyHex);
+
+    return arr;
+}
+
+inline session::array_uc32 extractEd25519PrivateKeyHex(
+        const Napi::Object& obj, const std::string identifier) {
+    assertIsString(obj.Get("ed25519PrivateKeyHex"), identifier);
+
+    auto ed25519PrivateKeyHex = toCppString(obj.Get("ed25519PrivateKeyHex"), identifier);
+    assert_length(ed25519PrivateKeyHex, 64, identifier);
+
+    auto arr = from_hex_to_array<32>(ed25519PrivateKeyHex);
 
     return arr;
 }
@@ -227,15 +313,18 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                         napi_writable | napi_configurable)),
 
                         // Destination decrypt
-                        // StaticMethod<&MultiEncryptWrapper::encryptFor1o1>(
-                        //         "encryptFor1o1",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
-
                         StaticMethod<&MultiEncryptWrapper::decryptForCommunity>(
                                 "decryptForCommunity",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
+                        StaticMethod<&MultiEncryptWrapper::decryptFor1o1>(
+                                "decryptFor1o1",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
+                        // StaticMethod<&MultiEncryptWrapper::decryptForGroup>(
+                        //         "decryptForGroup",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
                 });
     }
 
@@ -253,7 +342,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             auto ed25519SecretKey =
                     toCppBuffer(obj.Get("ed25519SecretKey"), "multiEncrypt.ed25519SecretKey");
 
-            assertIsString(obj.Get("domain"));
+            assertIsString(obj.Get("domain"), "multiEncrypt.domain");
             auto domain = toCppString(obj.Get("domain"), "multiEncrypt.domain");
 
             // handle the messages conversion
@@ -316,7 +405,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             auto sender_ed25519_pubkey = toCppBuffer(
                     obj.Get("senderEd25519Pubkey"), "multiDecryptEd25519.senderEd25519Pubkey");
 
-            assertIsString(obj.Get("domain"));
+            assertIsString(obj.Get("domain"), "multiDecryptEd25519.domain");
             auto domain = toCppString(obj.Get("domain"), "multiDecryptEd25519.domain");
 
             return session::decrypt_for_multiple_simple_ed25519(
@@ -345,7 +434,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
             assertIsUInt8Array(obj.Get("data"), "attachmentEncrypt.data");
             auto data = toCppBuffer(obj.Get("data"), "attachmentEncrypt.data");
 
-            assertIsString(obj.Get("domain"));
+            assertIsString(obj.Get("domain"), "attachmentEncrypt.domain");
             auto domain = toCppString(obj.Get("domain"), "attachmentEncrypt.domain");
 
             assertIsBoolean(obj.Get("allowLarge"));
@@ -460,7 +549,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                 ready_to_send[i] = session::encode_for_1o1(
                         extractPlaintext(obj, "encryptFor1o1.obj.plaintext"),
-                        extractSenderEd25519SeedAsSpan(obj, "encryptFor1o1.obj.senderEd25519Seed"),
+                        extractSenderEd25519SeedAsVector(obj, "encryptFor1o1.obj.senderEd25519Seed"),
                         extractSentTimestampMs(obj, "encryptFor1o1.obj.sentTimestampMs"),
                         extractRecipientPubkeyAsArray(obj, "encryptFor1o1.obj.recipientPubkey"),
                         extractProRotatingEd25519PrivKeyAsSpan(
@@ -507,7 +596,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                 ready_to_send[i] = session::encode_for_community_inbox(
                         extractPlaintext(obj, "encryptForCommunityInbox.obj.plaintext"),
-                        extractSenderEd25519SeedAsSpan(
+                        extractSenderEd25519SeedAsVector(
                                 obj, "encryptForCommunityInbox.obj.senderEd25519Seed"),
                         extractSentTimestampMs(obj, "encryptForCommunityInbox.obj.sentTimestampMs"),
                         extractRecipientPubkeyAsArray(
@@ -595,7 +684,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                 auto obj = itemValue.As<Napi::Object>();
 
                 auto plaintext = extractPlaintext(obj, "encryptForGroup.obj.plaintext");
-                auto senderEd25519Seed = extractSenderEd25519SeedAsSpan(
+                auto senderEd25519Seed = extractSenderEd25519SeedAsVector(
                         obj, "encryptForGroup.obj.senderEd25519Seed");
 
                 auto sentTimestampMs =
@@ -703,20 +792,104 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                 .subspan(0, d.content_plaintext_unpadded_size);
 
                 to_insert.Set(
+                        "envelope", d.envelope ? toJs(info.Env(), *d.envelope) : info.Env().Null());
+                to_insert.Set(
                         "contentPlaintextUnpadded", toJs(info.Env(), content_plaintext_unpadded));
                 to_insert.Set("serverId", toJs(info.Env(), decryptedServerIds[i]));
+
                 to_insert.Set(
-                        "envelope", d.envelope ? toJs(info.Env(), *d.envelope) : info.Env().Null());
+                        "proSigHex",
+                        d.pro_sig ? toJs(info.Env(), oxenc::to_hex(*d.pro_sig))
+                                  : info.Env().Null());
+                to_insert.Set("decodedPro", d.pro ? toJs(info.Env(), d.pro) : info.Env().Null());
 
-                if (d.pro_sig)
-                    to_insert.Set("proSigHex", toJs(info.Env(), oxenc::to_hex(*d.pro_sig)));
-                else
-                    to_insert.Set("proSigHex", info.Env().Null());
+                ret.Set(i, to_insert);
+                i++;
+            }
 
-                if (!d.pro.has_value())
-                    to_insert.Set("proProof", info.Env().Null());
-                else
-                    to_insert.Set("proProof", toJs(info.Env(), d.pro->proof));
+            return ret;
+        });
+    };
+
+    static Napi::Value decryptFor1o1(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect two arguments that match:
+            // first: [{
+            //   "envelopePayload": Uint8Array,
+            //   "messageHash": string,
+            // }],
+            // second: {
+            //   "nowMs": number,
+            //   "proBackendPubkeyHex": Hexstring,
+            //   "ed25519PrivateKeyHex": Hexstring,
+            //  }
+            //
+
+            assertInfoLength(info, 2);
+            assertIsArray(info[0], "decryptFor1o1 info[0]");
+            assertIsObject(info[1]);
+
+            auto first = info[0].As<Napi::Array>();
+
+            if (first.IsEmpty())
+                throw std::invalid_argument("decryptFor1o1 first received empty");
+
+            auto second = info[1].As<Napi::Object>();
+
+            if (second.IsEmpty())
+                throw std::invalid_argument("decryptFor1o1 second received empty");
+
+            auto nowMs = extractNowSysMs(second, "decryptFor1o1.second.nowMs");
+            auto proBackendPubkeyHex =
+                    extractProBackendPubkeyHex(second, "decryptFor1o1.second.proBackendPubkeyHex");
+
+            std::vector<DecodedEnvelope> decrypted;
+            std::vector<std::string> decryptedMessageHashes;
+
+            DecodeEnvelopeKey keys{};
+            auto keySpan = extractEd25519PrivateKeyHex(
+                    second, "decryptFor1o1.second.ed25519PrivateKeyHex");
+
+            std::vector<std::span<const unsigned char>> keySpans;
+            keySpans.emplace_back(keySpan.data(), keySpan.size());
+            keys.decrypt_keys = keySpans;
+
+            for (uint32_t i = 0; i < first.Length(); i++) {
+                auto itemValue = first.Get(i);
+                if (!itemValue.IsObject()) {
+                    throw std::invalid_argument(
+                            "decryptFor1o1 itemValue is not an "
+                            "object");
+                }
+                auto obj = itemValue.As<Napi::Object>();
+
+                try {
+                    std::string messageHash =
+                            extractMessageHash(obj, "decryptFor1o1.obj.messageHash");
+
+                    auto envelopePayload =
+                            extractEnvelopePayload(obj, "decryptFor1o1.obj.envelopePayload");
+                    decrypted.push_back(
+                            session::decode_envelope(
+                                    keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                    decryptedMessageHashes.push_back(messageHash);
+                } catch (const std::exception& e) {
+                    log::warning(
+                            cat,
+                            "decryptFor1o1: Failed to decrypt "
+                            "message at index {}",
+                            i);
+                }
+            }
+
+            auto ret = Napi::Array::New(info.Env(), decrypted.size());
+            uint32_t i = 0;
+
+            for (auto& d : decrypted) {
+                auto to_insert = Napi::Object::New(info.Env());
+
+                to_insert.Set("decodedEnvelope", toJs(info.Env(), d));
+                to_insert.Set("messageHash", toJs(info.Env(), decryptedMessageHashes[i]));
 
                 ret.Set(i, to_insert);
                 i++;

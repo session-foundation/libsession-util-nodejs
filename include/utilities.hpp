@@ -29,14 +29,14 @@ void assertInfoLength(const Napi::CallbackInfo& info, const int expected);
 
 void assertInfoMinLength(const Napi::CallbackInfo& info, const int minLength);
 
-void assertIsStringOrNull(const Napi::Value& value);
+void assertIsStringOrNull(const Napi::Value& value, const std::string& identifier = "");
 void assertIsNumber(const Napi::Value& value, const std::string& identifier);
 void assertIsArray(const Napi::Value& value, const std::string& identifier);
 void assertIsObject(const Napi::Value& value);
 void assertIsUInt8ArrayOrNull(const Napi::Value& value);
 void assertIsUInt8Array(const Napi::Value& value, const std::string& identifier);
-void assertIsString(const Napi::Value& value);
-void assertIsBoolean(const Napi::Value& value);
+void assertIsString(const Napi::Value& value, const std::string& identifier = "");
+void assertIsBoolean(const Napi::Value& value, const std::string& identifier = "");
 
 // Checks for and returns exactly N string arguments.  If N == 1 this return just a string; if > 1
 // this returns an std::array of strings of size N.
@@ -46,7 +46,7 @@ auto getStringArgs(const Napi::CallbackInfo& info) {
     std::array<std::string, N> args;
     for (int i = 0; i < args.size(); i++) {
         auto arg = info[i];
-        assertIsString(arg);
+        assertIsString(arg, "getStringArgs");
         args[i] = arg.As<Napi::String>().Utf8Value();
     }
     if constexpr (N == 1)

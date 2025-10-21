@@ -17,14 +17,39 @@ declare module 'libsession_util_nodejs' {
   type WithCommunityPubkey = { communityPubkey: string };
   type WithGroupEd25519Pubkey = { groupEd25519Pubkey: string };
   type WithGroupEncKey = { groupEncKey: string };
+  type WithEd25519PrivateKeyHex = {
+    /**
+     * This is the current user identity private key, HexString
+     */
+    ed25519PrivateKeyHex: string;
+  };
+  type WithEd25519GroupPubkeyHex = {
+    /**
+     * This is the group identity pubkey, HexString
+     */
+    ed25519GroupPubkeyHex: string;
+  };
+  type WithGroupEncryptionKeys = {
+    /**
+     * This should be what is returned by the 03-group `MetaGroupWrapper::keyGetAll()`
+     */
+    groupEncKeys: Array<Uint8Array>;
+  };
   type WithProRotatingEd25519PrivKey = { proRotatingEd25519PrivKey: string | null };
 
   type WithContentOrEnvelope = { contentOrEnvelope: Uint8Array };
+  type WithEnvelopePayload = { envelopePayload: Uint8Array };
   type WithContentPlaintext = {
     contentPlaintextUnpadded: Uint8Array;
   };
   type WithServerId = {
     serverId: number;
+  };
+  type WithMessageHash = {
+    /**
+     * Base64 string
+     */
+    messageHash: string;
   };
   type WithNowMs = { nowMs: number };
   type WithProBackendPubkey = {
@@ -34,6 +59,11 @@ declare module 'libsession_util_nodejs' {
     proBackendPubkeyHex: string;
   };
 
+  type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid' | 'Expired';
+  type ProFeature = '10K_CHARACTER_LIMIT' | 'PRO_BADGE' | 'ANIMATED_AVATAR';
+  type ProFeatures = Array<ProFeature>;
+  type WithProFeatures = { proFeatures: ProFeatures };
+
   type ProProof = {
     version: number;
     genIndexHashB64: string;
@@ -41,9 +71,21 @@ declare module 'libsession_util_nodejs' {
     expiryMs: number;
   };
 
-  type WithProProof = {
+  type DecodedPro = WithProFeatures & {
+    proStatus: ProStatus;
     proProof: ProProof;
   };
+
+  type WithDecodedPro = {
+    decodedPro: DecodedPro | null;
+  };
+  type WithProSigHex = {
+    /**
+     * HexString
+     */
+    proSigHex: string | null;
+  };
+
   type Envelope = {
     timestampMs: number;
     /**
@@ -56,8 +98,24 @@ declare module 'libsession_util_nodejs' {
     proSigHex: string | null;
   };
 
-  type WithDecryptedEnvelope = {
+  type WithEnvelope = {
     envelope: Envelope | null;
+  };
+
+  type WithNonNullableEnvelope = {
+    envelope: Envelope;
+  };
+
+  type WithDecodedEnvelope = {
+    decodedEnvelope:
+      | WithNonNullableEnvelope &
+          WithContentPlaintext &
+          WithDecodedPro & {
+            /**
+             * HexString with 05 prefix of the author of that message
+             */
+            sessionId: string;
+          };
   };
 
   type MultiEncryptWrapper = {
@@ -135,7 +193,17 @@ declare module 'libsession_util_nodejs' {
     decryptForCommunity: (
       first: Array<WithContentOrEnvelope & WithServerId>,
       second: WithNowMs & WithProBackendPubkey
-    ) => Array<WithProProof & WithDecryptedEnvelope & WithContentPlaintext & WithServerId>;
+    ) => Array<WithDecodedPro & WithProSigHex & WithEnvelope & WithContentPlaintext & WithServerId>;
+
+    decryptFor1o1: (
+      first: Array<WithEnvelopePayload & WithMessageHash>,
+      second: WithNowMs & WithProBackendPubkey & WithEd25519PrivateKeyHex
+    ) => Array<WithDecodedEnvelope & WithMessageHash>;
+
+    // decryptForGroup: (
+    //   first: Array<WithEnvelopePayload>,
+    //   second: WithNowMs & WithProBackendPubkey & WithEd25519GroupPubkeyHex & WithGroupEncryptionKeys
+    // ) => Array<{}>;
   };
 
   export type MultiEncryptActionsCalls = MakeWrapperActionCalls<MultiEncryptWrapper>;
@@ -154,6 +222,8 @@ declare module 'libsession_util_nodejs' {
     public static encryptForGroup: MultiEncryptWrapper['encryptForGroup'];
 
     public static decryptForCommunity: MultiEncryptWrapper['decryptForCommunity'];
+    public static decryptFor1o1: MultiEncryptWrapper['decryptFor1o1'];
+    // public static decryptForGroup: MultiEncryptWrapper['decryptForGroup'];
   }
 
   /**
@@ -170,5 +240,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MultiEncryptWrapper, 'encryptForCommunityInbox'>
     | MakeActionCall<MultiEncryptWrapper, 'encryptForCommunity'>
     | MakeActionCall<MultiEncryptWrapper, 'encryptForGroup'>
-    | MakeActionCall<MultiEncryptWrapper, 'decryptForCommunity'>;
+    | MakeActionCall<MultiEncryptWrapper, 'decryptForCommunity'>
+    | MakeActionCall<MultiEncryptWrapper, 'decryptFor1o1'>;
+  // | MakeActionCall<MultiEncryptWrapper, 'decryptForGroup'>;
 }
