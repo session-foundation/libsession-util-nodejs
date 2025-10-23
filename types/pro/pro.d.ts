@@ -18,6 +18,9 @@ declare module 'libsession_util_nodejs' {
   type ProProof = {
     version: number;
     genIndexHashB64: string;
+    /**
+     * HexString, 64 chars
+     */
     rotatingPubkeyHex: string;
     expiryMs: number;
   };

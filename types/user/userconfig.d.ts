@@ -40,7 +40,14 @@ declare module 'libsession_util_nodejs' {
 
     setProConfig: (proConfig: ProConfig) => void;
     getProConfig: () => ProConfig | null;
-    generateProMasterKey: ({ed25519SeedHex}: {ed25519SeedHex: string}) => {
+    generateProMasterKey: ({
+      ed25519SeedHex,
+    }: {
+      /**
+       * HexString, 64 chars
+       */
+      ed25519SeedHex: string;
+    }) => {
       /**
        * 64 bytes
        */
@@ -93,7 +100,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'getEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'setEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'getNoteToSelfExpiry'>
-    | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>
     | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>
     | MakeActionCall<UserConfigWrapper, 'getProConfig'>
     | MakeActionCall<UserConfigWrapper, 'setProConfig'>

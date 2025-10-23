@@ -390,7 +390,6 @@ std::vector<unsigned char> from_base64_to_vector(std::string_view x) ;
 
 
 // Concept to match containers with a size() method
-// Concept to match containers with a size() method
 template <typename T>
 concept HasSize = requires(T t) {
     {t.size()}->std::convertible_to<size_t>;
