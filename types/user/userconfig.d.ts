@@ -1,4 +1,5 @@
 /// <reference path="../shared.d.ts" />
+/// <reference path="../pro/pro.d.ts" />
 
 declare module 'libsession_util_nodejs' {
   /**
@@ -36,6 +37,15 @@ declare module 'libsession_util_nodejs' {
      * @returns the expiry in seconds, 0 if off, undefined if not set
      */
     getNoteToSelfExpiry: () => number | undefined;
+
+    setProConfig: (proConfig: ProConfig) => void;
+    getProConfig: () => ProConfig | null;
+    generateProMasterKey: ({ed25519SeedHex}: {ed25519SeedHex: string}) => {
+      /**
+       * 64 bytes
+       */
+      proMasterKey: Uint8Array;
+    };
   };
 
   export type UserConfigWrapperActionsCalls = MakeWrapperActionCalls<UserConfigWrapper>;
@@ -58,6 +68,9 @@ declare module 'libsession_util_nodejs' {
     public setEnableBlindedMsgRequest: UserConfigWrapper['setEnableBlindedMsgRequest'];
     public getNoteToSelfExpiry: UserConfigWrapper['getNoteToSelfExpiry'];
     public setNoteToSelfExpiry: UserConfigWrapper['setNoteToSelfExpiry'];
+    public getProConfig: UserConfigWrapper['getProConfig'];
+    public setProConfig: UserConfigWrapper['setProConfig'];
+    public generateProMasterKey: UserConfigWrapper['generateProMasterKey'];
   }
 
   /**
@@ -80,5 +93,9 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'getEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'setEnableBlindedMsgRequest'>
     | MakeActionCall<UserConfigWrapper, 'getNoteToSelfExpiry'>
-    | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>;
+    | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>
+    | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>
+    | MakeActionCall<UserConfigWrapper, 'getProConfig'>
+    | MakeActionCall<UserConfigWrapper, 'setProConfig'>
+    | MakeActionCall<UserConfigWrapper, 'generateProMasterKey'>;
 }

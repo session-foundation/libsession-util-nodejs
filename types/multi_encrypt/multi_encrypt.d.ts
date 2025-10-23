@@ -1,4 +1,5 @@
 /// <reference path="../shared.d.ts" />
+/// <reference path="../pro/pro.d.ts" />
 
 declare module 'libsession_util_nodejs' {
   type WithEncryptedData = { encryptedData: Uint8Array };
@@ -35,7 +36,6 @@ declare module 'libsession_util_nodejs' {
      */
     groupEncKeys: Array<Uint8Array>;
   };
-  type WithProRotatingEd25519PrivKey = { proRotatingEd25519PrivKey: string | null };
 
   type WithContentOrEnvelope = { contentOrEnvelope: Uint8Array };
   type WithEnvelopePayload = { envelopePayload: Uint8Array };
@@ -52,24 +52,6 @@ declare module 'libsession_util_nodejs' {
     messageHash: string;
   };
   type WithNowMs = { nowMs: number };
-  type WithProBackendPubkey = {
-    /**
-     * HexString
-     */
-    proBackendPubkeyHex: string;
-  };
-
-  type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid' | 'Expired';
-  type ProFeature = '10K_CHARACTER_LIMIT' | 'PRO_BADGE' | 'ANIMATED_AVATAR';
-  type ProFeatures = Array<ProFeature>;
-  type WithProFeatures = { proFeatures: ProFeatures };
-
-  type ProProof = {
-    version: number;
-    genIndexHashB64: string;
-    rotatingPubkeyHex: string;
-    expiryMs: number;
-  };
 
   type DecodedPro = WithProFeatures & {
     proStatus: ProStatus;

@@ -377,6 +377,11 @@ std::array<uint8_t, N> from_hex_to_array(std::string x) {
 
 std::vector<unsigned char> from_hex_to_vector(std::string_view x);
 
+std::span<const uint8_t> from_base64_to_span(std::string_view x);
+std::vector<unsigned char> from_base64_to_vector(std::string_view x) ;
+
+
+// Concept to match containers with a size() method
 // Concept to match containers with a size() method
 template <typename T>
 concept HasSize = requires(T t) {
