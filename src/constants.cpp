@@ -19,7 +19,7 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     auto pro_urls = Napi::Object::New(env);
     pro_urls["roadmap"] = toJs(env, SESSION_PRO_URLS.roadmap);
     pro_urls["privacy_policy"] = toJs(env, SESSION_PRO_URLS.privacy_policy);
-    pro_urls["terms_of_conditions"] = toJs(env, SESSION_PRO_URLS.terms_of_conditions);
+    pro_urls["terms_of_service"] = toJs(env, SESSION_PRO_URLS.terms_of_service);
     pro_urls["pro_access_not_found"] = toJs(env, SESSION_PRO_URLS.pro_access_not_found);
     pro_urls["support_url"] = toJs(env, SESSION_PRO_URLS.support_url);
 
@@ -29,6 +29,7 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     pro_provider_nil["platform"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL].platform);
     pro_provider_nil["platform_account"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL].platform_account);
     pro_provider_nil["refund_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL].refund_url);
+    pro_provider_nil["refund_after_platform_deadline_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL].refund_after_platform_deadline_url);
     pro_provider_nil["update_subscription_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL].update_subscription_url);
     pro_provider_nil["cancel_subscription_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL].cancel_subscription_url);
 
@@ -38,8 +39,10 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     pro_provider_google["platform"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].platform);
     pro_provider_google["platform_account"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].platform_account);
     pro_provider_google["refund_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].refund_url);
+    pro_provider_google["refund_after_platform_deadline_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].refund_after_platform_deadline_url);
     pro_provider_google["update_subscription_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].update_subscription_url);
     pro_provider_google["cancel_subscription_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].cancel_subscription_url);
+    pro_provider_google["store_other"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].store);
 
     auto pro_provider_ios = Napi::Object::New(env);
     pro_provider_ios["device"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].device);
@@ -47,13 +50,16 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     pro_provider_ios["platform"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].platform);
     pro_provider_ios["platform_account"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].platform_account);
     pro_provider_ios["refund_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].refund_url);
+    pro_provider_ios["refund_after_platform_deadline_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].refund_after_platform_deadline_url);
     pro_provider_ios["update_subscription_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].update_subscription_url);
     pro_provider_ios["cancel_subscription_url"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE].cancel_subscription_url);
+    pro_provider_ios["store_other"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].store);
+    pro_provider_ios["store_other"] = toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE].store);
 
     auto pro_providers = Napi::Object::New(env);
-    pro_providers["0"] = toJs(env, pro_provider_nil);
-    pro_providers["1"] = toJs(env, pro_provider_google);
-    pro_providers["2"] = toJs(env, pro_provider_ios);
+    pro_providers["Nil"] = toJs(env, pro_provider_nil);
+    pro_providers["Google"] = toJs(env, pro_provider_google);
+    pro_providers["iOS"] = toJs(env, pro_provider_ios);
 
     // construct javascript constants object
     Napi::Function cls = DefineClass(
