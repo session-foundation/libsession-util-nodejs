@@ -89,7 +89,7 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                      "LIBSESSION_PRO_URLS",
                      pro_urls,
                      napi_enumerable),
-            ObjectWrap::StaticValue(
+             ObjectWrap::StaticValue(
                      "LIBSESSION_PRO_PROVIDERS",
                      pro_providers,
                      napi_enumerable),
