@@ -1,3 +1,5 @@
+/// <reference path="./pro/pro.d.ts" />
+
 declare module 'libsession_util_nodejs' {
   type Uint8ArrayFixedLength<T extends number> = {
     buffer: Uint8Array;
@@ -174,6 +176,10 @@ declare module 'libsession_util_nodejs' {
      * A string corresponding to the full hash of the commit
      */
     LIBSESSION_NODEJS_COMMIT: string;
+    /** Object containing pro urls **/
+    LIBSESSION_PRO_URLS: ProBackendUrlsType;
+    /** Object containing mapped provder constants */
+    LIBSESSION_PRO_PROVIDERS: ProBackendProviderConstantsType;
   };
 
   export const CONSTANTS: ConstantsType;
