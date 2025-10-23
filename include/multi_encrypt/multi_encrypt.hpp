@@ -10,6 +10,7 @@
 
 #include "../utilities.hpp"
 #include "oxen/log.hpp"
+#include "pro/types.hpp"
 #include "session/attachments.hpp"
 #include "session/config/user_profile.hpp"
 #include "session/multi_encrypt.hpp"
@@ -20,93 +21,6 @@ namespace session::nodeapi {
 namespace log = oxen::log;
 
 auto cat = log::Cat("multi_encrypt");
-
-template <>
-struct toJs_impl<session::ProProof> {
-    Napi::Object operator()(const Napi::Env& env, const session::ProProof pro_proof) {
-        auto obj = Napi::Object::New(env);
-
-        obj["version"] = toJs(env, pro_proof.version);
-        obj["genIndexHashB64"] = toJs(env, oxenc::to_base64(pro_proof.gen_index_hash));
-        obj["rotatingPubkeyHex"] = toJs(env, oxenc::to_hex(pro_proof.rotating_pubkey));
-        obj["expiryMs"] = toJs(env, pro_proof.expiry_unix_ts.time_since_epoch().count());
-
-        return obj;
-    }
-};
-
-template <>
-struct toJs_impl<session::Envelope> {
-    Napi::Object operator()(const Napi::Env& env, const session::Envelope envelope) {
-        auto obj = Napi::Object::New(env);
-
-        obj["timestampMs"] = toJs(env, envelope.timestamp.count());
-        obj["source"] = envelope.source.size() ? toJs(env, envelope.source) : env.Null();
-        obj["proSigHex"] =
-                envelope.pro_sig.size() ? toJs(env, oxenc::to_hex(envelope.pro_sig)) : env.Null();
-
-        return obj;
-    }
-};
-
-template <>
-struct toJs_impl<session::DecodedEnvelope> {
-    Napi::Object operator()(const Napi::Env& env, const session::DecodedEnvelope decoded_envelope) {
-        auto obj = Napi::Object::New(env);
-
-        obj.Set("envelope", toJs(env, decoded_envelope.envelope));
-        obj.Set("contentPlaintextUnpadded", toJs(env, decoded_envelope.content_plaintext));
-        obj.Set("sessionId",
-                toJs(env, "05" + oxenc::to_hex(decoded_envelope.sender_x25519_pubkey)));
-        obj.Set("decodedPro", decoded_envelope.pro ? toJs(env, decoded_envelope.pro) : env.Null());
-
-        return obj;
-    }
-};
-
-template <>
-struct toJs_impl<SESSION_PROTOCOL_PRO_FEATURES> {
-    Napi::Object operator()(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
-        Napi::Array arr = Napi::Array::New(env);
-        uint32_t index = 0;
-
-        if (bitset == SESSION_PROTOCOL_PRO_FEATURES_NIL) {
-            return arr;
-        }
-
-        if (bitset & (SESSION_PROTOCOL_PRO_FEATURES_10K_CHARACTER_LIMIT)) {
-            arr[index] = Napi::String::New(env, "10K_CHARACTER_LIMIT");
-            index++;
-        }
-        if (bitset & SESSION_PROTOCOL_PRO_FEATURES_PRO_BADGE) {
-            arr[index++] = Napi::String::New(env, "PRO_BADGE");
-            index++;
-        }
-        if (bitset & SESSION_PROTOCOL_PRO_FEATURES_ANIMATED_AVATAR) {
-            arr[index++] = Napi::String::New(env, "ANIMATED_AVATAR");
-            index++;
-        }
-        return arr;
-    }
-};
-
-template <>
-struct toJs_impl<session::DecodedPro> {
-    Napi::Object operator()(const Napi::Env& env, const session::DecodedPro decoded_pro) {
-        auto obj = Napi::Object::New(env);
-
-        obj["proStatus"] =
-                toJs(env,
-                     decoded_pro.status == ProStatus::InvalidProBackendSig ? "InvalidProBackendSig"
-                     : decoded_pro.status == ProStatus::InvalidUserSig     ? "InvalidUserSig"
-                     : decoded_pro.status == ProStatus::Valid              ? "Valid"
-                                                                           : "Expired");
-        obj["proProof"] = toJs(env, decoded_pro.proof);
-        obj["proFeatures"] = toJs(env, decoded_pro.features);
-
-        return obj;
-    }
-};
 
 inline std::vector<unsigned char> extractPlaintext(
         const Napi::Object& obj, const std::string identifier) {
@@ -181,7 +95,7 @@ inline cleared_uc32 extractGroupEncKeyAsArray(
     return result;
 }
 
-inline std::optional<std::vector<unsigned char>> extractProRotatingEd25519PrivKeyAsSpan(
+inline std::optional<std::vector<unsigned char>> extractProRotatingEd25519PrivKeyAsVector(
         const Napi::Object& obj, const std::string identifier) {
     assertIsStringOrNull(obj.Get("proRotatingEd25519PrivKey"), identifier);
     auto proRotatingEd25519PrivKeyHex =
@@ -588,7 +502,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                 obj, "encryptFor1o1.obj.senderEd25519Seed"),
                         extractSentTimestampMs(obj, "encryptFor1o1.obj.sentTimestampMs"),
                         extractRecipientPubkeyAsArray(obj, "encryptFor1o1.obj.recipientPubkey"),
-                        extractProRotatingEd25519PrivKeyAsSpan(
+                        extractProRotatingEd25519PrivKeyAsVector(
                                 obj, "encryptFor1o1.obj.proRotatingEd25519PrivKey"));
             }
 
@@ -639,7 +553,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
                                 obj, "encryptForCommunityInbox.obj.recipientPubkey"),
                         extractCommunityPubkeyAsArray(
                                 obj, "encryptForCommunityInbox.obj.communityPubkey"),
-                        extractProRotatingEd25519PrivKeyAsSpan(
+                        extractProRotatingEd25519PrivKeyAsVector(
                                 obj, "encryptForCommunityInbox.obj.proRotatingEd25519PrivKey"));
             }
 
@@ -678,7 +592,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                 ready_to_send[i] = session::encode_for_community(
                         extractPlaintext(obj, "encryptForCommunity.obj.plaintext"),
-                        extractProRotatingEd25519PrivKeyAsSpan(
+                        extractProRotatingEd25519PrivKeyAsVector(
                                 obj, "encryptForCommunity.obj.proRotatingEd25519PrivKey"));
             }
 
@@ -731,7 +645,7 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                 auto groupEncKey =
                         extractGroupEncKeyAsArray(obj, "encryptForGroup.obj.groupEncKey");
-                auto proRotatingEd25519PrivKey = extractProRotatingEd25519PrivKeyAsSpan(
+                auto proRotatingEd25519PrivKey = extractProRotatingEd25519PrivKeyAsVector(
                         obj, "encryptForGroup.obj.proRotatingEd25519PrivKey");
 
                 ready_to_send[i] = session::encode_for_group(

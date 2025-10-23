@@ -1,5 +1,6 @@
 #include "utilities.hpp"
 
+#include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
 #include <chrono>
@@ -52,17 +53,18 @@ void assertIsUInt8ArrayOrNull(const Napi::Value& val) {
 void assertIsUInt8Array(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
             IsUint8Array(val),
-            std::string("Wrong arguments: expected uint8Array" + identifier).c_str());
+            std::string("Wrong arguments: expected uint8Array: " + identifier).c_str());
 }
 
 void assertIsString(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
-            val.IsString(), std::string("Wrong arguments: expected string" + identifier).c_str());
+            val.IsString(), std::string("Wrong arguments: expected string: " + identifier).c_str());
 }
 
 void assertIsBoolean(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
-            val.IsBoolean(), std::string("Wrong arguments: expected boolean" + identifier).c_str());
+            val.IsBoolean(),
+            std::string("Wrong arguments: expected boolean: " + identifier).c_str());
 }
 
 std::string toCppString(Napi::Value x, const std::string& identifier) {
@@ -349,6 +351,14 @@ std::span<const uint8_t> from_hex_to_span(std::string_view x) {
 
 std::vector<unsigned char> from_hex_to_vector(std::string_view x) {
     return session::to_vector(oxenc::from_hex(x));
+}
+
+std::span<const uint8_t> from_base64_to_span(std::string_view x) {
+    return session::to_span(oxenc::from_base64(x));
+}
+
+std::vector<unsigned char> from_base64_to_vector(std::string_view x) {
+    return session::to_vector(oxenc::from_base64(x));
 }
 
 template <std::size_t N>

@@ -34,6 +34,9 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
 
     Napi::Value getNoteToSelfExpiry(const Napi::CallbackInfo& info);
     void setNoteToSelfExpiry(const Napi::CallbackInfo& info);
-};
 
-}  // namespace session::nodeapi
+    Napi::Value getProConfig(const Napi::CallbackInfo& info);
+    void setProConfig(const Napi::CallbackInfo& info);
+    Napi::Value generateProMasterKey(const Napi::CallbackInfo& info);
+};
+};  // namespace session::nodeapi

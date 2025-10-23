@@ -1,9 +1,43 @@
+/// <reference path="../shared.d.ts" />
+
 declare module 'libsession_util_nodejs' {
+  type WithProRotatingEd25519PrivKey = { proRotatingEd25519PrivKey: string | null };
+
+  type WithProBackendPubkey = {
+    /**
+     * HexString
+     */
+    proBackendPubkeyHex: string;
+  };
+
+  type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid' | 'Expired';
+  type ProFeature = '10K_CHARACTER_LIMIT' | 'PRO_BADGE' | 'ANIMATED_AVATAR';
+  type ProFeatures = Array<ProFeature>;
+  type WithProFeatures = { proFeatures: ProFeatures };
+
+  type ProProof = {
+    version: number;
+    genIndexHashB64: string;
+    /**
+     * HexString, 64 chars
+     */
+    rotatingPubkeyHex: string;
+    expiryMs: number;
+  };
+
+  type ProConfig = {
+    /**
+     * 64 bytes, 128 chars
+     */
+    rotatingPrivKeyHex: string;
+    proProof: ProProof;
+  };
+
   // Must match session-desktop
   export enum ProOriginatingPlatform {
-    Nil = "Nil",
-    GooglePlayStore = "Google",
-    iOSAppStore = "iOS",
+    Nil = 'Nil',
+    GooglePlayStore = 'Google',
+    iOSAppStore = 'iOS',
   }
 
   export type ProBackendProviderConstantType = {
@@ -16,9 +50,12 @@ declare module 'libsession_util_nodejs' {
     refund_after_platform_deadline_url: string;
     update_subscription_url: string;
     cancel_subscription_url: string;
-  }
+  };
 
-  export type ProBackendProviderConstantsType = Record<ProOriginatingPlatform, ProBackendProviderConstantType>
+  export type ProBackendProviderConstantsType = Record<
+    ProOriginatingPlatform,
+    ProBackendProviderConstantType
+  >;
 
   export type ProBackendUrlsType = {
     roadmap: string;
@@ -26,5 +63,5 @@ declare module 'libsession_util_nodejs' {
     terms_of_service: string;
     pro_access_not_found: string;
     support_url: string;
-  }
+  };
 }
