@@ -13,6 +13,7 @@
 #include "oxenc/hex.h"
 #include "session/config/namespaces.hpp"
 #include "session/config/profile_pic.hpp"
+#include "session/types.h"
 #include "session/types.hpp"
 #include "utilities.hpp"
 
@@ -127,6 +128,13 @@ template <typename T>
 struct toJs_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string_view>>> {
     auto operator()(const Napi::Env& env, std::string_view s) const {
         return Napi::String::New(env, s.data(), s.size());
+    }
+};
+
+template <>
+struct toJs_impl<string8> {
+    auto operator()(const Napi::Env& env, string8 s) const {
+        return Napi::String::New(env, s.data, s.size);
     }
 };
 
