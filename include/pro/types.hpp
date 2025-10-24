@@ -116,4 +116,19 @@ struct toJs_impl<session::DecodedPro> {
     }
 };
 
+template <>
+struct toJs_impl<session::ProFeaturesForMsg> {
+    Napi::Object operator()(
+            const Napi::Env& env, const session::ProFeaturesForMsg pro_features_msg) {
+        auto obj = Napi::Object::New(env);
+
+        obj["success"] = toJs(env, pro_features_msg.success);
+        obj["error"] = toJs(env, pro_features_msg.error);
+        obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
+        obj["proFeatures"] = toJs(env, pro_features_msg.features);
+
+        return obj;
+    }
+};
+
 };  // namespace session::nodeapi
