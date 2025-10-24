@@ -64,4 +64,32 @@ declare module 'libsession_util_nodejs' {
     pro_access_not_found: string;
     support_url: string;
   };
+
+  type ProWrapper = {
+    proFeaturesForMessage: (args: {
+      utf16: string;
+      /**
+       * If the utf16 requires 10K_CHARACTER_LIMIT to be set, it will be set in the return.
+       * If provided (here) as an input, it will be ignored.
+       */
+      proFeatures: ProFeatures;
+    }) => WithProFeatures & { success: boolean; error: string | null; codePointCount: number };
+  };
+
+    export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
+
+
+  /**
+   * To be used inside the web worker only (calls are synchronous and won't work asynchronously)
+   */
+  export class ProWrapperNode {
+    public static proFeaturesForMessage: ProWrapper['proFeaturesForMessage'];
+  }
+
+  /**
+   * Those actions are used internally for the web worker communication.
+   * You should never need to import them in Session directly
+   * You will need to add an entry here if you add a new function
+   */
+  export type ProActionsType = MakeActionCall<ProWrapper, 'proFeaturesForMessage'>;
 }
