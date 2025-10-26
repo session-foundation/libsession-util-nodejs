@@ -92,7 +92,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     pro_features_msg.error.size() ? toJs(env, pro_features_msg.error) : env.Null();
             obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
             obj["proFeatures"] = proFeaturesToJs(env, pro_features_msg.features);
-            
+
             return obj;
         });
     };

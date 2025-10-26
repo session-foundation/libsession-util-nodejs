@@ -382,11 +382,10 @@ template <std::size_t N>
 std::array<uint8_t, N> from_hex_to_array(std::string x) {
     std::string as_hex = oxenc::from_hex(x);
     if (as_hex.size() != N) {
-        throw std::invalid_argument(
-                std::format(
-                        "from_hex_to_array: Decoded hex size mismatch: expected {}, got {}",
-                        N,
-                        as_hex.size()));
+        throw std::invalid_argument(std::format(
+                "from_hex_to_array: Decoded hex size mismatch: expected {}, got {}",
+                N,
+                as_hex.size()));
     }
 
     std::array<uint8_t, N> result;
@@ -402,15 +401,14 @@ std::vector<unsigned char> from_base64_to_vector(std::string_view x);
 // Concept to match containers with a size() method
 template <typename T>
 concept HasSize = requires(T t) {
-    {t.size()}->std::convertible_to<size_t>;
+    { t.size() } -> std::convertible_to<size_t>;
 };
 
 template <HasSize T>
 void assert_length(const T& x, size_t n, std::string_view base_identifier) {
     if (x.size() != n) {
-        throw std::invalid_argument(
-                std::format(
-                        "assert_length: expected {}, got {} for {}", n, x.size(), base_identifier));
+        throw std::invalid_argument(std::format(
+                "assert_length: expected {}, got {} for {}", n, x.size(), base_identifier));
     }
 }
 
