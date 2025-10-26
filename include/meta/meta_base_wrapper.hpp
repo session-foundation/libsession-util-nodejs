@@ -3,7 +3,6 @@
 #include <napi.h>
 
 #include <optional>
-#include <span>
 #include <vector>
 
 #include "../base_config.hpp"

@@ -4,20 +4,28 @@
 #include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
-#include <algorithm>
-#include <span>
 #include <vector>
 
 #include "../utilities.hpp"
-#include "oxen/log.hpp"
-#include "pro/types.hpp"
-#include "session/attachments.hpp"
-#include "session/config/user_profile.hpp"
-#include "session/random.hpp"
+#include "meta/meta_base_wrapper.hpp"
 #include "session/session_protocol.hpp"
 
 namespace session::nodeapi {
 
+template <>
+struct toJs_impl<session::ProFeaturesForMsg> {
+    Napi::Object operator()(
+            const Napi::Env& env, const session::ProFeaturesForMsg pro_features_msg) {
+        auto obj = Napi::Object::New(env);
+
+        obj["success"] = toJs(env, pro_features_msg.success);
+        obj["error"] = toJs(env, pro_features_msg.error);
+        obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
+        obj["proFeatures"] = toJs(env, pro_features_msg.features);
+
+        return obj;
+    }
+};
 class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
   public:
     ProWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWrap<ProWrapper>{info} {
@@ -40,7 +48,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
   private:
     static Napi::Value proFeaturesForMessage(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
+        return wrapResult(info, [&] () {
             // we expect two arguments that match:
             // first: {
             //   "utf16": string,

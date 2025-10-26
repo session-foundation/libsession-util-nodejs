@@ -47,7 +47,7 @@ if(MSVC)
 endif()
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${CMAKE_JS_SRC})
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC} "include/" "node_modules/node-addon-api" "../../node_modules/node-addon-api" "node_modules/node-api-headers/include" "../../node_modules/node-api-headers/include")
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC} "include/" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-addon-api" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-api-headers/include")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} ${LIBSESSION_STATIC_BUNDLE_LIBS})

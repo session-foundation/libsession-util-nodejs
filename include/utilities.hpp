@@ -15,7 +15,6 @@
 #include "session/config/profile_pic.hpp"
 #include "session/types.h"
 #include "session/types.hpp"
-#include "utilities.hpp"
 
 namespace session::nodeapi {
 
@@ -293,8 +292,9 @@ auto wrapResult(const Napi::Env& env, Call&& call) {
             auto res = call();
             if constexpr (std::is_base_of_v<Napi::Value, Result>)
                 return res;
-            else
-                return toJs(env, std::move(res));
+            else {
+                return toJs<Result>(env, std::move(res));
+            }
         }
     } catch (const std::exception& e) {
         throw Napi::Error::New(env, e.what());
