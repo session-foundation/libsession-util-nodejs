@@ -37,7 +37,7 @@ set(ENABLE_ONIONREQ OFF)
 # as it is not part of the archive. We actually don't care about it on session-desktop
 set(SUBMODULE_CHECK OFF)
 
-file(GLOB SOURCE_FILES src/*.cpp src/groups/*.cpp src/multi_encrypt/*.cpp)
+file(GLOB SOURCE_FILES src/*.cpp src/groups/*.cpp )
 
 add_subdirectory(libsession-util)
 

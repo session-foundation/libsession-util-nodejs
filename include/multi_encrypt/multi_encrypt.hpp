@@ -20,7 +20,6 @@ namespace session::nodeapi {
 
 namespace log = oxen::log;
 
-auto cat = log::Cat("multi_encrypt");
 
 inline std::vector<unsigned char> extractPlaintext(
         const Napi::Object& obj, const std::string identifier) {

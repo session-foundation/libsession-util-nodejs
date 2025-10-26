@@ -10,9 +10,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include "oxen/log.hpp"
 #include "oxenc/hex.h"
 #include "session/config/namespaces.hpp"
 #include "session/config/profile_pic.hpp"
+#include "session/session_protocol.hpp"
 #include "session/types.h"
 #include "session/types.hpp"
 #include "utilities.hpp"
@@ -20,6 +22,8 @@
 namespace session::nodeapi {
 
 using namespace std::literals;
+
+inline auto cat = oxen::log::Cat("nodeapi");
 
 static void checkOrThrow(bool condition, const char* msg) {
     if (!condition)
@@ -117,6 +121,11 @@ struct toJs_impl<session::config::Namespace> {
     auto operator()(const Napi::Env& env, session::config::Namespace b) const {
         return Napi::Number::New(env, static_cast<int16_t>(b));
     }
+};
+
+template <>
+struct toJs_impl<size_t> {
+    auto operator()(const Napi::Env& env, size_t b) const { return Napi::Number::New(env, (b)); }
 };
 
 template <typename T>
@@ -362,6 +371,8 @@ Napi::Object decrypt_result_to_JS(
 
 confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const Napi::Object& obj);
 
+Napi::Object proFeaturesToJs(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset);
+
 std::span<const uint8_t> from_hex_to_span(std::string_view x);
 
 template <std::size_t N>
@@ -386,8 +397,7 @@ std::array<uint8_t, N> from_hex_to_array(std::string x) {
 std::vector<unsigned char> from_hex_to_vector(std::string_view x);
 
 std::span<const uint8_t> from_base64_to_span(std::string_view x);
-std::vector<unsigned char> from_base64_to_vector(std::string_view x) ;
-
+std::vector<unsigned char> from_base64_to_vector(std::string_view x);
 
 // Concept to match containers with a size() method
 template <typename T>

@@ -73,7 +73,7 @@ declare module 'libsession_util_nodejs' {
        * If provided (here) as an input, it will be ignored.
        */
       proFeatures: ProFeatures;
-    }) => WithProFeatures & { success: boolean; error: string | null; codePointCount: number };
+    }) => WithProFeatures & { success: boolean; error: string | null; codepointCount: number };
   };
 
     export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
