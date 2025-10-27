@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - feat-add-pro-backend-fns
   pull_request:
     branches:
       - main
+      - feat-add-pro-backend-fns
 
 concurrency:
   group: ${{ github.workflow }}
@@ -19,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, macos-13, macos-14, ubuntu-22.04]
+        os: [windows-2022, macos-13, macos-14, ubuntu-24.04]
     env:
       SIGNAL_ENV: production
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,16 +31,21 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          submodules: "recursive"
+
+      - name: Install correct clang versions
+        if: runner.os == 'Linux'
+        run: sudo apt update && sudo apt search clang && sudo apt install clang-format-19 #clang-tidy-19
+        shell: bash
 
       - name: Install node
         uses: actions/setup-node@v3
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.3.1
@@ -48,7 +55,15 @@ jobs:
         shell: bash
         run: yarn update_version
 
-
       - name: build libsession-util-nodejs
         shell: bash
         run: yarn install --frozen-lockfile
+
+      - name: Check formatting
+        if: runner.os == 'Linux'
+        run: clang-format-19 --dry-run --Werror src/*.cpp include/*.hpp src/**/*.cpp include/**/*.hpp
+        shell: bash
+
+      # - name: Run clang-tidy
+      #   run: clang-tidy-19 -p build src/*.cpp include/*.hpp src/**/*.cpp include/**/*.hpp
+      #   shell: bash
