@@ -129,7 +129,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto master_privkey =
                     toCppBufferView(master_privkey_napi, "proProofRequestBody.master_privkey");
             auto rotating_privkey =
-                    toCppBuffer(rotating_privkey_napi, "proProofRequestBody.rotating_privkey");
+                    toCppBufferView(rotating_privkey_napi, "proProofRequestBody.rotating_privkey");
 
             assert(master_privkey.size() == 64);
             assert(rotating_privkey.size() == 64);
