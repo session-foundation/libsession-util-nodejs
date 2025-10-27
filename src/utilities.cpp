@@ -345,6 +345,30 @@ confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const 
     return confirmed_pushed_entry;
 }
 
+Napi::Object proFeaturesToJs(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
+    Napi::Array arr = Napi::Array::New(env);
+    uint32_t index = 0;
+
+    if (bitset == SESSION_PROTOCOL_PRO_FEATURES_NIL) {
+        return arr;
+    }
+
+    if (bitset & (SESSION_PROTOCOL_PRO_FEATURES_10K_CHARACTER_LIMIT)) {
+        arr[index] = Napi::String::New(env, "10K_CHARACTER_LIMIT");
+        index++;
+    }
+    if (bitset & SESSION_PROTOCOL_PRO_FEATURES_PRO_BADGE) {
+        arr[index++] = Napi::String::New(env, "PRO_BADGE");
+        index++;
+    }
+    if (bitset & SESSION_PROTOCOL_PRO_FEATURES_ANIMATED_AVATAR) {
+        arr[index++] = Napi::String::New(env, "ANIMATED_AVATAR");
+        index++;
+    }
+
+    return arr;
+}
+
 std::span<const uint8_t> from_hex_to_span(std::string_view x) {
     return session::to_span(oxenc::from_hex(x));
 }

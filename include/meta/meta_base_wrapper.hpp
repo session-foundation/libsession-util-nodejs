@@ -3,7 +3,6 @@
 #include <napi.h>
 
 #include <optional>
-#include <span>
 #include <vector>
 
 #include "../base_config.hpp"
@@ -13,7 +12,7 @@ namespace session::nodeapi {
 class MetaBaseWrapper {
 
   public:
-    explicit MetaBaseWrapper(){};
+    explicit MetaBaseWrapper() {};
 
     virtual ~MetaBaseWrapper() = default;
 

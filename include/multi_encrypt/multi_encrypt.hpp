@@ -20,8 +20,6 @@ namespace session::nodeapi {
 
 namespace log = oxen::log;
 
-auto cat = log::Cat("multi_encrypt");
-
 inline std::vector<unsigned char> extractPlaintext(
         const Napi::Object& obj, const std::string identifier) {
 
@@ -718,9 +716,8 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                     auto contentOrEnvelope = extractContentOrEnvelope(
                             obj, "decryptForCommunity.obj.contentOrEnvelope");
-                    decrypted.push_back(
-                            session::decode_for_community(
-                                    contentOrEnvelope, nowMs, proBackendPubkeyHex));
+                    decrypted.push_back(session::decode_for_community(
+                            contentOrEnvelope, nowMs, proBackendPubkeyHex));
                     decryptedServerIds.push_back(serverId);
 
                 } catch (const std::exception& e) {
@@ -819,9 +816,8 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                     auto envelopePayload =
                             extractEnvelopePayload(obj, "decryptFor1o1.obj.envelopePayload");
-                    decrypted.push_back(
-                            session::decode_envelope(
-                                    keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                    decrypted.push_back(session::decode_envelope(
+                            keys, envelopePayload, nowMs, proBackendPubkeyHex));
                     decryptedMessageHashes.push_back(messageHash);
                 } catch (const std::exception& e) {
                     log::warning(
@@ -919,9 +915,8 @@ class MultiEncryptWrapper : public Napi::ObjectWrap<MultiEncryptWrapper> {
 
                     auto envelopePayload =
                             extractEnvelopePayload(obj, "decryptForGroup.obj.envelopePayload");
-                    decrypted.push_back(
-                            session::decode_envelope(
-                                    keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                    decrypted.push_back(session::decode_envelope(
+                            keys, envelopePayload, nowMs, proBackendPubkeyHex));
                     decryptedMessageHashes.push_back(messageHash);
                 } catch (const std::exception& e) {
                     log::warning(

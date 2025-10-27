@@ -10,9 +10,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include "oxen/log.hpp"
 #include "oxenc/hex.h"
 #include "session/config/namespaces.hpp"
 #include "session/config/profile_pic.hpp"
+#include "session/session_protocol.hpp"
 #include "session/types.h"
 #include "session/types.hpp"
 #include "utilities.hpp"
@@ -20,6 +22,8 @@
 namespace session::nodeapi {
 
 using namespace std::literals;
+
+inline auto cat = oxen::log::Cat("nodeapi");
 
 static void checkOrThrow(bool condition, const char* msg) {
     if (!condition)
@@ -117,6 +121,11 @@ struct toJs_impl<session::config::Namespace> {
     auto operator()(const Napi::Env& env, session::config::Namespace b) const {
         return Napi::Number::New(env, static_cast<int16_t>(b));
     }
+};
+
+template <>
+struct toJs_impl<size_t> {
+    auto operator()(const Napi::Env& env, size_t b) const { return Napi::Number::New(env, (b)); }
 };
 
 template <typename T>
@@ -294,7 +303,7 @@ auto wrapResult(const Napi::Env& env, Call&& call) {
             if constexpr (std::is_base_of_v<Napi::Value, Result>)
                 return res;
             else
-                return toJs(env, std::move(res));
+                return toJs<Result>(env, std::move(res));
         }
     } catch (const std::exception& e) {
         throw Napi::Error::New(env, e.what());
@@ -362,6 +371,8 @@ Napi::Object decrypt_result_to_JS(
 
 confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const Napi::Object& obj);
 
+Napi::Object proFeaturesToJs(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset);
+
 std::span<const uint8_t> from_hex_to_span(std::string_view x);
 
 template <std::size_t N>
@@ -371,11 +382,10 @@ template <std::size_t N>
 std::array<uint8_t, N> from_hex_to_array(std::string x) {
     std::string as_hex = oxenc::from_hex(x);
     if (as_hex.size() != N) {
-        throw std::invalid_argument(
-                std::format(
-                        "from_hex_to_array: Decoded hex size mismatch: expected {}, got {}",
-                        N,
-                        as_hex.size()));
+        throw std::invalid_argument(std::format(
+                "from_hex_to_array: Decoded hex size mismatch: expected {}, got {}",
+                N,
+                as_hex.size()));
     }
 
     std::array<uint8_t, N> result;
@@ -386,21 +396,21 @@ std::array<uint8_t, N> from_hex_to_array(std::string x) {
 std::vector<unsigned char> from_hex_to_vector(std::string_view x);
 
 std::span<const uint8_t> from_base64_to_span(std::string_view x);
-std::vector<unsigned char> from_base64_to_vector(std::string_view x) ;
-
+std::vector<unsigned char> from_base64_to_vector(std::string_view x);
 
 // Concept to match containers with a size() method
 template <typename T>
 concept HasSize = requires(T t) {
-    {t.size()}->std::convertible_to<size_t>;
+    {
+        t.size()
+    } -> std::convertible_to<size_t>;
 };
 
 template <HasSize T>
 void assert_length(const T& x, size_t n, std::string_view base_identifier) {
     if (x.size() != n) {
-        throw std::invalid_argument(
-                std::format(
-                        "assert_length: expected {}, got {} for {}", n, x.size(), base_identifier));
+        throw std::invalid_argument(std::format(
+                "assert_length: expected {}, got {} for {}", n, x.size(), base_identifier));
     }
 }
 

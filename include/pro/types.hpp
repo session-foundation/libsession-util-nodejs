@@ -4,16 +4,9 @@
 #include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
-#include <algorithm>
-#include <span>
-#include <vector>
-
-#include "../utilities.hpp"
-#include "oxen/log.hpp"
-#include "session/attachments.hpp"
-#include "session/config/user_profile.hpp"
-#include "session/multi_encrypt.hpp"
-#include "session/random.hpp"
+#include "session/config/pro.hpp"
+#include "session/session_protocol.hpp"
+#include "utilities.hpp"
 
 namespace session::nodeapi {
 
@@ -73,32 +66,6 @@ struct toJs_impl<session::DecodedEnvelope> {
 };
 
 template <>
-struct toJs_impl<SESSION_PROTOCOL_PRO_FEATURES> {
-    Napi::Object operator()(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
-        Napi::Array arr = Napi::Array::New(env);
-        uint32_t index = 0;
-
-        if (bitset == SESSION_PROTOCOL_PRO_FEATURES_NIL) {
-            return arr;
-        }
-
-        if (bitset & (SESSION_PROTOCOL_PRO_FEATURES_10K_CHARACTER_LIMIT)) {
-            arr[index] = Napi::String::New(env, "10K_CHARACTER_LIMIT");
-            index++;
-        }
-        if (bitset & SESSION_PROTOCOL_PRO_FEATURES_PRO_BADGE) {
-            arr[index++] = Napi::String::New(env, "PRO_BADGE");
-            index++;
-        }
-        if (bitset & SESSION_PROTOCOL_PRO_FEATURES_ANIMATED_AVATAR) {
-            arr[index++] = Napi::String::New(env, "ANIMATED_AVATAR");
-            index++;
-        }
-        return arr;
-    }
-};
-
-template <>
 struct toJs_impl<session::DecodedPro> {
     Napi::Object operator()(const Napi::Env& env, const session::DecodedPro decoded_pro) {
         auto obj = Napi::Object::New(env);
@@ -110,22 +77,7 @@ struct toJs_impl<session::DecodedPro> {
                      : decoded_pro.status == ProStatus::Valid              ? "Valid"
                                                                            : "Expired");
         obj["proProof"] = toJs(env, decoded_pro.proof);
-        obj["proFeatures"] = toJs(env, decoded_pro.features);
-
-        return obj;
-    }
-};
-
-template <>
-struct toJs_impl<session::ProFeaturesForMsg> {
-    Napi::Object operator()(
-            const Napi::Env& env, const session::ProFeaturesForMsg pro_features_msg) {
-        auto obj = Napi::Object::New(env);
-
-        obj["success"] = toJs(env, pro_features_msg.success);
-        obj["error"] = toJs(env, pro_features_msg.error);
-        obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
-        obj["proFeatures"] = toJs(env, pro_features_msg.features);
+        obj["proFeatures"] = proFeaturesToJs(env, decoded_pro.features);
 
         return obj;
     }

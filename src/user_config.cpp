@@ -266,7 +266,6 @@ void UserConfigWrapper::setProConfig(const Napi::CallbackInfo& info) {
                 pro_config_from_object(pro_config_js.As<Napi::Object>());
 
         config.set_pro_config(pro_config);
-
     });
 }
 
