@@ -303,7 +303,7 @@ auto wrapResult(const Napi::Env& env, Call&& call) {
             if constexpr (std::is_base_of_v<Napi::Value, Result>)
                 return res;
             else
-                return toJs(env, std::move(res));
+                return toJs<Result>(env, std::move(res));
         }
     } catch (const std::exception& e) {
         throw Napi::Error::New(env, e.what());

@@ -4,17 +4,11 @@
 #include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
-#include <algorithm>
-#include <span>
 #include <vector>
 
 #include "../meta/meta_base_wrapper.hpp"
 #include "../utilities.hpp"
-#include "oxen/log.hpp"
-#include "pro/types.hpp"
-#include "session/attachments.hpp"
-#include "session/config/user_profile.hpp"
-#include "session/random.hpp"
+#include "meta/meta_base_wrapper.hpp"
 #include "session/session_protocol.hpp"
 
 namespace session::nodeapi {
