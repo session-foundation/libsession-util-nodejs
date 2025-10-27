@@ -10,14 +10,13 @@
 #include <unordered_set>
 #include <vector>
 
-#include "oxen/log.hpp"
+#include "oxen/log/catlogger.hpp"
 #include "oxenc/hex.h"
 #include "session/config/namespaces.hpp"
 #include "session/config/profile_pic.hpp"
-#include "session/session_protocol.hpp"
+#include "session/session_protocol.h"
 #include "session/types.h"
 #include "session/types.hpp"
-#include "utilities.hpp"
 
 namespace session::nodeapi {
 
