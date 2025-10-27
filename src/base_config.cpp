@@ -1,7 +1,6 @@
 #include "base_config.hpp"
 
 #include "session/config/base.hpp"
-#include "session/config/encrypt.hpp"
 
 namespace session::nodeapi {
 

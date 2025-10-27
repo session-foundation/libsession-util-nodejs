@@ -1,18 +1,17 @@
 #pragma once
 
-#include <napi.h>
 #include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
 #include <vector>
 
+#include "../../node_modules/node-addon-api/napi.h"
 #include "../meta/meta_base_wrapper.hpp"
 #include "../utilities.hpp"
 #include "meta/meta_base_wrapper.hpp"
 #include "session/session_protocol.hpp"
 
 namespace session::nodeapi {
-namespace log = oxen::log;
 
 class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
