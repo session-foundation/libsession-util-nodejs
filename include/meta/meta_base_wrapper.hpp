@@ -12,7 +12,7 @@ namespace session::nodeapi {
 class MetaBaseWrapper {
 
   public:
-    explicit MetaBaseWrapper(){};
+    explicit MetaBaseWrapper() {};
 
     virtual ~MetaBaseWrapper() = default;
 

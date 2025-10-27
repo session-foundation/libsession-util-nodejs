@@ -12,7 +12,7 @@
     "update_version": "sh update_version.sh",
     "clean": "rimraf .cache build",
     "lint:cpp": "cppcheck --std=c++20 -j8 --quiet src libsession-util/src",
-    "lint": "find src include -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i",
+    "lint": "find src include -name '*.cpp' -o -name '*.hpp' | xargs clang-format-19 -i",
     "install": "cmake-js build --runtime=electron --runtime-version=34.2.0 --CDSUBMODULE_CHECK=OFF --CDLOCAL_MIRROR=https://oxen.rocks/deps --CDENABLE_ONIONREQ=OFF --CDWITH_TESTS=OFF",
     "prepare_release": "sh prepare_release.sh",
     "dedup": "npx --yes yarn-deduplicate yarn.lock"
