@@ -14,7 +14,6 @@ python -m venv .venv
 . .venv/bin/activate
 pip install git-archive-all
 PACKAGE_VERSION=$(node -p "require('./package.json').version")
-yarn update_version
 echo "PACKAGE_VERSION: $PACKAGE_VERSION"
 echo "Is '$PACKAGE_VERSION' the correct version? If yes, press 'y' to create the release. Press anything else to exit."
 read_char char_read

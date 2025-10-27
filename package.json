@@ -9,7 +9,6 @@
     "email": "team@oxen.io"
   },
   "scripts": {
-    "update_version": "sh update_version.sh",
     "clean": "rimraf .cache build",
     "lint:cpp": "cppcheck --std=c++20 -j8 --quiet src libsession-util/src",
     "install": "cmake-js build --runtime=electron --runtime-version=34.2.0 --CDSUBMODULE_CHECK=OFF --CDLOCAL_MIRROR=https://oxen.rocks/deps --CDENABLE_ONIONREQ=OFF --CDWITH_TESTS=OFF",

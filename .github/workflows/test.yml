@@ -44,11 +44,6 @@ jobs:
         uses: microsoft/setup-msbuild@v1.3.1
         if: runner.os == 'Windows'
 
-      - name: generate fake src/version.h so we can try to build
-        shell: bash
-        run: yarn update_version
-
-
       - name: build libsession-util-nodejs
         shell: bash
         run: yarn install --frozen-lockfile
