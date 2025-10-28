@@ -13,8 +13,24 @@ rm -f ./libsession_util_nodejs*.tar.gz
 python -m venv .venv
 . .venv/bin/activate
 pip install git-archive-all
+
 PACKAGE_VERSION=$(node -p "require('./package.json').version")
-echo "PACKAGE_VERSION: $PACKAGE_VERSION"
+GIT_COMMIT=$(git rev-parse HEAD)
+
+HEADER_PACKAGE_VERSION=$(grep 'LIBSESSION_NODEJS_VERSION' src/version.h | sed -E 's/.*"([0-9.]+)".*/\1/')
+HEADER_GIT_COMMIT=$(grep 'LIBSESSION_NODEJS_COMMIT' src/version.h | sed -E 's/.*"([A-Za-z0-9.]+)".*/\1/')
+
+echo "Package: $PACKAGE_VERSION; Commit: $GIT_COMMIT"
+if [ "$PACKAGE_VERSION" != "$HEADER_PACKAGE_VERSION" ]; then
+    echo "Error: Version mismatch! package.json version is $PACKAGE_VERSION, but src/version.h has $HEADER_PACKAGE_VERSION. Build the project first before packaging 'yarn install'"
+    exit 1
+fi
+
+if [ "$GIT_COMMIT" != "$HEADER_GIT_COMMIT" ]; then
+    echo "Error: Version mismatch! Git commit is $GIT_COMMIT, but src/version.h has $HEADER_GIT_COMMIT. Build the project first before packaging 'yarn install'"
+    exit 1
+fi
+
 echo "Is '$PACKAGE_VERSION' the correct version? If yes, press 'y' to create the release. Press anything else to exit."
 read_char char_read
 case "$char_read" in
