@@ -99,10 +99,10 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         return wrapResult(info, [&] {
             // we expect arguments that match:
             // first: {
-            //   "version": string,
-            //   "master_privkey": Uint8Array,
-            //   "rotating_privkey": Uint8Array,
-            //   "unix_ts": number,
+            //   "requestVersion": string,
+            //   "masterPrivkey": Uint8Array,
+            //   "rotatingPrivkey": Uint8Array,
+            //   "unixTsMs": number,
             // }
 
             assertInfoLength(info, 1);
@@ -114,46 +114,30 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             if (first.IsEmpty())
                 throw std::invalid_argument("proProofRequestBody first received empty");
 
-            assertIsNumber(first.Get("version"), "proProofRequestBody.version");
-            assertIsNumber(first.Get("unix_ts"), "proProofRequestBody.unix_ts");
-            auto version = first.Get("version").As<Napi::Number>();
-            auto unix_ts = toCppSysMs(first.Get("unix_ts"), "proProofRequestBody.unix_ts");
+            assertIsNumber(first.Get("requestVersion"), "proProofRequestBody.requestVersion");
+            assertIsNumber(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
+            auto requestVersion = first.Get("requestVersion").As<Napi::Number>();
+            auto unix_ts_ms = toCppSysMs(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
 
-            assertIsUInt8Array(first.Get("master_privkey"), "proProofRequestBody.master_privkey");
-            assertIsUInt8Array(
-                    first.Get("rotating_privkey"), "proProofRequestBody.rotating_privkey");
+            assertIsUInt8Array(first.Get("masterPrivkey"), "proProofRequestBody.masterPrivkey");
+            assertIsUInt8Array(first.Get("rotatingPrivkey"), "proProofRequestBody.rotatingPrivkey");
 
-            // stack allocate to the buffer view so the ref doesnt get deleted
-            auto master_privkey_napi = first.Get("master_privkey");
-            auto rotating_privkey_napi = first.Get("rotating_privkey");
+            auto master_privkey_js = first.Get("masterPrivkey");
+            auto rotating_privkey_js = first.Get("rotatingPrivkey");
             auto master_privkey =
-                    toCppBufferView(master_privkey_napi, "proProofRequestBody.master_privkey");
+                    toCppBuffer(master_privkey_js, "proProofRequestBody.masterPrivkey");
             auto rotating_privkey =
-                    toCppBufferView(rotating_privkey_napi, "proProofRequestBody.rotating_privkey");
+                    toCppBuffer(rotating_privkey_js, "proProofRequestBody.rotatingPrivkey");
 
-            assert(master_privkey.size() == 64);
-            assert(rotating_privkey.size() == 64);
+            assert_length(master_privkey, 64, "master_privkey");
+            assert_length(rotating_privkey, 64, "rotating_prevkey");
 
-            pro_backend::GetProProofRequest proProofRequest{
-                    .version = static_cast<uint8_t>(version.Int32Value()),
-                    .unix_ts = unix_ts,
-            };
-
-            auto [master_sig, rotating_sig] = proProofRequest.build_sigs(
-                    proProofRequest.version,
+            auto json = pro_backend::GetProProofRequest::build_to_json(
+                    static_cast<uint8_t>(requestVersion.Int32Value()),
                     master_privkey,
                     rotating_privkey,
-                    proProofRequest.unix_ts);
+                    unix_ts_ms);
 
-            assert(master_sig.size() == 64);
-            assert(rotating_sig.size() == 64);
-
-            proProofRequest.master_sig = master_sig;
-            proProofRequest.rotating_sig = rotating_sig;
-            memcpy(proProofRequest.master_pkey.data(), master_privkey.data(), 32);
-            memcpy(proProofRequest.rotating_pkey.data(), rotating_privkey.data(), 32);
-
-            auto json = proProofRequest.to_json();
             auto json_str = Napi::String::New(env, json);
             return json_str;
         });
