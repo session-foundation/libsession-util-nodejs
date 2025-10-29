@@ -74,9 +74,16 @@ declare module 'libsession_util_nodejs' {
        */
       proFeatures: ProFeatures;
     }) => WithProFeatures & { success: boolean; error: string | null; codepointCount: number };
+    proProofRequestBody: (args: {
+      requestVersion: string,
+      masterPrivkey: Uint8Array,
+      rotatingPrivkey: Uint8Array,
+      unixTsMs: number,
+    }
+    ) => string;
   };
 
-    export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
+  export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
 
 
   /**

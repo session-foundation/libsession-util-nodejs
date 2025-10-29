@@ -9,6 +9,7 @@
 #include "../meta/meta_base_wrapper.hpp"
 #include "../utilities.hpp"
 #include "meta/meta_base_wrapper.hpp"
+#include "session/pro_backend.hpp"
 #include "session/session_protocol.hpp"
 
 namespace session::nodeapi {
@@ -29,6 +30,10 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                         // Pro features
                         StaticMethod<&ProWrapper::proFeaturesForMessage>(
                                 "proFeaturesForMessage",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
+                        StaticMethod<&ProWrapper::proProofRequestBody>(
+                                "proProofRequestBody",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
                 });
@@ -87,6 +92,53 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["proFeatures"] = proFeaturesToJs(env, pro_features_msg.features);
 
             return obj;
+        });
+    };
+
+    static Napi::Value proProofRequestBody(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect arguments that match:
+            // first: {
+            //   "requestVersion": string,
+            //   "masterPrivkey": Uint8Array,
+            //   "rotatingPrivkey": Uint8Array,
+            //   "unixTsMs": number,
+            // }
+
+            assertInfoLength(info, 1);
+            assertIsObject(info[0]);
+            auto env = info.Env();
+
+            auto first = info[0].As<Napi::Object>();
+
+            if (first.IsEmpty())
+                throw std::invalid_argument("proProofRequestBody first received empty");
+
+            assertIsNumber(first.Get("requestVersion"), "proProofRequestBody.requestVersion");
+            assertIsNumber(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
+            auto requestVersion = first.Get("requestVersion").As<Napi::Number>();
+            auto unix_ts_ms = toCppSysMs(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
+
+            assertIsUInt8Array(first.Get("masterPrivkey"), "proProofRequestBody.masterPrivkey");
+            assertIsUInt8Array(first.Get("rotatingPrivkey"), "proProofRequestBody.rotatingPrivkey");
+
+            auto master_privkey_js = first.Get("masterPrivkey");
+            auto rotating_privkey_js = first.Get("rotatingPrivkey");
+            auto master_privkey =
+                    toCppBuffer(master_privkey_js, "proProofRequestBody.masterPrivkey");
+            auto rotating_privkey =
+                    toCppBuffer(rotating_privkey_js, "proProofRequestBody.rotatingPrivkey");
+
+            assert_length(master_privkey, 64, "master_privkey");
+            assert_length(rotating_privkey, 64, "rotating_prevkey");
+
+            auto json = pro_backend::GetProProofRequest::build_to_json(
+                    static_cast<uint8_t>(requestVersion.Int32Value()),
+                    master_privkey,
+                    rotating_privkey,
+                    unix_ts_ms);
+
+            return json;
         });
     };
 };
