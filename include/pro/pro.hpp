@@ -138,8 +138,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     rotating_privkey,
                     unix_ts_ms);
 
-            auto json_str = Napi::String::New(env, json);
-            return json_str;
+            return json;
         });
     };
 };
