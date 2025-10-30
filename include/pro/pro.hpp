@@ -10,8 +10,16 @@
 #include "../utilities.hpp"
 #include "./types.hpp"
 #include "meta/meta_base_wrapper.hpp"
+#include "session/pro_backend.h"
 #include "session/pro_backend.hpp"
+#include "session/session_protocol.h"
 #include "session/session_protocol.hpp"
+
+std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v);
+std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v);
+std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PLAN v);
+std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v);
+std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v);
 
 namespace session::nodeapi {
 
@@ -251,7 +259,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["status"] = toJs(env, json.status);
             obj["errors"] = toJs(env, json.errors);
             obj["ticket"] = json.errors.empty() ? toJs(env, json.ticket) : env.Null();
-            obj["items"] = json.errors.empty() ? toJs(env, json.items) : env.Null();
+            // FIXME: implement
+            // obj["items"] = json.errors.empty() ? toJs(env, json.items) : env.Null();
 
             return obj;
         });
@@ -326,14 +335,20 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             obj["status"] = toJs(env, json.status);
             obj["errors"] = toJs(env, json.errors);
-            obj["items"] = json.errors.empty() ? toJs(env, json.items) : env.Null();
-            obj["userStatus"] = json.errors.empty() ? toJs(env, json.user_status) : env.Null();
-            obj["errorReport"] = json.errors.empty() ? toJs(env, json.error_report) : env.Null();
+            // FIXME: implement
+            // obj["items"] = json.errors.empty() ? toJs(env, json.items) : env.Null();
+            obj["userStatus"] = json.errors.empty()
+                                      ? toJs(env, ProBackendEnumToString(json.user_status))
+                                      : env.Null();
+            obj["errorReport"] = json.errors.empty()
+                                       ? toJs(env, ProBackendEnumToString(json.error_report))
+                                       : env.Null();
             obj["autoRenewing"] = json.errors.empty() ? toJs(env, json.auto_renewing) : env.Null();
-            obj["expiryUnixTsMs"] =
-                    json.errors.empty() ? toJs(env, json.expiry_unix_ts_ms) : env.Null();
-            obj["gracePeriodDurationMs"] =
-                    json.errors.empty() ? toJs(env, json.grace_period_duration_ms) : env.Null();
+
+            // FIXME: implement
+            // obj["expiryUnixTsMs"] = json.errors.empty() ? toJs(env, json.expiry_unix_ts_ms) :
+            // env.Null(); obj["gracePeriodDurationMs"] = json.errors.empty() ? toJs(env,
+            // json.grace_period_duration_ms) : env.Null();
 
             return obj;
         });
