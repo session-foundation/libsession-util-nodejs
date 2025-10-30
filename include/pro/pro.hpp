@@ -15,13 +15,12 @@
 #include "session/session_protocol.h"
 #include "session/session_protocol.hpp"
 
+namespace session::nodeapi {
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v);
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v);
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PLAN v);
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v);
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v);
-
-namespace session::nodeapi {
 
 class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 

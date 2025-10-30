@@ -1,5 +1,6 @@
 #include "pro/pro.hpp"
 
+namespace session::nodeapi {
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v) {
     switch (v) {
         case SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL: return "NIL";
@@ -57,4 +58,4 @@ std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR
     }
 }
 
-
+}
