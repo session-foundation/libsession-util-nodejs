@@ -21,6 +21,12 @@ std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PLAN v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v);
 
+template <typename T>
+Napi::Value toJsOrNullIfErrors(
+        const Napi::Env& env, const T& value, const std::vector<std::string>& errors) {
+    return errors.empty() ? toJs(env, value) : env.Null();
+}
+
 template <>
 struct toJs_impl<pro_backend::ProRevocationItem> {
     auto operator()(const Napi::Env& env, pro_backend::ProRevocationItem i) const {
@@ -46,7 +52,7 @@ struct toJs_impl<pro_backend::ProPaymentItem> {
         obj["unredeemedTsMs"] = toJs(env, p.unredeemed_unix_ts);
         obj["redeemedTsMs"] = toJs(env, p.redeemed_unix_ts);
         obj["expiryTsMs"] = toJs(env, p.expiry_unix_ts);
-        obj["gracePeriodDurationMs"] = toJs(env, p.grace_period_duration_ms.count());
+        obj["gracePeriodDurationMs"] = toJs(env, p.grace_period_duration_ms);
         obj["platformRefundExpiryTsMs"] = toJs(env, p.platform_refund_expiry_unix_ts);
         obj["revokedTsMs"] = toJs(env, p.revoked_unix_ts);
 
@@ -244,7 +250,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto parsed = pro_backend::AddProPaymentOrGetProProofResponse::parse(json_str);
 
             auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
-            obj["proof"] = parsed.errors.empty() ? toJs(env, parsed.proof) : env.Null();
+            obj["proof"] = toJsOrNullIfErrors(env, parsed.proof, parsed.errors);
 
             return obj;
         });
@@ -343,7 +349,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto master_privkey =
                     toCppBuffer(master_privkey_js, "proStatusRequestBody.masterPrivkey");
 
-            assert_length(master_privkey, 64, "master_privkey");
+            assert_length(master_privkey, 64, "proStatusRequestBody.master_privkey");
 
             auto json = pro_backend::GetProStatusRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
@@ -377,20 +383,17 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
 
-            obj["items"] = parsed.errors.empty() ? toJs(env, parsed.items) : env.Null();
-            obj["userStatus"] = parsed.errors.empty()
-                                      ? toJs(env, proBackendEnumToString(parsed.user_status))
-                                      : env.Null();
-            obj["errorReport"] = parsed.errors.empty()
-                                       ? toJs(env, proBackendEnumToString(parsed.error_report))
-                                       : env.Null();
-            obj["autoRenewing"] =
-                    parsed.errors.empty() ? toJs(env, parsed.auto_renewing) : env.Null();
+            obj["items"] = toJsOrNullIfErrors(env, parsed.items, parsed.errors);
+            obj["userStatus"] = toJsOrNullIfErrors(
+                    env, proBackendEnumToString(parsed.user_status), parsed.errors);
 
-            obj["expiryTsMs"] =
-                    parsed.errors.empty() ? toJs(env, parsed.expiry_unix_ts_ms) : env.Null();
+            obj["errorReport"] = toJsOrNullIfErrors(
+                    env, proBackendEnumToString(parsed.error_report), parsed.errors);
+
+            obj["autoRenewing"] = toJsOrNullIfErrors(env, parsed.auto_renewing, parsed.errors);
+            obj["expiryTsMs"] = toJsOrNullIfErrors(env, parsed.expiry_unix_ts_ms, parsed.errors);
             obj["gracePeriodMs"] =
-                    parsed.errors.empty() ? toJs(env, parsed.grace_period_duration_ms) : env.Null();
+                    toJsOrNullIfErrors(env, parsed.grace_period_duration_ms, parsed.errors);
 
             return obj;
         });
