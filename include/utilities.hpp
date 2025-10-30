@@ -2,6 +2,7 @@
 
 #include <napi.h>
 
+#include <chrono>
 #include <optional>
 #include <span>
 #include <stdexcept>
