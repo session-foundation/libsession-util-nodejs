@@ -33,6 +33,11 @@ declare module 'libsession_util_nodejs' {
     proProof: ProProof;
   };
 
+  type WithProBackendResponse = {
+    status: number;
+    errors: Array<string>;
+  }
+
   // Must match session-desktop
   export enum ProOriginatingPlatform {
     Nil = 'Nil',
@@ -75,12 +80,53 @@ declare module 'libsession_util_nodejs' {
       proFeatures: ProFeatures;
     }) => WithProFeatures & { success: boolean; error: string | null; codepointCount: number };
     proProofRequestBody: (args: {
-      requestVersion: string,
+      requestVersion: number,
       masterPrivkey: Uint8Array,
       rotatingPrivkey: Uint8Array,
       unixTsMs: number,
     }
     ) => string;
+
+    proProofResponseBody: (args: {
+      json: string,
+    }
+    ) => WithProBackendResponse & { proof: ProProof | null };
+
+    proRevocationsRequestBody: (args: {
+      requestVersion: number,
+      ticket: number,
+    }
+    ) => string;
+
+    proRevocationsResponseBody: (args: {
+      json: string,
+    }
+    ) => WithProBackendResponse & {
+      ticket: number | null;
+      items: Array<ProRevocationItem>
+    };
+
+    proStatusRequestBody: (args: {
+      requestVersion: number,
+      masterPrivkey: Uint8Array,
+      unixTsMs: number,
+      withPaymentHistory: boolean,
+    }
+    ) => string;
+
+    proStatusResponseBody: (args: {
+      json: string,
+    }
+    ) => WithProBackendResponse & {
+      ticket: number | null;
+      items: Array<ProPaymentItem>;
+      userStatus: number;
+      errorReport: number;
+      autoRenewing: boolean;
+      expiryUnixTsMs: number;
+      gracePeriodDurationMs: number;
+    };
+
   };
 
   export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
