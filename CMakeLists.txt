@@ -46,11 +46,20 @@ if(MSVC)
   add_compile_definitions(NOMINMAX)
 endif()
 
+
+
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${CMAKE_JS_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC} "include/" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-addon-api" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-api-headers/include")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} ${LIBSESSION_STATIC_BUNDLE_LIBS})
+
+
+# if(UNIX AND NOT APPLE)
+#     # Add switch-enum warnings as errors on Linux (see __builtin_unreachable calls)
+#     target_compile_options(${PROJECT_NAME} PRIVATE -Werror=switch-enum)
+# endif()
+
 
 if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
   # Generate node.lib

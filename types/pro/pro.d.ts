@@ -14,10 +14,10 @@ declare module 'libsession_util_nodejs' {
   type ProFeature = '10K_CHARACTER_LIMIT' | 'PRO_BADGE' | 'ANIMATED_AVATAR';
   type ProFeatures = Array<ProFeature>;
   type WithProFeatures = { proFeatures: ProFeatures };
+  type WithGenIndexHash = { genIndexHashB64: string };
 
-  type ProProof = {
+  type ProProof = WithGenIndexHash & {
     version: number;
-    genIndexHashB64: string;
     /**
      * HexString, 64 chars
      */
@@ -36,7 +36,7 @@ declare module 'libsession_util_nodejs' {
   type WithProBackendResponse = {
     status: number;
     errors: Array<string>;
-  }
+  };
 
   // Must match session-desktop
   export enum ProOriginatingPlatform {
@@ -70,6 +70,10 @@ declare module 'libsession_util_nodejs' {
     support_url: string;
   };
 
+  type ProRevocationItem = WithGenIndexHash & {
+    expiryUnixTsMs: number;
+  };
+
   type ProWrapper = {
     proFeaturesForMessage: (args: {
       utf16: string;
@@ -80,44 +84,37 @@ declare module 'libsession_util_nodejs' {
       proFeatures: ProFeatures;
     }) => WithProFeatures & { success: boolean; error: string | null; codepointCount: number };
     proProofRequestBody: (args: {
-      requestVersion: number,
-      masterPrivkey: Uint8Array,
-      rotatingPrivkey: Uint8Array,
-      unixTsMs: number,
-    }
-    ) => string;
+      requestVersion: number;
+      masterPrivkey: Uint8Array;
+      rotatingPrivkey: Uint8Array;
+      unixTsMs: number;
+    }) => string;
 
-    proProofResponseBody: (args: {
-      json: string,
-    }
-    ) => WithProBackendResponse & { proof: ProProof | null };
+    proProofParseResponse: (args: {
+      json: string;
+    }) => WithProBackendResponse & { proof: ProProof | null };
 
-    proRevocationsRequestBody: (args: {
-      requestVersion: number,
-      ticket: number,
-    }
-    ) => string;
+    /**
+     * @param version: Request version. The latest accepted version is 0
+     * @param ticket: 4-byte monotonic integer for the caller's revocation list iteration. Set to 0 if unknown; otherwise, use the latest known `ticket` from a prior `GetProRevocationsResponse` to allow
+    /// the Session Pro Backend to omit the revocation list if it has not changed.
+     * @returns the stringified body to include in the request
+     */
+    proRevocationsRequestBody: (args: { requestVersion: number; ticket: number }) => string;
 
-    proRevocationsResponseBody: (args: {
-      json: string,
-    }
-    ) => WithProBackendResponse & {
+    proRevocationsParseResponse: (args: { json: string }) => WithProBackendResponse & {
       ticket: number | null;
-      items: Array<ProRevocationItem>
+      items: Array<ProRevocationItem>;
     };
 
     proStatusRequestBody: (args: {
-      requestVersion: number,
-      masterPrivkey: Uint8Array,
-      unixTsMs: number,
-      withPaymentHistory: boolean,
-    }
-    ) => string;
+      requestVersion: number;
+      masterPrivkey: Uint8Array;
+      unixTsMs: number;
+      withPaymentHistory: boolean;
+    }) => string;
 
-    proStatusResponseBody: (args: {
-      json: string,
-    }
-    ) => WithProBackendResponse & {
+    proStatusParseResponse: (args: { json: string }) => WithProBackendResponse & {
       ticket: number | null;
       items: Array<ProPaymentItem>;
       userStatus: number;
@@ -126,17 +123,21 @@ declare module 'libsession_util_nodejs' {
       expiryUnixTsMs: number;
       gracePeriodDurationMs: number;
     };
-
   };
 
   export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
-
 
   /**
    * To be used inside the web worker only (calls are synchronous and won't work asynchronously)
    */
   export class ProWrapperNode {
     public static proFeaturesForMessage: ProWrapper['proFeaturesForMessage'];
+    public static proProofRequestBody: ProWrapper['proProofRequestBody'];
+    public static proProofParseResponse: ProWrapper['proProofParseResponse'];
+    public static proRevocationRequestBody: ProWrapper['proRevocationsRequestBody'];
+    public static proRevocationParseResponse: ProWrapper['proRevocationsParseResponse'];
+    public static proStatusRequestBody: ProWrapper['proStatusRequestBody'];
+    public static proStatusParseResponse: ProWrapper['proStatusParseResponse'];
   }
 
   /**
@@ -144,5 +145,12 @@ declare module 'libsession_util_nodejs' {
    * You should never need to import them in Session directly
    * You will need to add an entry here if you add a new function
    */
-  export type ProActionsType = MakeActionCall<ProWrapper, 'proFeaturesForMessage'>;
+  export type ProActionsType =
+    | MakeActionCall<ProWrapper, 'proFeaturesForMessage'>
+    | MakeActionCall<ProWrapper, 'proProofRequestBody'>
+    | MakeActionCall<ProWrapper, 'proProofParseResponse'>
+    | MakeActionCall<ProWrapper, 'proRevocationsRequestBody'>
+    | MakeActionCall<ProWrapper, 'proRevocationsParseResponse'>
+    | MakeActionCall<ProWrapper, 'proStatusRequestBody'>
+    | MakeActionCall<ProWrapper, 'proStatusParseResponse'>;
 }
