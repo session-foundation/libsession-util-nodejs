@@ -281,8 +281,7 @@ Napi::Value UserConfigWrapper::generateProMasterKey(const Napi::CallbackInfo& in
         assert_length(ed25519_seed_cpp_hex, 64, "generateProMasterKey");
         auto converted = from_hex_to_vector(ed25519_seed_cpp_hex);
 
-        auto pro_master_key_hex =
-                session::ed25519::ed25519_pro_privkey_for_ed25519_seed(converted);
+        auto pro_master_key_hex = session::ed25519::ed25519_pro_privkey_for_ed25519_seed(converted);
         auto obj = Napi::Object::New(info.Env());
         obj["proMasterKey"] = toJs(info.Env(), pro_master_key_hex);
 
