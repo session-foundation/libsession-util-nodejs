@@ -16,6 +16,12 @@ declare module 'libsession_util_nodejs' {
   type WithProFeatures = { proFeatures: ProFeatures };
   type WithGenIndexHash = { genIndexHashB64: string };
 
+  type WithRequestVersion = { requestVersion: number };
+
+  type WithUnixTsMs = {
+    unixTsMs: number;
+  };
+
   type ProProof = WithGenIndexHash & {
     version: number;
     /**
@@ -25,18 +31,21 @@ declare module 'libsession_util_nodejs' {
     expiryMs: number;
   };
 
-  type ProConfig = {
+  type WithRotatingPrivKeyHex = {
     /**
      * 64 bytes, 128 chars
      */
     rotatingPrivKeyHex: string;
+  };
+
+  type ProConfig = WithRotatingPrivKeyHex & {
     proProof: ProProof;
   };
 
-  type WithProBackendResponse = {
-    status: number;
-    errors: Array<string>;
-  };
+  // type WithProBackendResponse = {
+  //   status: number;
+  //   errors: Array<string>;
+  // };
 
   // Must match session-desktop
   export enum ProOriginatingPlatform {
@@ -74,7 +83,7 @@ declare module 'libsession_util_nodejs' {
     expiryUnixTsMs: number;
   };
 
-  type WithMasterPrivKey = { masterPrivKey: Uint8Array };
+  type WithMasterPrivKeyHex = { masterPrivKeyHex: string };
 
   type ProPaymentItem = {
     /**
@@ -163,16 +172,12 @@ declare module 'libsession_util_nodejs' {
       proFeatures: ProFeatures;
     }) => WithProFeatures & { success: boolean; error: string | null; codepointCount: number };
     proProofRequestBody: (
-      args: WithMasterPrivKey & {
-        requestVersion: number;
-        rotatingPrivkey: Uint8Array;
-        unixTsMs: number;
-      }
+      args: WithMasterPrivKeyHex & WithRequestVersion & WithUnixTsMs & WithRotatingPrivKeyHex
     ) => string;
 
-    proProofParseResponse: (args: {
-      json: string;
-    }) => WithProBackendResponse & { proof: ProProof | null };
+    // proProofParseResponse: (args: {
+    //   json: string;
+    // }) => WithProBackendResponse & { proof: ProProof | null };
 
     /**
      * @param version: Request version. The latest accepted version is 0
@@ -180,30 +185,30 @@ declare module 'libsession_util_nodejs' {
      the Session Pro Backend to omit the revocation list if it has not changed.
      * @returns the stringified body to include in the request
      */
-    proRevocationsRequestBody: (args: { requestVersion: number; ticket: number }) => string;
+    proRevocationsRequestBody: (args: WithRequestVersion & { ticket: number }) => string;
 
-    proRevocationsParseResponse: (args: { json: string }) => WithProBackendResponse & {
-      ticket: number | null;
-      items: Array<ProRevocationItem> | null;
-    };
+    // proRevocationsParseResponse: (args: { json: string }) => WithProBackendResponse & {
+    //   ticket: number | null;
+    //   items: Array<ProRevocationItem> | null;
+    // };
 
     proStatusRequestBody: (
-      args: WithMasterPrivKey & {
-        requestVersion: number;
-        unixTsMs: number;
-        withPaymentHistory: boolean;
-      }
+      args: WithMasterPrivKeyHex &
+        WithRequestVersion &
+        WithUnixTsMs & {
+          withPaymentHistory: boolean;
+        }
     ) => string;
 
-    proStatusParseResponse: (args: { json: string }) => WithProBackendResponse & {
-      ticket: number | null;
-      items: Array<ProPaymentItem>;
-      userStatus: number;
-      errorReport: number;
-      autoRenewing: boolean;
-      expiryUnixTsMs: number;
-      gracePeriodDurationMs: number;
-    };
+    // proStatusParseResponse: (args: { json: string }) => WithProBackendResponse & {
+    //   ticket: number | null;
+    //   items: Array<ProPaymentItem>;
+    //   userStatus: number;
+    //   errorReport: number;
+    //   autoRenewing: boolean;
+    //   expiryUnixTsMs: number;
+    //   gracePeriodDurationMs: number;
+    // };
   };
 
   export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
@@ -214,11 +219,11 @@ declare module 'libsession_util_nodejs' {
   export class ProWrapperNode {
     public static proFeaturesForMessage: ProWrapper['proFeaturesForMessage'];
     public static proProofRequestBody: ProWrapper['proProofRequestBody'];
-    public static proProofParseResponse: ProWrapper['proProofParseResponse'];
-    public static proRevocationRequestBody: ProWrapper['proRevocationsRequestBody'];
-    public static proRevocationParseResponse: ProWrapper['proRevocationsParseResponse'];
+    public static proRevocationsRequestBody: ProWrapper['proRevocationsRequestBody'];
     public static proStatusRequestBody: ProWrapper['proStatusRequestBody'];
-    public static proStatusParseResponse: ProWrapper['proStatusParseResponse'];
+    // public static proProofParseResponse: ProWrapper['proProofParseResponse'];
+    // public static proRevocationsParseResponse: ProWrapper['proRevocationsParseResponse'];
+    // public static proStatusParseResponse: ProWrapper['proStatusParseResponse'];
   }
 
   /**
@@ -229,9 +234,9 @@ declare module 'libsession_util_nodejs' {
   export type ProActionsType =
     | MakeActionCall<ProWrapper, 'proFeaturesForMessage'>
     | MakeActionCall<ProWrapper, 'proProofRequestBody'>
-    | MakeActionCall<ProWrapper, 'proProofParseResponse'>
     | MakeActionCall<ProWrapper, 'proRevocationsRequestBody'>
-    | MakeActionCall<ProWrapper, 'proRevocationsParseResponse'>
-    | MakeActionCall<ProWrapper, 'proStatusRequestBody'>
-    | MakeActionCall<ProWrapper, 'proStatusParseResponse'>;
+    | MakeActionCall<ProWrapper, 'proStatusRequestBody'>;
+  // | MakeActionCall<ProWrapper, 'proProofParseResponse'>
+  // | MakeActionCall<ProWrapper, 'proRevocationsParseResponse'>
+  // | MakeActionCall<ProWrapper, 'proStatusParseResponse'>
 }

@@ -110,19 +110,21 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
 
+                        // Note: those are not plugged in for now as we do this parsing through zod
+                        // on desktop.
                         // Pro responses parsing
-                        StaticMethod<&ProWrapper::proProofParseResponse>(
-                                "proProofParseResponse",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
-                        StaticMethod<&ProWrapper::proRevocationsParseResponse>(
-                                "proRevocationsParseResponse",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
-                        StaticMethod<&ProWrapper::proStatusParseResponse>(
-                                "proStatusParseResponse",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
+                        // StaticMethod<&ProWrapper::proProofParseResponse>(
+                        //         "proProofParseResponse",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
+                        // StaticMethod<&ProWrapper::proRevocationsParseResponse>(
+                        //         "proRevocationsParseResponse",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
+                        // StaticMethod<&ProWrapper::proStatusParseResponse>(
+                        //         "proStatusParseResponse",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
                 });
     }
 
@@ -187,8 +189,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             // we expect arguments that match:
             // first: {
             //   "requestVersion": number,
-            //   "masterPrivkey": Uint8Array,
-            //   "rotatingPrivkey": Uint8Array,
+            //   "masterPrivKeyHex": string,
+            //   "rotatingPrivKeyHex": string,
             //   "unixTsMs": number,
             // }
 
@@ -197,32 +199,35 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto env = info.Env();
 
             auto first = info[0].As<Napi::Object>();
-
             if (first.IsEmpty())
                 throw std::invalid_argument("proProofRequestBody first received empty");
 
             assertIsNumber(first.Get("requestVersion"), "proProofRequestBody.requestVersion");
+            Napi::Number requestVersion = first.Get("requestVersion").As<Napi::Number>();
             assertIsNumber(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
-            auto requestVersion = first.Get("requestVersion").As<Napi::Number>();
             auto unix_ts_ms = toCppSysMs(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
 
-            assertIsUInt8Array(first.Get("masterPrivkey"), "proProofRequestBody.masterPrivkey");
-            assertIsUInt8Array(first.Get("rotatingPrivkey"), "proProofRequestBody.rotatingPrivkey");
+            assertIsString(first.Get("masterPrivKeyHex"), "proProofRequestBody.masterPrivKeyHex");
+            assertIsString(
+                    first.Get("rotatingPrivKeyHex"), "proProofRequestBody.rotatingPrivKeyHex");
 
-            auto master_privkey_js = first.Get("masterPrivkey");
-            auto rotating_privkey_js = first.Get("rotatingPrivkey");
-            auto master_privkey =
-                    toCppBuffer(master_privkey_js, "proProofRequestBody.masterPrivkey");
-            auto rotating_privkey =
-                    toCppBuffer(rotating_privkey_js, "proProofRequestBody.rotatingPrivkey");
+            auto master_privkey_js = first.Get("masterPrivKeyHex");
+            auto rotating_privkey_js = first.Get("rotatingPrivKeyHex");
+            std::string master_privkey =
+                    toCppString(master_privkey_js, "proProofRequestBody.masterPrivKeyHex");
+            std::string rotating_privkey =
+                    toCppString(rotating_privkey_js, "proProofRequestBody.rotatingPrivKeyHex");
 
-            assert_length(master_privkey, 64, "master_privkey");
-            assert_length(rotating_privkey, 64, "rotating_prevkey");
+            assert_length(master_privkey, 64, "masterPrivKeyHex");
+            assert_length(rotating_privkey, 64, "rotatingPrivkey");
 
-            auto json = pro_backend::GetProProofRequest::build_to_json(
+            auto master_privkey_decoded = from_hex(master_privkey);
+            auto rotating_privkey_decoded = from_hex(rotating_privkey);
+
+            std::string json = pro_backend::GetProProofRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
-                    master_privkey,
-                    rotating_privkey,
+                    to_span(master_privkey_decoded),
+                    to_span(rotating_privkey_decoded),
                     unix_ts_ms);
 
             return json;
@@ -321,7 +326,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             // we expect arguments that match:
             // first: {
             //   "requestVersion": number,
-            //   "masterPrivkey": Uint8Array,
+            //   "masterPrivKeyHex": string,
             //   "unixTsMs": number,
             //   "withPaymentHistory": boolean,
             // }
@@ -343,17 +348,17 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto unix_ts_ms = toCppSysMs(first.Get("unixTsMs"), "proStatusRequestBody.unixTsMs");
             auto withPaymentHistory = toCppBoolean(
                     first.Get("withPaymentHistory"), "proStatusRequestBody.withPaymentHistory");
-            assertIsUInt8Array(first.Get("masterPrivkey"), "proStatusRequestBody.masterPrivkey");
+            assertIsString(first.Get("masterPrivKeyHex"), "proStatusRequestBody.masterPrivKeyHex");
 
-            auto master_privkey_js = first.Get("masterPrivkey");
+            auto master_privkey_js = first.Get("masterPrivKeyHex");
             auto master_privkey =
-                    toCppBuffer(master_privkey_js, "proStatusRequestBody.masterPrivkey");
+                    toCppString(master_privkey_js, "proStatusRequestBody.masterPrivKeyHex");
 
-            assert_length(master_privkey, 64, "proStatusRequestBody.master_privkey");
+            assert_length(master_privkey, 64, "proStatusRequestBody.masterPrivKeyHex");
 
             auto json = pro_backend::GetProStatusRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
-                    master_privkey,
+                    to_span(from_hex(master_privkey)),
                     unix_ts_ms,
                     withPaymentHistory);
 
