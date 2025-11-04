@@ -170,7 +170,9 @@ declare module 'libsession_util_nodejs' {
        * If provided (here) as an input, it will be ignored.
        */
       proFeatures: ProFeatures;
-    }) => WithProFeatures & { success: boolean; error: string | null; codepointCount: number };
+    }) => WithProFeatures & {
+      status: 'SUCCESS' | 'UTF_DECODING_ERROR' | 'EXCEEDS_CHARACTER_LIMIT';
+    };
     proProofRequestBody: (
       args: WithMasterPrivKeyHex & WithRequestVersion & WithUnixTsMs & WithRotatingPrivKeyHex
     ) => string;

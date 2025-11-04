@@ -20,6 +20,7 @@ std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PLAN v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v);
+std::string_view proBackendEnumToString(session::ProFeaturesForMsgStatus v);
 
 template <typename T>
 Napi::Value toJsOrNullIfErrors(
@@ -174,7 +175,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             auto obj = Napi::Object::New(env);
 
-            obj["success"] = toJs(env, pro_features_msg.success);
+            obj["status"] = toJs(env, proBackendEnumToString(pro_features_msg.status));
             obj["error"] =
                     pro_features_msg.error.size() ? toJs(env, pro_features_msg.error) : env.Null();
             obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
