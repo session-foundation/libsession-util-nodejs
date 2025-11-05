@@ -49,15 +49,24 @@ endif()
 
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${CMAKE_JS_SRC})
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC} "include/" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-addon-api" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules" "${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-api-headers/include")
+
+# Mark the node-addon-api headers as system so the -Werror=switch-enum does not apply to them
+target_include_directories(${PROJECT_NAME}
+    SYSTEM PRIVATE
+    ${CMAKE_JS_INC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-addon-api
+    ${CMAKE_CURRENT_SOURCE_DIR}/node_modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-api-headers/include
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE  "include/" )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} ${LIBSESSION_STATIC_BUNDLE_LIBS})
 
 
 if(UNIX AND NOT APPLE)
-    # Add switch-enum warnings as errors on Linux (see __builtin_unreachable()/UNREACHABLE() calls)
-#     target_compile_options(${PROJECT_NAME} PRIVATE -Werror=switch-enum)
+    target_compile_options(${PROJECT_NAME} PRIVATE -Werror=switch-enum)
 endif()
 
 
