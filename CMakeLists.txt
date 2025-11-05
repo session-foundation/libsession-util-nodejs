@@ -55,10 +55,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} ${LIBSESSION_STATIC_BUNDLE_LIBS})
 
 
-# if(UNIX AND NOT APPLE)
-#     # Add switch-enum warnings as errors on Linux (see __builtin_unreachable calls)
+if(UNIX AND NOT APPLE)
+    # Add switch-enum warnings as errors on Linux (see __builtin_unreachable()/UNREACHABLE() calls)
 #     target_compile_options(${PROJECT_NAME} PRIVATE -Werror=switch-enum)
-# endif()
+endif()
 
 
 if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)

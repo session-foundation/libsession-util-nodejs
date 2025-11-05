@@ -24,6 +24,12 @@ namespace session::nodeapi {
 
 using namespace std::literals;
 
+#ifdef _MSC_VER
+#define UNREACHABLE() __assume(0)
+#else
+#define UNREACHABLE() __builtin_unreachable()
+#endif
+
 inline auto cat = oxen::log::Cat("nodeapi");
 
 static void checkOrThrow(bool condition, const char* msg) {

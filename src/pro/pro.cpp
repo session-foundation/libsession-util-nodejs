@@ -1,6 +1,7 @@
 #include "pro/pro.hpp"
 
 namespace session::nodeapi {
+
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v) {
     switch (v) {
         case SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL: return "NIL";
@@ -9,7 +10,7 @@ std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v) 
         case SESSION_PRO_BACKEND_PAYMENT_PROVIDER_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_PAYMENT_PROVIDER_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v) {
@@ -22,7 +23,7 @@ std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v) {
         case SESSION_PRO_BACKEND_PAYMENT_STATUS_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_PAYMENT_STATUS_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PLAN v) {
@@ -34,7 +35,7 @@ std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PLAN v) {
         case SESSION_PRO_BACKEND_PLAN_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_PLAN_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v) {
@@ -45,7 +46,7 @@ std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v) {
         case SESSION_PRO_BACKEND_USER_PRO_STATUS_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_USER_PRO_STATUS_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v) {
@@ -55,7 +56,7 @@ std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR
         case SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view proBackendEnumPlanToString(SESSION_PRO_BACKEND_PLAN v) {
@@ -67,7 +68,7 @@ std::string_view proBackendEnumPlanToString(SESSION_PRO_BACKEND_PLAN v) {
         case SESSION_PRO_BACKEND_PLAN_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_PLAN_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view proBackendEnumPaymentProviderToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v) {
@@ -79,7 +80,7 @@ std::string_view proBackendEnumPaymentProviderToString(SESSION_PRO_BACKEND_PAYME
         case SESSION_PRO_BACKEND_PAYMENT_PROVIDER_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_PAYMENT_PROVIDER_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view proBackendEnumPaymentStatusToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v) {
@@ -92,7 +93,7 @@ std::string_view proBackendEnumPaymentStatusToString(SESSION_PRO_BACKEND_PAYMENT
         case SESSION_PRO_BACKEND_PAYMENT_STATUS_COUNT:
             throw std::invalid_argument("SESSION_PRO_BACKEND_PAYMENT_STATUS_COUNT");
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 std::string_view proBackendEnumToString(session::ProFeaturesForMsgStatus v) {
@@ -102,7 +103,7 @@ std::string_view proBackendEnumToString(session::ProFeaturesForMsgStatus v) {
         case session::ProFeaturesForMsgStatus::ExceedsCharacterLimit:
             return "EXCEEDS_CHARACTER_LIMIT";
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 }  // namespace session::nodeapi
