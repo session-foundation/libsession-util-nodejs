@@ -5,22 +5,78 @@
 
 #include <vector>
 
-#include "../../node_modules/node-addon-api/napi.h"
-#include "../meta/meta_base_wrapper.hpp"
-#include "../utilities.hpp"
-#include "./types.hpp"
 #include "meta/meta_base_wrapper.hpp"
+#include "pro/types.hpp"
 #include "session/pro_backend.h"
 #include "session/pro_backend.hpp"
 #include "session/session_protocol.h"
 #include "session/session_protocol.hpp"
+#include "utilities.hpp"
 
 namespace session::nodeapi {
-std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v);
-std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v);
-std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_PLAN v);
-std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v);
-std::string_view ProBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v);
+
+std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v);
+std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v);
+std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PLAN v);
+std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v);
+std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v);
+std::string_view proBackendEnumToString(session::ProFeaturesForMsgStatus v);
+
+template <typename T>
+Napi::Value toJsOrNullIfErrors(
+        const Napi::Env& env, const T& value, const std::vector<std::string>& errors) {
+    return errors.empty() ? toJs(env, value) : env.Null();
+}
+
+template <>
+struct toJs_impl<pro_backend::ProRevocationItem> {
+    auto operator()(const Napi::Env& env, pro_backend::ProRevocationItem i) const {
+
+        auto obj = Napi::Object::New(env);
+        obj["genIndexHashB64"] = toJs(env, to_base64(i.gen_index_hash));
+        obj["expiryUnixTsMs"] = toJs(env, i.expiry_unix_ts);
+
+        return obj;
+    }
+};
+
+template <>
+struct toJs_impl<pro_backend::ProPaymentItem> {
+    auto operator()(const Napi::Env& env, pro_backend::ProPaymentItem p) const {
+
+        auto obj = Napi::Object::New(env);
+        obj["status"] = toJs(env, proBackendEnumToString(p.status));
+        obj["plan"] = toJs(env, proBackendEnumToString(p.plan));
+        obj["paymentProvider"] = toJs(env, proBackendEnumToString(p.payment_provider));
+
+        obj["autoRenewing"] = toJs(env, p.auto_renewing);
+        obj["unredeemedTsMs"] = toJs(env, p.unredeemed_unix_ts);
+        obj["redeemedTsMs"] = toJs(env, p.redeemed_unix_ts);
+        obj["expiryTsMs"] = toJs(env, p.expiry_unix_ts);
+        obj["gracePeriodDurationMs"] = toJs(env, p.grace_period_duration_ms);
+        obj["platformRefundExpiryTsMs"] = toJs(env, p.platform_refund_expiry_unix_ts);
+        obj["revokedTsMs"] = toJs(env, p.revoked_unix_ts);
+
+        obj["googlePaymentToken"] = toJs(env, p.google_payment_token);
+        obj["appleOriginalTxId"] = toJs(env, p.apple_original_tx_id);
+        obj["appleTxId"] = toJs(env, p.apple_tx_id);
+        obj["appleWebLineOrderId"] = toJs(env, p.apple_web_line_order_id);
+
+        return obj;
+    }
+};
+
+template <>
+struct toJs_impl<pro_backend::ResponseHeader> {
+    auto operator()(const Napi::Env& env, pro_backend::ResponseHeader r) const {
+
+        auto obj = Napi::Object::New(env);
+        obj["status"] = toJs(env, r.status);
+        obj["errors"] = toJs(env, r.errors);
+
+        return obj;
+    }
+};
 
 class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
@@ -40,30 +96,36 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                                 "proFeaturesForMessage",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
+
+                        // Pro requests
                         StaticMethod<&ProWrapper::proProofRequestBody>(
                                 "proProofRequestBody",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
-                        StaticMethod<&ProWrapper::proProofResponseBody>(
-                                "proProofResponseBody",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
                         StaticMethod<&ProWrapper::proRevocationsRequestBody>(
                                 "proRevocationsRequestBody",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
-                        StaticMethod<&ProWrapper::proRevocationsResponseBody>(
-                                "proRevocationsResponseBody",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
                         StaticMethod<&ProWrapper::proStatusRequestBody>(
                                 "proStatusRequestBody",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
-                        StaticMethod<&ProWrapper::proStatusResponseBody>(
-                                "proStatusResponseBody",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
+
+                        // Note: those are not plugged in for now as we do this parsing through zod
+                        // on desktop.
+                        // Pro responses parsing
+                        // StaticMethod<&ProWrapper::proProofParseResponse>(
+                        //         "proProofParseResponse",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
+                        // StaticMethod<&ProWrapper::proRevocationsParseResponse>(
+                        //         "proRevocationsParseResponse",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
+                        // StaticMethod<&ProWrapper::proStatusParseResponse>(
+                        //         "proStatusParseResponse",
+                        //         static_cast<napi_property_attributes>(
+                        //                 napi_writable | napi_configurable)),
                 });
     }
 
@@ -113,7 +175,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             auto obj = Napi::Object::New(env);
 
-            obj["success"] = toJs(env, pro_features_msg.success);
+            obj["status"] = toJs(env, proBackendEnumToString(pro_features_msg.status));
             obj["error"] =
                     pro_features_msg.error.size() ? toJs(env, pro_features_msg.error) : env.Null();
             obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
@@ -128,8 +190,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             // we expect arguments that match:
             // first: {
             //   "requestVersion": number,
-            //   "masterPrivkey": Uint8Array,
-            //   "rotatingPrivkey": Uint8Array,
+            //   "masterPrivKeyHex": string,
+            //   "rotatingPrivKeyHex": string,
             //   "unixTsMs": number,
             // }
 
@@ -138,39 +200,42 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto env = info.Env();
 
             auto first = info[0].As<Napi::Object>();
-
             if (first.IsEmpty())
                 throw std::invalid_argument("proProofRequestBody first received empty");
 
             assertIsNumber(first.Get("requestVersion"), "proProofRequestBody.requestVersion");
+            Napi::Number requestVersion = first.Get("requestVersion").As<Napi::Number>();
             assertIsNumber(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
-            auto requestVersion = first.Get("requestVersion").As<Napi::Number>();
             auto unix_ts_ms = toCppSysMs(first.Get("unixTsMs"), "proProofRequestBody.unixTsMs");
 
-            assertIsUInt8Array(first.Get("masterPrivkey"), "proProofRequestBody.masterPrivkey");
-            assertIsUInt8Array(first.Get("rotatingPrivkey"), "proProofRequestBody.rotatingPrivkey");
+            assertIsString(first.Get("masterPrivKeyHex"), "proProofRequestBody.masterPrivKeyHex");
+            assertIsString(
+                    first.Get("rotatingPrivKeyHex"), "proProofRequestBody.rotatingPrivKeyHex");
 
-            auto master_privkey_js = first.Get("masterPrivkey");
-            auto rotating_privkey_js = first.Get("rotatingPrivkey");
-            auto master_privkey =
-                    toCppBuffer(master_privkey_js, "proProofRequestBody.masterPrivkey");
-            auto rotating_privkey =
-                    toCppBuffer(rotating_privkey_js, "proProofRequestBody.rotatingPrivkey");
+            auto master_privkey_js = first.Get("masterPrivKeyHex");
+            auto rotating_privkey_js = first.Get("rotatingPrivKeyHex");
+            std::string master_privkey =
+                    toCppString(master_privkey_js, "proProofRequestBody.masterPrivKeyHex");
+            std::string rotating_privkey =
+                    toCppString(rotating_privkey_js, "proProofRequestBody.rotatingPrivKeyHex");
 
-            assert_length(master_privkey, 64, "master_privkey");
-            assert_length(rotating_privkey, 64, "rotating_prevkey");
+            assert_length(master_privkey, 64, "masterPrivKeyHex");
+            assert_length(rotating_privkey, 64, "rotatingPrivkey");
 
-            auto json = pro_backend::GetProProofRequest::build_to_json(
+            auto master_privkey_decoded = from_hex(master_privkey);
+            auto rotating_privkey_decoded = from_hex(rotating_privkey);
+
+            std::string json = pro_backend::GetProProofRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
-                    master_privkey,
-                    rotating_privkey,
+                    to_span(master_privkey_decoded),
+                    to_span(rotating_privkey_decoded),
                     unix_ts_ms);
 
             return json;
         });
     };
 
-    static Napi::Value proProofResponseBody(const Napi::CallbackInfo& info) {
+    static Napi::Value proProofParseResponse(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             // we expect arguments that match:
             // first: {
@@ -184,17 +249,14 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto first = info[0].As<Napi::Object>();
 
             if (first.IsEmpty())
-                throw std::invalid_argument("proProofResponseBody first received empty");
+                throw std::invalid_argument("proProofParseResponse first received empty");
 
-            assertIsString(first.Get("json"), "proProofResponseBody.jsonStr");
-            auto json_str = toCppString(first.Get("json"), "proProofResponseBody.jsonStr");
-            auto json = pro_backend::AddProPaymentOrGetProProofResponse::parse(json_str);
+            assertIsString(first.Get("json"), "proProofParseResponse.json");
+            auto json_str = toCppString(first.Get("json"), "proProofParseResponse.json");
+            auto parsed = pro_backend::AddProPaymentOrGetProProofResponse::parse(json_str);
 
-            auto obj = Napi::Object::New(env);
-
-            obj["status"] = toJs(env, json.status);
-            obj["errors"] = toJs(env, json.errors);
-            obj["proof"] = json.errors.empty() ? toJs(env, json.proof) : env.Null();
+            auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
+            obj["proof"] = toJsOrNullIfErrors(env, parsed.proof, parsed.errors);
 
             return obj;
         });
@@ -227,13 +289,11 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     .ticket = ticket.Uint32Value(),
             };
 
-            auto json = revocationsRequest.to_json();
-
-            return json;
+            return revocationsRequest.to_json();
         });
     };
 
-    static Napi::Value proRevocationsResponseBody(const Napi::CallbackInfo& info) {
+    static Napi::Value proRevocationsParseResponse(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             // we expect arguments that match:
             // first: {
@@ -247,19 +307,16 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto first = info[0].As<Napi::Object>();
 
             if (first.IsEmpty())
-                throw std::invalid_argument("proRevocationsResponseBody first received empty");
+                throw std::invalid_argument("proRevocationsParseResponse first received empty");
 
-            assertIsString(first.Get("json"), "proRevocationsResponseBody.jsonStr");
-            auto json_str = toCppString(first.Get("json"), "proRevocationsResponseBody.jsonStr");
-            auto json = pro_backend::GetProRevocationsResponse::parse(json_str);
+            assertIsString(first.Get("json"), "proRevocationsParseResponse.json");
+            auto json_str = toCppString(first.Get("json"), "proRevocationsParseResponse.json");
+            auto parsed = pro_backend::GetProRevocationsResponse::parse(json_str);
 
-            auto obj = Napi::Object::New(env);
-
-            obj["status"] = toJs(env, json.status);
-            obj["errors"] = toJs(env, json.errors);
-            obj["ticket"] = json.errors.empty() ? toJs(env, json.ticket) : env.Null();
-            // FIXME: implement
-            // obj["items"] = json.errors.empty() ? toJs(env, json.items) : env.Null();
+            auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
+            // if error is set, the body might not be parsable so don't try to use it
+            obj["ticket"] = parsed.errors.size() ? env.Null() : toJs(env, parsed.ticket);
+            obj["items"] = parsed.errors.size() ? env.Null() : toJs(env, parsed.items);
 
             return obj;
         });
@@ -270,7 +327,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             // we expect arguments that match:
             // first: {
             //   "requestVersion": number,
-            //   "masterPrivkey": Uint8Array,
+            //   "masterPrivKeyHex": string,
             //   "unixTsMs": number,
             //   "withPaymentHistory": boolean,
             // }
@@ -292,17 +349,17 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto unix_ts_ms = toCppSysMs(first.Get("unixTsMs"), "proStatusRequestBody.unixTsMs");
             auto withPaymentHistory = toCppBoolean(
                     first.Get("withPaymentHistory"), "proStatusRequestBody.withPaymentHistory");
-            assertIsUInt8Array(first.Get("masterPrivkey"), "proStatusRequestBody.masterPrivkey");
+            assertIsString(first.Get("masterPrivKeyHex"), "proStatusRequestBody.masterPrivKeyHex");
 
-            auto master_privkey_js = first.Get("masterPrivkey");
+            auto master_privkey_js = first.Get("masterPrivKeyHex");
             auto master_privkey =
-                    toCppBuffer(master_privkey_js, "proStatusRequestBody.masterPrivkey");
+                    toCppString(master_privkey_js, "proStatusRequestBody.masterPrivKeyHex");
 
-            assert_length(master_privkey, 64, "master_privkey");
+            assert_length(master_privkey, 64, "proStatusRequestBody.masterPrivKeyHex");
 
             auto json = pro_backend::GetProStatusRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
-                    master_privkey,
+                    to_span(from_hex(master_privkey)),
                     unix_ts_ms,
                     withPaymentHistory);
 
@@ -310,7 +367,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         });
     };
 
-    static Napi::Value proStatusResponseBody(const Napi::CallbackInfo& info) {
+    static Napi::Value proStatusParseResponse(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             // we expect arguments that match:
             // first: {
@@ -324,30 +381,25 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto first = info[0].As<Napi::Object>();
 
             if (first.IsEmpty())
-                throw std::invalid_argument("proStatusResponseBody first received empty");
+                throw std::invalid_argument("proStatusParseResponse first received empty");
 
-            assertIsString(first.Get("json"), "proStatusResponseBody.jsonStr");
-            auto json_str = toCppString(first.Get("json"), "proStatusResponseBody.jsonStr");
-            auto json = pro_backend::GetProStatusResponse::parse(json_str);
+            assertIsString(first.Get("json"), "proStatusParseResponse.json");
+            auto json_str = toCppString(first.Get("json"), "proStatusParseResponse.json");
+            auto parsed = pro_backend::GetProStatusResponse::parse(json_str);
 
-            auto obj = Napi::Object::New(env);
+            auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
 
-            obj["status"] = toJs(env, json.status);
-            obj["errors"] = toJs(env, json.errors);
-            // FIXME: implement
-            // obj["items"] = json.errors.empty() ? toJs(env, json.items) : env.Null();
-            obj["userStatus"] = json.errors.empty()
-                                      ? toJs(env, ProBackendEnumToString(json.user_status))
-                                      : env.Null();
-            obj["errorReport"] = json.errors.empty()
-                                       ? toJs(env, ProBackendEnumToString(json.error_report))
-                                       : env.Null();
-            obj["autoRenewing"] = json.errors.empty() ? toJs(env, json.auto_renewing) : env.Null();
+            obj["items"] = toJsOrNullIfErrors(env, parsed.items, parsed.errors);
+            obj["userStatus"] = toJsOrNullIfErrors(
+                    env, proBackendEnumToString(parsed.user_status), parsed.errors);
 
-            // FIXME: implement
-            // obj["expiryUnixTsMs"] = json.errors.empty() ? toJs(env, json.expiry_unix_ts_ms) :
-            // env.Null(); obj["gracePeriodDurationMs"] = json.errors.empty() ? toJs(env,
-            // json.grace_period_duration_ms) : env.Null();
+            obj["errorReport"] = toJsOrNullIfErrors(
+                    env, proBackendEnumToString(parsed.error_report), parsed.errors);
+
+            obj["autoRenewing"] = toJsOrNullIfErrors(env, parsed.auto_renewing, parsed.errors);
+            obj["expiryTsMs"] = toJsOrNullIfErrors(env, parsed.expiry_unix_ts_ms, parsed.errors);
+            obj["gracePeriodMs"] =
+                    toJsOrNullIfErrors(env, parsed.grace_period_duration_ms, parsed.errors);
 
             return obj;
         });

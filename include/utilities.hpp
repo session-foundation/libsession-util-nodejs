@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fmt/format.h>
 #include <napi.h>
 
 #include <chrono>
@@ -22,6 +23,12 @@
 namespace session::nodeapi {
 
 using namespace std::literals;
+
+#ifdef _MSC_VER
+#define UNREACHABLE() __assume(0)
+#else
+#define UNREACHABLE() __builtin_unreachable()
+#endif
 
 inline auto cat = oxen::log::Cat("nodeapi");
 
@@ -239,6 +246,21 @@ struct toJs_impl<std::chrono::sys_seconds> {
     }
 };
 
+template <>
+struct toJs_impl<std::chrono::milliseconds> {
+    auto operator()(const Napi::Env& env, std::chrono::milliseconds t) const {
+        return Napi::Number::New(env, t.count());
+    }
+};
+
+template <>
+struct toJs_impl<std::chrono::sys_time<std::chrono::milliseconds>> {
+    auto operator()(
+            const Napi::Env& env, std::chrono::sys_time<std::chrono::milliseconds> t) const {
+        return Napi::Number::New(env, t.time_since_epoch().count());
+    }
+};
+
 // Returns {"url": "...", "key": buffer} object; both values will be Null if the pic is not set.
 
 template <>
@@ -383,7 +405,7 @@ template <std::size_t N>
 std::array<uint8_t, N> from_hex_to_array(std::string x) {
     std::string as_hex = oxenc::from_hex(x);
     if (as_hex.size() != N) {
-        throw std::invalid_argument(std::format(
+        throw std::invalid_argument(fmt::format(
                 "from_hex_to_array: Decoded hex size mismatch: expected {}, got {}",
                 N,
                 as_hex.size()));
@@ -410,7 +432,7 @@ concept HasSize = requires(T t) {
 template <HasSize T>
 void assert_length(const T& x, size_t n, std::string_view base_identifier) {
     if (x.size() != n) {
-        throw std::invalid_argument(std::format(
+        throw std::invalid_argument(fmt::format(
                 "assert_length: expected {}, got {} for {}", n, x.size(), base_identifier));
     }
 }
