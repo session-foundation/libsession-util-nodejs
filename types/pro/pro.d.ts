@@ -47,12 +47,7 @@ declare module 'libsession_util_nodejs' {
   //   errors: Array<string>;
   // };
 
-  // Must match session-desktop
-  export enum ProOriginatingPlatform {
-    Nil = 'Nil',
-    GooglePlayStore = 'Google',
-    iOSAppStore = 'iOS',
-  }
+  export type ProOriginatingPlatform = 'Nil' | 'Google' | 'iOS';
 
   export type ProBackendProviderConstantType = {
     device: string;
