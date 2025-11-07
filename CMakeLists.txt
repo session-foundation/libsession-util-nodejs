@@ -78,6 +78,9 @@ target_include_directories(${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-addon-api
     ${CMAKE_CURRENT_SOURCE_DIR}/node_modules
     ${CMAKE_CURRENT_SOURCE_DIR}/node_modules/node-api-headers/include
+    "../../node_modules/node-addon-api"
+    "../../node_modules"
+    "../../node_modules/node-api-headers/include"
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE  "include/" )
