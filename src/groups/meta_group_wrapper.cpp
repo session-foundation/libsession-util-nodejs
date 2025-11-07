@@ -139,6 +139,8 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("keysNeedsRekey", &MetaGroupWrapper::keysNeedsRekey),
                     InstanceMethod("keyRekey", &MetaGroupWrapper::keyRekey),
                     InstanceMethod("keyGetAll", &MetaGroupWrapper::keyGetAll),
+                    InstanceMethod(
+                            "keyGetEncryptionKeyHex", &MetaGroupWrapper::keyGetEncryptionKeyHex),
                     InstanceMethod("activeHashes", &MetaGroupWrapper::activeHashes),
                     InstanceMethod("loadKeyMessage", &MetaGroupWrapper::loadKeyMessage),
                     InstanceMethod("keyGetCurrentGen", &MetaGroupWrapper::keyGetCurrentGen),
@@ -741,6 +743,10 @@ Napi::Value MetaGroupWrapper::keyRekey(const Napi::CallbackInfo& info) {
 
 Napi::Value MetaGroupWrapper::keyGetAll(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] { return meta_group->keys->group_keys(); });
+}
+
+Napi::Value MetaGroupWrapper::keyGetEncryptionKeyHex(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] { return to_hex(meta_group->keys->group_enc_key()); });
 }
 
 Napi::Value MetaGroupWrapper::loadKeyMessage(const Napi::CallbackInfo& info) {

@@ -1,5 +1,6 @@
 #include "utilities.hpp"
 
+#include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
 #include <chrono>
@@ -18,8 +19,10 @@ void assertInfoMinLength(const Napi::CallbackInfo& info, const int minLength) {
     checkOrThrow(info.Length() < minLength, "Invalid number of min length arguments");
 }
 
-void assertIsStringOrNull(const Napi::Value& val) {
-    checkOrThrow(val.IsString() || val.IsNull(), "Wrong arguments: expected string or null");
+void assertIsStringOrNull(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsString() || val.IsNull(),
+            std::string("Wrong arguments: expected string or null" + identifier).c_str());
 }
 
 void assertIsNumber(const Napi::Value& val, const std::string& identifier) {
@@ -50,15 +53,18 @@ void assertIsUInt8ArrayOrNull(const Napi::Value& val) {
 void assertIsUInt8Array(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
             IsUint8Array(val),
-            std::string("Wrong arguments: expected uint8Array" + identifier).c_str());
+            std::string("Wrong arguments: expected uint8Array: " + identifier).c_str());
 }
 
-void assertIsString(const Napi::Value& val) {
-    checkOrThrow(val.IsString(), "Wrong arguments: expected string");
+void assertIsString(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsString(), std::string("Wrong arguments: expected string: " + identifier).c_str());
 }
 
-void assertIsBoolean(const Napi::Value& val) {
-    checkOrThrow(val.IsBoolean(), "Wrong arguments: expected boolean");
+void assertIsBoolean(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsBoolean(),
+            std::string("Wrong arguments: expected boolean: " + identifier).c_str());
 }
 
 std::string toCppString(Napi::Value x, const std::string& identifier) {
@@ -163,6 +169,27 @@ std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& ident
     throw std::invalid_argument{"toCppSysSeconds with invalid type, called from " + identifier};
 }
 
+std::chrono::sys_time<std::chrono::milliseconds> toCppSysMs(
+        Napi::Value x, const std::string& identifier) {
+
+    if (x.IsNumber()) {
+        auto num = x.As<Napi::Number>().Int64Value();
+        return std::chrono::sys_time<std::chrono::milliseconds>{std::chrono::milliseconds{num}};
+    }
+
+    throw std::invalid_argument{"toCppSysMs with invalid type, called from " + identifier};
+}
+
+std::chrono::milliseconds toCppMs(Napi::Value x, const std::string& identifier) {
+
+    if (x.IsNumber()) {
+        auto num = x.As<Napi::Number>().Int64Value();
+        return std::chrono::milliseconds{num};
+    }
+
+    throw std::invalid_argument{"toCppMs with invalid type, called from " + identifier};
+}
+
 std::optional<session::config::profile_pic> maybeNonemptyProfilePic(
         Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
@@ -190,7 +217,7 @@ std::optional<session::config::profile_pic> maybeNonemptyProfilePic(
         // when the `x` obj is provided (i.e. not null), it should have those 2 fields set.
         // They can be empty (meaning to remove the profile pic), but not undefined/null, as the
         // object itself should have been undefined/null
-        throw new std::invalid_argument{"maybeNonemptyProfilePic with invalid input"};
+        throw std::invalid_argument{"maybeNonemptyProfilePic with invalid input"};
     }
     return session::config::profile_pic{*url, *key};
 
@@ -317,4 +344,56 @@ confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const 
     confirm_pushed_entry_t confirmed_pushed_entry{seqno, hashes};
     return confirmed_pushed_entry;
 }
+
+Napi::Object proFeaturesToJs(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
+    Napi::Array arr = Napi::Array::New(env);
+    uint32_t index = 0;
+
+    if (bitset == SESSION_PROTOCOL_PRO_FEATURES_NIL) {
+        return arr;
+    }
+
+    if (bitset & (SESSION_PROTOCOL_PRO_FEATURES_10K_CHARACTER_LIMIT)) {
+        arr[index] = Napi::String::New(env, "10K_CHARACTER_LIMIT");
+        index++;
+    }
+    if (bitset & SESSION_PROTOCOL_PRO_FEATURES_PRO_BADGE) {
+        arr[index++] = Napi::String::New(env, "PRO_BADGE");
+        index++;
+    }
+    if (bitset & SESSION_PROTOCOL_PRO_FEATURES_ANIMATED_AVATAR) {
+        arr[index++] = Napi::String::New(env, "ANIMATED_AVATAR");
+        index++;
+    }
+
+    return arr;
+}
+
+std::span<const uint8_t> from_hex_to_span(std::string_view x) {
+    return session::to_span(oxenc::from_hex(x));
+}
+
+std::vector<unsigned char> from_hex_to_vector(std::string_view x) {
+    return session::to_vector(oxenc::from_hex(x));
+}
+
+std::span<const uint8_t> from_base64_to_span(std::string_view x) {
+    return session::to_span(oxenc::from_base64(x));
+}
+
+std::vector<unsigned char> from_base64_to_vector(std::string_view x) {
+    return session::to_vector(oxenc::from_base64(x));
+}
+
+template <std::size_t N>
+std::array<uint8_t, N> spanToArray(std::span<const unsigned char> span) {
+    if (span.size() != N) {
+        throw std::invalid_argument("Span size does not match array size");
+    }
+
+    std::array<uint8_t, N> result;
+    std::ranges::copy(span, result.begin());
+    return result;
+}
+
 }  // namespace session::nodeapi

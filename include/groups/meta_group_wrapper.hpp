@@ -80,6 +80,7 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     Napi::Value keysNeedsRekey(const Napi::CallbackInfo& info);
     Napi::Value keyRekey(const Napi::CallbackInfo& info);
     Napi::Value keyGetAll(const Napi::CallbackInfo& info);
+    Napi::Value keyGetEncryptionKeyHex(const Napi::CallbackInfo& info);
     Napi::Value loadKeyMessage(const Napi::CallbackInfo& info);
     Napi::Value keyGetCurrentGen(const Napi::CallbackInfo& info);
     Napi::Value activeHashes(const Napi::CallbackInfo& info);

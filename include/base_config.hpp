@@ -6,13 +6,10 @@
 #include <cassert>
 #include <memory>
 #include <oxen/log.hpp>
-#include <span>
 #include <stdexcept>
 #include <unordered_set>
 
 #include "session/config/base.hpp"
-#include "session/logging.hpp"
-#include "session/types.hpp"
 #include "utilities.hpp"
 
 namespace session::nodeapi {

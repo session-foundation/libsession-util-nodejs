@@ -6,8 +6,9 @@
 #include "constants.hpp"
 #include "contacts_config.hpp"
 #include "convo_info_volatile_config.hpp"
+#include "encrypt_decrypt/encrypt_decrypt.hpp"
 #include "groups/meta_group_wrapper.hpp"
-#include "multi_encrypt/multi_encrypt.hpp"
+#include "pro/pro.hpp"
 #include "user_config.hpp"
 #include "user_groups_config.hpp"
 
@@ -32,7 +33,7 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
                                                         .As<Napi::Object>()
                                                         .Get("log")
                                                         .As<Napi::Function>();
-                    Napi::String jsStr = Napi::String::New(env, "libsession-util: " + *msg);
+                    Napi::String jsStr = Napi::String::New(env, "libsession: " + *msg);
                     consoleLog.Call({jsStr});
                     delete msg;
                 });
@@ -52,6 +53,7 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
 
     // Fully static wrappers init
     session::nodeapi::MultiEncryptWrapper::Init(env, exports);
+    session::nodeapi::ProWrapper::Init(env, exports);
     session::nodeapi::BlindingWrapper::Init(env, exports);
 
     return exports;
