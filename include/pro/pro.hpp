@@ -343,7 +343,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     toCppString(master_privkey_js, "proStatusRequestBody.masterPrivKeyHex");
 
             auto master_privkey_decoded = from_hex(master_privkey);
-            assert_length(master_privkey_decoded, 64, "proStatusRequestBody.masterPrivKeyHex");
+            assert_length(master_privkey_decoded, 32, "proStatusRequestBody.masterPrivKeyHex");
 
             auto json = pro_backend::GetProStatusRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),

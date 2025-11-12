@@ -354,7 +354,6 @@ confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const 
 
 Napi::BigInt proFeaturesToJsBitset(
         const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
-    // 2^53 should be enough for now. If we do need more we can use a bigint
     return Napi::BigInt::New(env, bitset);
 }
 
