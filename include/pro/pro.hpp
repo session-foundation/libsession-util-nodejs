@@ -206,11 +206,12 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             std::string rotating_privkey =
                     toCppString(rotating_privkey_js, "proProofRequestBody.rotatingPrivKeyHex");
 
-            assert_length(master_privkey, 64, "masterPrivKeyHex");
-            assert_length(rotating_privkey, 64, "rotatingPrivkey");
 
             auto master_privkey_decoded = from_hex(master_privkey);
             auto rotating_privkey_decoded = from_hex(rotating_privkey);
+
+            assert_length(master_privkey_decoded, 64, "masterPrivKeyHex");
+            assert_length(rotating_privkey_decoded, 64, "rotatingPrivkey");
 
             std::string json = pro_backend::GetProProofRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
@@ -343,7 +344,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     toCppString(master_privkey_js, "proStatusRequestBody.masterPrivKeyHex");
 
             auto master_privkey_decoded = from_hex(master_privkey);
-            assert_length(master_privkey_decoded, 32, "proStatusRequestBody.masterPrivKeyHex");
+            assert_length(master_privkey_decoded, 64, "proStatusRequestBody.masterPrivKeyHex");
 
             auto json = pro_backend::GetProStatusRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
