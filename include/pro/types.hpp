@@ -77,7 +77,7 @@ struct toJs_impl<session::DecodedPro> {
                      : decoded_pro.status == ProStatus::Valid              ? "Valid"
                                                                            : "Expired");
         obj["proProof"] = toJs(env, decoded_pro.proof);
-        obj["proFeatures"] = proFeaturesToJs(env, decoded_pro.features);
+        obj["proFeaturesBitset"] = proFeaturesToJsBitset(env, decoded_pro.features);
 
         return obj;
     }

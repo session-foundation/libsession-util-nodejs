@@ -40,6 +40,7 @@ declare module 'libsession_util_nodejs' {
 
     setProConfig: (proConfig: ProConfig) => void;
     getProConfig: () => ProConfig | null;
+
     generateProMasterKey: ({
       ed25519SeedHex,
     }: {
@@ -49,10 +50,16 @@ declare module 'libsession_util_nodejs' {
       ed25519SeedHex: string;
     }) => {
       /**
-       * 64 bytes
+       * 64 bytes, 128 chars
        */
-      proMasterKey: Uint8Array;
+      proMasterKeyHex: string;
     };
+
+    /**
+     * Generates a new rotating private key for the user.
+     * Note: this should only be done once per device, and saved to the DB or the extra_data of `UserProfile`.
+     */
+    generateRotatingPrivKeyHex: () => WithRotatingPrivKeyHex;
   };
 
   export type UserConfigWrapperActionsCalls = MakeWrapperActionCalls<UserConfigWrapper>;
@@ -78,6 +85,7 @@ declare module 'libsession_util_nodejs' {
     public getProConfig: UserConfigWrapper['getProConfig'];
     public setProConfig: UserConfigWrapper['setProConfig'];
     public generateProMasterKey: UserConfigWrapper['generateProMasterKey'];
+    public generateRotatingPrivKeyHex: UserConfigWrapper['generateRotatingPrivKeyHex'];
   }
 
   /**
@@ -103,5 +111,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>
     | MakeActionCall<UserConfigWrapper, 'getProConfig'>
     | MakeActionCall<UserConfigWrapper, 'setProConfig'>
-    | MakeActionCall<UserConfigWrapper, 'generateProMasterKey'>;
+    | MakeActionCall<UserConfigWrapper, 'generateProMasterKey'>
+    | MakeActionCall<UserConfigWrapper, 'generateRotatingPrivKeyHex'>;
 }

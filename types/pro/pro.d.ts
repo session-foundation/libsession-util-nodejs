@@ -11,12 +11,11 @@ declare module 'libsession_util_nodejs' {
   };
 
   type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid' | 'Expired';
-  type ProFeature = '10K_CHARACTER_LIMIT' | 'PRO_BADGE' | 'ANIMATED_AVATAR';
-  type ProFeatures = Array<ProFeature>;
-  type WithProFeatures = { proFeatures: ProFeatures };
+  type WithProFeaturesBitset = { proFeaturesBitset: bigint };
   type WithGenIndexHash = { genIndexHashB64: string };
 
   type WithRequestVersion = { requestVersion: number };
+  type WithTicket = { ticket: number };
 
   type WithUnixTsMs = {
     unixTsMs: number;
@@ -41,11 +40,6 @@ declare module 'libsession_util_nodejs' {
   type ProConfig = WithRotatingPrivKeyHex & {
     proProof: ProProof;
   };
-
-  // type WithProBackendResponse = {
-  //   status: number;
-  //   errors: Array<string>;
-  // };
 
   export type ProOriginatingPlatform = 'Nil' | 'Google' | 'iOS';
 
@@ -158,23 +152,16 @@ declare module 'libsession_util_nodejs' {
   };
 
   type ProWrapper = {
-    proFeaturesForMessage: (args: {
-      utf16: string;
-      /**
-       * If the utf16 requires 10K_CHARACTER_LIMIT to be set, it will be set in the return.
-       * If provided (here) as an input, it will be ignored.
-       */
-      proFeatures: ProFeatures;
-    }) => WithProFeatures & {
+    proFeaturesForMessage: (
+      args: WithProFeaturesBitset & {
+        utf16: string;
+      }
+    ) => WithProFeaturesBitset & {
       status: 'SUCCESS' | 'UTF_DECODING_ERROR' | 'EXCEEDS_CHARACTER_LIMIT';
     };
     proProofRequestBody: (
       args: WithMasterPrivKeyHex & WithRequestVersion & WithUnixTsMs & WithRotatingPrivKeyHex
     ) => string;
-
-    // proProofParseResponse: (args: {
-    //   json: string;
-    // }) => WithProBackendResponse & { proof: ProProof | null };
 
     /**
      * @param version: Request version. The latest accepted version is 0
@@ -182,12 +169,7 @@ declare module 'libsession_util_nodejs' {
      the Session Pro Backend to omit the revocation list if it has not changed.
      * @returns the stringified body to include in the request
      */
-    proRevocationsRequestBody: (args: WithRequestVersion & { ticket: number }) => string;
-
-    // proRevocationsParseResponse: (args: { json: string }) => WithProBackendResponse & {
-    //   ticket: number | null;
-    //   items: Array<ProRevocationItem> | null;
-    // };
+    proRevocationsRequestBody: (args: WithRequestVersion & WithTicket) => string;
 
     proStatusRequestBody: (
       args: WithMasterPrivKeyHex &
@@ -196,16 +178,6 @@ declare module 'libsession_util_nodejs' {
           withPaymentHistory: boolean;
         }
     ) => string;
-
-    // proStatusParseResponse: (args: { json: string }) => WithProBackendResponse & {
-    //   ticket: number | null;
-    //   items: Array<ProPaymentItem>;
-    //   userStatus: number;
-    //   errorReport: number;
-    //   autoRenewing: boolean;
-    //   expiryUnixTsMs: number;
-    //   gracePeriodDurationMs: number;
-    // };
   };
 
   export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
@@ -218,9 +190,6 @@ declare module 'libsession_util_nodejs' {
     public static proProofRequestBody: ProWrapper['proProofRequestBody'];
     public static proRevocationsRequestBody: ProWrapper['proRevocationsRequestBody'];
     public static proStatusRequestBody: ProWrapper['proStatusRequestBody'];
-    // public static proProofParseResponse: ProWrapper['proProofParseResponse'];
-    // public static proRevocationsParseResponse: ProWrapper['proRevocationsParseResponse'];
-    // public static proStatusParseResponse: ProWrapper['proStatusParseResponse'];
   }
 
   /**
@@ -233,7 +202,4 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<ProWrapper, 'proProofRequestBody'>
     | MakeActionCall<ProWrapper, 'proRevocationsRequestBody'>
     | MakeActionCall<ProWrapper, 'proStatusRequestBody'>;
-  // | MakeActionCall<ProWrapper, 'proProofParseResponse'>
-  // | MakeActionCall<ProWrapper, 'proRevocationsParseResponse'>
-  // | MakeActionCall<ProWrapper, 'proStatusParseResponse'>
 }

@@ -247,10 +247,11 @@ void UserConfigWrapper::setNoteToSelfExpiry(const Napi::CallbackInfo& info) {
 
 Napi::Value UserConfigWrapper::getProConfig(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
-        auto pro_config = config.get_pro_config();
-        if (pro_config) {
-            return toJs(info.Env(), *pro_config);
-        }
+        // TODO fixme once extra_data is implemented
+        // auto pro_config = config.get_pro_config();
+        // if (pro_config) {
+        //     return toJs(info.Env(), *pro_config);
+        // }
 
         return info.Env().Null();
     });
@@ -264,8 +265,9 @@ void UserConfigWrapper::setProConfig(const Napi::CallbackInfo& info) {
 
         session::config::ProConfig pro_config =
                 pro_config_from_object(pro_config_js.As<Napi::Object>());
+        // TODO fixme once extra_data is implemented
 
-        config.set_pro_config(pro_config);
+        // config.set_pro_config(pro_config);
     });
 }
 
@@ -283,7 +285,21 @@ Napi::Value UserConfigWrapper::generateProMasterKey(const Napi::CallbackInfo& in
 
         auto pro_master_key_hex = session::ed25519::ed25519_pro_privkey_for_ed25519_seed(converted);
         auto obj = Napi::Object::New(info.Env());
-        obj["proMasterKey"] = toJs(info.Env(), pro_master_key_hex);
+        obj["proMasterKeyHex"] = toJs(info.Env(), to_hex(pro_master_key_hex));
+
+        return obj;
+    });
+}
+
+Napi::Value UserConfigWrapper::generateRotatingPrivKeyHex(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        assertInfoLength(info, 0);
+        auto result = session::ed25519::ed25519_key_pair();
+        auto [ed_pk, ed_sk] = result;
+
+        std::string rotating_privkey_hex = to_hex(ed_sk);
+        auto obj = Napi::Object::New(info.Env());
+        obj["rotatingPrivKeyHex"] = toJs(info.Env(), rotating_privkey_hex);
 
         return obj;
     });

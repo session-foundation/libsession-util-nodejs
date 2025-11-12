@@ -38,5 +38,7 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     Napi::Value getProConfig(const Napi::CallbackInfo& info);
     void setProConfig(const Napi::CallbackInfo& info);
     Napi::Value generateProMasterKey(const Napi::CallbackInfo& info);
+    Napi::Value generateRotatingPrivKeyHex(const Napi::CallbackInfo& info);
+
 };
 };  // namespace session::nodeapi

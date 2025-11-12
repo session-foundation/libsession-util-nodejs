@@ -1,5 +1,6 @@
 #include "utilities.hpp"
 
+#include <napi.h>
 #include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
@@ -22,18 +23,24 @@ void assertInfoMinLength(const Napi::CallbackInfo& info, const int minLength) {
 void assertIsStringOrNull(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
             val.IsString() || val.IsNull(),
-            std::string("Wrong arguments: expected string or null" + identifier).c_str());
+            std::string("Wrong arguments: expected string or null: " + identifier).c_str());
 }
 
 void assertIsNumber(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
             val.IsNumber() && !val.IsEmpty() && !val.IsNull() && !val.IsUndefined(),
-            std::string("Wrong arguments: expected number" + identifier).c_str());
+            std::string("Wrong arguments: expected number: " + identifier).c_str());
+}
+
+void assertIsBigint(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsBigInt() && !val.IsEmpty() && !val.IsNull() && !val.IsUndefined(),
+            std::string("Wrong arguments: expected bigint: " + identifier).c_str());
 }
 
 void assertIsArray(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
-            val.IsArray(), std::string("Wrong arguments: expected array:" + identifier).c_str());
+            val.IsArray(), std::string("Wrong arguments: expected array: " + identifier).c_str());
 }
 
 void assertIsObject(const Napi::Value& val) {
@@ -345,28 +352,10 @@ confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const 
     return confirmed_pushed_entry;
 }
 
-Napi::Object proFeaturesToJs(const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
-    Napi::Array arr = Napi::Array::New(env);
-    uint32_t index = 0;
-
-    if (bitset == SESSION_PROTOCOL_PRO_FEATURES_NIL) {
-        return arr;
-    }
-
-    if (bitset & (SESSION_PROTOCOL_PRO_FEATURES_10K_CHARACTER_LIMIT)) {
-        arr[index] = Napi::String::New(env, "10K_CHARACTER_LIMIT");
-        index++;
-    }
-    if (bitset & SESSION_PROTOCOL_PRO_FEATURES_PRO_BADGE) {
-        arr[index++] = Napi::String::New(env, "PRO_BADGE");
-        index++;
-    }
-    if (bitset & SESSION_PROTOCOL_PRO_FEATURES_ANIMATED_AVATAR) {
-        arr[index++] = Napi::String::New(env, "ANIMATED_AVATAR");
-        index++;
-    }
-
-    return arr;
+Napi::BigInt proFeaturesToJsBitset(
+        const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
+    // 2^53 should be enough for now. If we do need more we can use a bigint
+    return Napi::BigInt::New(env, bitset);
 }
 
 std::span<const uint8_t> from_hex_to_span(std::string_view x) {
