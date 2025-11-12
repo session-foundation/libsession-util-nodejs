@@ -97,6 +97,9 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("setProConfig", &UserConfigWrapper::setProConfig),
                     InstanceMethod(
                             "generateProMasterKey", &UserConfigWrapper::generateProMasterKey),
+                    InstanceMethod(
+                            "generateRotatingPrivKeyHex",
+                            &UserConfigWrapper::generateRotatingPrivKeyHex),
             });
 }
 
