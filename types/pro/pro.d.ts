@@ -181,7 +181,7 @@ declare module 'libsession_util_nodejs' {
       args: WithMasterPrivKeyHex &
         WithRequestVersion &
         WithUnixTsMs & {
-          withPaymentHistory: boolean;
+          count: number;
         }
     ) => string;
   };

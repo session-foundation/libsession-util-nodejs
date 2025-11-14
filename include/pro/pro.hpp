@@ -241,7 +241,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             //   "requestVersion": number,
             //   "masterPrivKeyHex": string,
             //   "unixTsMs": number,
-            //   "withPaymentHistory": boolean,
+            //   "count": number,
             // }
 
             assertInfoLength(info, 1);
@@ -255,12 +255,10 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             assertIsNumber(first.Get("requestVersion"), "proStatusRequestBody.requestVersion");
             assertIsNumber(first.Get("unixTsMs"), "proStatusRequestBody.unixTsMs");
-            assertIsBoolean(
-                    first.Get("withPaymentHistory"), "proStatusRequestBody.withPaymentHistory");
+            assertIsNumber(first.Get("count"), "proStatusRequestBody.count");
             auto requestVersion = first.Get("requestVersion").As<Napi::Number>();
             auto unix_ts_ms = toCppSysMs(first.Get("unixTsMs"), "proStatusRequestBody.unixTsMs");
-            auto withPaymentHistory = toCppBoolean(
-                    first.Get("withPaymentHistory"), "proStatusRequestBody.withPaymentHistory");
+            auto count = toCppInteger(first.Get("count"), "proStatusRequestBody.count");
             assertIsString(first.Get("masterPrivKeyHex"), "proStatusRequestBody.masterPrivKeyHex");
 
             auto master_privkey_js = first.Get("masterPrivKeyHex");
@@ -273,7 +271,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     static_cast<uint8_t>(requestVersion.Int32Value()),
                     to_span(master_privkey_decoded),
                     unix_ts_ms,
-                    withPaymentHistory);
+                    count);
 
             return json;
         });
