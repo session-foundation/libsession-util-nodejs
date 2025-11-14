@@ -73,6 +73,12 @@ std::span<const unsigned char> toCppBufferView(Napi::Value x, const std::string&
 std::vector<unsigned char> toCppBuffer(Napi::Value x, const std::string& identifier);
 
 int64_t toCppInteger(Napi::Value x, const std::string& identifier, bool allowUndefined = false);
+
+/**
+ * Same as toCppInteger, but for BigInt
+ */
+int64_t toCppIntegerB(Napi::Value x, const std::string& identifier, bool allowUndefined = false);
+
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier);
 std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& identifier);
 std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(

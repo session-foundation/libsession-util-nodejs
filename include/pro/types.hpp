@@ -19,6 +19,7 @@ struct toJs_impl<session::ProProof> {
         obj["genIndexHashB64"] = toJs(env, oxenc::to_base64(pro_proof.gen_index_hash));
         obj["rotatingPubkeyHex"] = toJs(env, oxenc::to_hex(pro_proof.rotating_pubkey));
         obj["expiryMs"] = toJs(env, pro_proof.expiry_unix_ts.time_since_epoch().count());
+        obj["signatureHex"] = toJs(env, oxenc::to_hex(pro_proof.sig));
 
         return obj;
     }

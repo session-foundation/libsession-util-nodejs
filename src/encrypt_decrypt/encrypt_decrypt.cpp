@@ -95,10 +95,10 @@ std::optional<std::vector<unsigned char>> extractProRotatingEd25519PrivKeyAsVect
             maybeNonemptyString(obj.Get("proRotatingEd25519PrivKey"), identifier);
 
     if (proRotatingEd25519PrivKeyHex.has_value() && proRotatingEd25519PrivKeyHex.value().size()) {
-        assert_length(*proRotatingEd25519PrivKeyHex, 64, identifier);
 
         auto ret = from_hex_to_vector(*proRotatingEd25519PrivKeyHex);
 
+        assert_length(ret, 64, identifier);
         return ret;
     }
 

@@ -141,6 +141,16 @@ int64_t toCppInteger(Napi::Value x, const std::string& identifier, bool allowUnd
     throw std::invalid_argument{"Unsupported type for "s + identifier + ": expected a number"};
 }
 
+int64_t toCppIntegerB(Napi::Value x, const std::string& identifier, bool allowUndefined) {
+    auto lossless = true;
+    if (allowUndefined && (x.IsNull() || x.IsUndefined()))
+        return 0;
+    if (x.IsBigInt())
+        return x.As<Napi::BigInt>().Int64Value(&lossless);
+
+    throw std::invalid_argument{"Unsupported type for "s + identifier + ": expected a bigint"};
+}
+
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         return std::nullopt;

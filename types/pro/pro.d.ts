@@ -28,6 +28,11 @@ declare module 'libsession_util_nodejs' {
      */
     rotatingPubkeyHex: string;
     expiryMs: number;
+    /**
+     * signature of the pro proof provided by the backend (hex)
+     * 64 bytes, 128 chars
+     */
+    signatureHex: string;
   };
 
   type WithRotatingPrivKeyHex = {
@@ -36,6 +41,7 @@ declare module 'libsession_util_nodejs' {
      */
     rotatingPrivKeyHex: string;
   };
+
 
   type ProConfig = WithRotatingPrivKeyHex & {
     proProof: ProProof;

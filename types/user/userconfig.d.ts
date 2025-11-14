@@ -41,6 +41,13 @@ declare module 'libsession_util_nodejs' {
     setProConfig: (proConfig: ProConfig) => void;
     getProConfig: () => ProConfig | null;
 
+    setProFeaturesBitset: (args: WithProFeaturesBitset) => void;
+    /**
+     *
+     * @returns 0 if no pro user features are enabled, the bitset of pro features enabled otherwise
+     */
+    getProFeaturesBitset: () => bigint;
+
     generateProMasterKey: ({
       ed25519SeedHex,
     }: {
@@ -84,6 +91,8 @@ declare module 'libsession_util_nodejs' {
     public setNoteToSelfExpiry: UserConfigWrapper['setNoteToSelfExpiry'];
     public getProConfig: UserConfigWrapper['getProConfig'];
     public setProConfig: UserConfigWrapper['setProConfig'];
+    public getProFeaturesBitset: UserConfigWrapper['getProFeaturesBitset'];
+    public setProFeaturesBitset: UserConfigWrapper['setProFeaturesBitset'];
     public generateProMasterKey: UserConfigWrapper['generateProMasterKey'];
     public generateRotatingPrivKeyHex: UserConfigWrapper['generateRotatingPrivKeyHex'];
   }
@@ -111,6 +120,8 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>
     | MakeActionCall<UserConfigWrapper, 'getProConfig'>
     | MakeActionCall<UserConfigWrapper, 'setProConfig'>
+    | MakeActionCall<UserConfigWrapper, 'getProFeaturesBitset'>
+    | MakeActionCall<UserConfigWrapper, 'setProFeaturesBitset'>
     | MakeActionCall<UserConfigWrapper, 'generateProMasterKey'>
     | MakeActionCall<UserConfigWrapper, 'generateRotatingPrivKeyHex'>;
 }

@@ -1,5 +1,7 @@
 #include "user_config.hpp"
 
+#include <napi.h>
+
 #include <iostream>
 
 #include "base_config.hpp"
@@ -10,6 +12,7 @@
 #include "session/config/base.hpp"
 #include "session/config/user_profile.hpp"
 #include "session/ed25519.hpp"
+#include "utilities.hpp"
 
 namespace session::nodeapi {
 
@@ -59,6 +62,15 @@ session::config::ProConfig pro_config_from_object(Napi::Object input) {
             rotating_pubkey_cpp.end(),
             pro_config.proof.rotating_pubkey.begin());
 
+    // extract backend signature
+    auto signature_hex_js = proof_js.Get("signatureHex");
+    assertIsString(signature_hex_js, "pro_config_from_object.signature_hex_js");
+    auto signature_hex_cpp =
+            toCppString(signature_hex_js, "pro_config_from_object.signature_hex_js");
+    auto signature_cpp = from_hex_to_vector(signature_hex_cpp);
+    std::copy(signature_cpp.begin(), signature_cpp.end(), pro_config.proof.sig.begin());
+    assert_length(signature_cpp, 64, "pro_config_from_object.signature_cpp");
+
     // extract expiryMs
     assertIsNumber(proof_js.Get("expiryMs"), "pro_config_from_object.expiryMs");
     pro_config.proof.expiry_unix_ts =
@@ -95,6 +107,10 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("setNoteToSelfExpiry", &UserConfigWrapper::setNoteToSelfExpiry),
                     InstanceMethod("getProConfig", &UserConfigWrapper::getProConfig),
                     InstanceMethod("setProConfig", &UserConfigWrapper::setProConfig),
+                    InstanceMethod(
+                            "setProFeaturesBitset", &UserConfigWrapper::setProFeaturesBitset),
+                    InstanceMethod(
+                            "getProFeaturesBitset", &UserConfigWrapper::getProFeaturesBitset),
                     InstanceMethod(
                             "generateProMasterKey", &UserConfigWrapper::generateProMasterKey),
                     InstanceMethod(
@@ -251,10 +267,11 @@ void UserConfigWrapper::setNoteToSelfExpiry(const Napi::CallbackInfo& info) {
 Napi::Value UserConfigWrapper::getProConfig(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
         // TODO fixme once extra_data is implemented
-        // auto pro_config = config.get_pro_config();
-        // if (pro_config) {
-        //     return toJs(info.Env(), *pro_config);
-        // }
+
+        oxen::log::warning(cat, "getProConfig() is not wrapped to libsession");
+        if (this->pro_config.has_value()) {
+            return toJs(info.Env(), this->pro_config);
+        }
 
         return info.Env().Null();
     });
@@ -271,6 +288,35 @@ void UserConfigWrapper::setProConfig(const Napi::CallbackInfo& info) {
         // TODO fixme once extra_data is implemented
 
         // config.set_pro_config(pro_config);
+        this->pro_config = pro_config;
+    });
+}
+
+Napi::Value UserConfigWrapper::getProFeaturesBitset(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        // TODO fixme once extra_data is implemented
+        // config.get_pro_features_bitset();
+        oxen::log::warning(cat, "getProFeaturesBitset() is not wrapped to libsession");
+        return toJs(info.Env(), this->pro_user_features);
+    });
+}
+
+void UserConfigWrapper::setProFeaturesBitset(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        auto pro_features = info[0];
+        assertIsObject(info[0]);
+        auto obj = info[0].As<Napi::Object>();
+        assertIsBigint(obj.Get("proFeaturesBitset"), "UserConfigWrapper::setProFeaturesBitset");
+
+        auto pro_user_features_js = obj.Get("proFeaturesBitset");
+        auto pro_user_features_cpp = toCppIntegerB(
+                pro_user_features_js, "UserConfigWrapper::setProFeaturesBitset", false);
+
+        // TODO fixme once extra_data is implemented
+
+        // config.set_pro_features_bitset(pro_user_features_cpp);
+        this->pro_user_features = pro_user_features_cpp;
     });
 }
 
