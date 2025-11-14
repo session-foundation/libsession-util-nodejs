@@ -1,5 +1,6 @@
 #pragma once
 
+#include <napi.h>
 #include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
@@ -110,22 +111,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                                 "proStatusRequestBody",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
-
-                        // Note: those are not plugged in for now as we do this parsing through zod
-                        // on desktop.
-                        // Pro responses parsing
-                        // StaticMethod<&ProWrapper::proProofParseResponse>(
-                        //         "proProofParseResponse",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
-                        // StaticMethod<&ProWrapper::proRevocationsParseResponse>(
-                        //         "proRevocationsParseResponse",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
-                        // StaticMethod<&ProWrapper::proStatusParseResponse>(
-                        //         "proStatusParseResponse",
-                        //         static_cast<napi_property_attributes>(
-                        //                 napi_writable | napi_configurable)),
                 });
     }
 
@@ -135,7 +120,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             // we expect two arguments that match:
             // first: {
             //   "utf16": string,
-            //   "proFeatures": Array<ProFeature>,
+            //   "proFeaturesBitset": bigint,
             // }
 
             assertInfoLength(info, 1);
@@ -147,27 +132,13 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             if (first.IsEmpty())
                 throw std::invalid_argument("proFeaturesForMessage first received empty");
 
-            assertIsArray(first.Get("proFeatures"), "proFeaturesForMessage.proFeatures");
-            auto proFeaturesJS = first.Get("proFeatures").As<Napi::Array>();
-            std::vector<std::string> proFeatures;
-            proFeatures.reserve(proFeaturesJS.Length());
-            for (uint32_t i = 0; i < proFeaturesJS.Length(); i++) {
-                auto itemValue = proFeaturesJS.Get(i);
-                assertIsString(itemValue, "proFeaturesForMessage.proFeatures.itemValue");
-                std::string item =
-                        toCppString(itemValue, "proFeaturesForMessage.proFeatures.itemValue");
-                proFeatures.push_back(item);
-            }
+            assertIsBigint(
+                    first.Get("proFeaturesBitset"), "proFeaturesForMessage.proFeaturesBitset");
 
-            SESSION_PROTOCOL_PRO_EXTRA_FEATURES flags = 0;
-            for (std::string& feature : proFeatures) {
-                // Note: 10K_CHARACTER_LIMIT cannot be requested by the caller
-                if (feature == "PRO_BADGE") {
-                    flags |= SESSION_PROTOCOL_PRO_EXTRA_FEATURES_PRO_BADGE;
-                } else if (feature == "ANIMATED_AVATAR") {
-                    flags |= SESSION_PROTOCOL_PRO_EXTRA_FEATURES_ANIMATED_AVATAR;
-                }
-            }
+            auto lossless = true;
+            SESSION_PROTOCOL_PRO_FEATURES flags =
+                    first.Get("proFeaturesBitset").As<Napi::BigInt>().Uint64Value(&lossless);
+
             assertIsString(first.Get("utf16"), "proFeaturesForMessage.utf16");
             std::u16string utf16 = first.Get("utf16").As<Napi::String>().Utf16Value();
             auto pro_features_msg =
@@ -179,7 +150,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["error"] =
                     pro_features_msg.error.size() ? toJs(env, pro_features_msg.error) : env.Null();
             obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
-            obj["proFeatures"] = proFeaturesToJs(env, pro_features_msg.features);
+            obj["proFeaturesBitset"] = proFeaturesToJsBitset(env, pro_features_msg.features);
 
             return obj;
         });
@@ -219,9 +190,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             std::string rotating_privkey =
                     toCppString(rotating_privkey_js, "proProofRequestBody.rotatingPrivKeyHex");
 
-            assert_length(master_privkey, 64, "masterPrivKeyHex");
-            assert_length(rotating_privkey, 64, "rotatingPrivkey");
-
             auto master_privkey_decoded = from_hex(master_privkey);
             auto rotating_privkey_decoded = from_hex(rotating_privkey);
 
@@ -232,33 +200,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     unix_ts_ms);
 
             return json;
-        });
-    };
-
-    static Napi::Value proProofParseResponse(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
-            // we expect arguments that match:
-            // first: {
-            //   "json": string,
-            // }
-
-            assertInfoLength(info, 1);
-            assertIsObject(info[0]);
-            auto env = info.Env();
-
-            auto first = info[0].As<Napi::Object>();
-
-            if (first.IsEmpty())
-                throw std::invalid_argument("proProofParseResponse first received empty");
-
-            assertIsString(first.Get("json"), "proProofParseResponse.json");
-            auto json_str = toCppString(first.Get("json"), "proProofParseResponse.json");
-            auto parsed = pro_backend::AddProPaymentOrGetProProofResponse::parse(json_str);
-
-            auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
-            obj["proof"] = toJsOrNullIfErrors(env, parsed.proof, parsed.errors);
-
-            return obj;
         });
     };
 
@@ -290,35 +231,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             };
 
             return revocationsRequest.to_json();
-        });
-    };
-
-    static Napi::Value proRevocationsParseResponse(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
-            // we expect arguments that match:
-            // first: {
-            //   "json": string,
-            // }
-
-            assertInfoLength(info, 1);
-            assertIsObject(info[0]);
-            auto env = info.Env();
-
-            auto first = info[0].As<Napi::Object>();
-
-            if (first.IsEmpty())
-                throw std::invalid_argument("proRevocationsParseResponse first received empty");
-
-            assertIsString(first.Get("json"), "proRevocationsParseResponse.json");
-            auto json_str = toCppString(first.Get("json"), "proRevocationsParseResponse.json");
-            auto parsed = pro_backend::GetProRevocationsResponse::parse(json_str);
-
-            auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
-            // if error is set, the body might not be parsable so don't try to use it
-            obj["ticket"] = parsed.errors.size() ? env.Null() : toJs(env, parsed.ticket);
-            obj["items"] = parsed.errors.size() ? env.Null() : toJs(env, parsed.items);
-
-            return obj;
         });
     };
 
@@ -355,53 +267,15 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto master_privkey =
                     toCppString(master_privkey_js, "proStatusRequestBody.masterPrivKeyHex");
 
-            assert_length(master_privkey, 64, "proStatusRequestBody.masterPrivKeyHex");
+            auto master_privkey_decoded = from_hex(master_privkey);
 
             auto json = pro_backend::GetProStatusRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
-                    to_span(from_hex(master_privkey)),
+                    to_span(master_privkey_decoded),
                     unix_ts_ms,
                     withPaymentHistory);
 
             return json;
-        });
-    };
-
-    static Napi::Value proStatusParseResponse(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
-            // we expect arguments that match:
-            // first: {
-            //   "json": string,
-            // }
-
-            assertInfoLength(info, 1);
-            assertIsObject(info[0]);
-            auto env = info.Env();
-
-            auto first = info[0].As<Napi::Object>();
-
-            if (first.IsEmpty())
-                throw std::invalid_argument("proStatusParseResponse first received empty");
-
-            assertIsString(first.Get("json"), "proStatusParseResponse.json");
-            auto json_str = toCppString(first.Get("json"), "proStatusParseResponse.json");
-            auto parsed = pro_backend::GetProStatusResponse::parse(json_str);
-
-            auto obj = toJs(env, static_cast<pro_backend::ResponseHeader>(parsed));
-
-            obj["items"] = toJsOrNullIfErrors(env, parsed.items, parsed.errors);
-            obj["userStatus"] = toJsOrNullIfErrors(
-                    env, proBackendEnumToString(parsed.user_status), parsed.errors);
-
-            obj["errorReport"] = toJsOrNullIfErrors(
-                    env, proBackendEnumToString(parsed.error_report), parsed.errors);
-
-            obj["autoRenewing"] = toJsOrNullIfErrors(env, parsed.auto_renewing, parsed.errors);
-            obj["expiryTsMs"] = toJsOrNullIfErrors(env, parsed.expiry_unix_ts_ms, parsed.errors);
-            obj["gracePeriodMs"] =
-                    toJsOrNullIfErrors(env, parsed.grace_period_duration_ms, parsed.errors);
-
-            return obj;
         });
     };
 };

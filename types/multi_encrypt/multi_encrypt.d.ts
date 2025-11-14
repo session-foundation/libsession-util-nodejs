@@ -53,7 +53,7 @@ declare module 'libsession_util_nodejs' {
   };
   type WithNowMs = { nowMs: number };
 
-  type DecodedPro = WithProFeatures & {
+  type DecodedPro = WithProFeaturesBitset & {
     proStatus: ProStatus;
     proProof: ProProof;
   };

@@ -95,10 +95,10 @@ std::optional<std::vector<unsigned char>> extractProRotatingEd25519PrivKeyAsVect
             maybeNonemptyString(obj.Get("proRotatingEd25519PrivKey"), identifier);
 
     if (proRotatingEd25519PrivKeyHex.has_value() && proRotatingEd25519PrivKeyHex.value().size()) {
-        assert_length(*proRotatingEd25519PrivKeyHex, 64, identifier);
 
         auto ret = from_hex_to_vector(*proRotatingEd25519PrivKeyHex);
 
+        assert_length(ret, 64, identifier);
         return ret;
     }
 
@@ -636,8 +636,9 @@ Napi::Value MultiEncryptWrapper::decryptForCommunity(const Napi::CallbackInfo& i
 
                 auto contentOrEnvelope =
                         extractContentOrEnvelope(obj, "decryptForCommunity.obj.contentOrEnvelope");
-                decrypted.push_back(session::decode_for_community(
-                        contentOrEnvelope, nowMs, proBackendPubkeyHex));
+                decrypted.push_back(
+                        session::decode_for_community(
+                                contentOrEnvelope, nowMs, proBackendPubkeyHex));
                 decryptedServerIds.push_back(serverId);
 
             } catch (const std::exception& e) {
@@ -654,12 +655,10 @@ Napi::Value MultiEncryptWrapper::decryptForCommunity(const Napi::CallbackInfo& i
 
         for (auto& d : decrypted) {
             auto to_insert = Napi::Object::New(info.Env());
-            std::span<unsigned char> content_plaintext_unpadded =
-                    std::span(d.content_plaintext).subspan(0, d.content_plaintext_unpadded_size);
 
             to_insert.Set(
                     "envelope", d.envelope ? toJs(info.Env(), *d.envelope) : info.Env().Null());
-            to_insert.Set("contentPlaintextUnpadded", toJs(info.Env(), content_plaintext_unpadded));
+            to_insert.Set("contentPlaintextUnpadded", toJs(info.Env(), d.content_plaintext));
             to_insert.Set("serverId", toJs(info.Env(), decryptedServerIds[i]));
 
             to_insert.Set(
@@ -732,8 +731,9 @@ Napi::Value MultiEncryptWrapper::decryptFor1o1(const Napi::CallbackInfo& info) {
 
                 auto envelopePayload =
                         extractEnvelopePayload(obj, "decryptFor1o1.obj.envelopePayload");
-                decrypted.push_back(session::decode_envelope(
-                        keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                decrypted.push_back(
+                        session::decode_envelope(
+                                keys, envelopePayload, nowMs, proBackendPubkeyHex));
                 decryptedMessageHashes.push_back(messageHash);
             } catch (const std::exception& e) {
                 log::warning(
@@ -831,8 +831,9 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
 
                 auto envelopePayload =
                         extractEnvelopePayload(obj, "decryptForGroup.obj.envelopePayload");
-                decrypted.push_back(session::decode_envelope(
-                        keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                decrypted.push_back(
+                        session::decode_envelope(
+                                keys, envelopePayload, nowMs, proBackendPubkeyHex));
                 decryptedMessageHashes.push_back(messageHash);
             } catch (const std::exception& e) {
                 log::warning(
