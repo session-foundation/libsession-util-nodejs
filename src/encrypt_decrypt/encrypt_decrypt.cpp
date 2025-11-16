@@ -815,6 +815,10 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
         std::span<std::span<const unsigned char>> groupEncKeys(span_group_enc_keys);
 
         keys.decrypt_keys = groupEncKeys;
+        // remove prefix
+        std::vector<uint8_t> groupPkNoPrefix(groupPk.begin() + 1, groupPk.end());
+
+        keys.group_ed25519_pubkey = groupPkNoPrefix;
 
         for (uint32_t i = 0; i < first.Length(); i++) {
             auto itemValue = first.Get(i);
