@@ -297,7 +297,7 @@ Napi::Value UserConfigWrapper::getProFeaturesBitset(const Napi::CallbackInfo& in
         // TODO fixme once extra_data is implemented
         // config.get_pro_features_bitset();
         oxen::log::warning(cat, "getProFeaturesBitset() is not wrapped to libsession");
-        return toJs(info.Env(), this->pro_user_features);
+        return proFeaturesToJsBitset(info.Env(), this->pro_user_features);
     });
 }
 
