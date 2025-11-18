@@ -10,7 +10,7 @@ declare module 'libsession_util_nodejs' {
     proBackendPubkeyHex: string;
   };
 
-  type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid' | 'Expired';
+  type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid';
   type WithProFeaturesBitset = { proFeaturesBitset: bigint };
   type WithGenIndexHash = { genIndexHashB64: string };
 
@@ -42,7 +42,6 @@ declare module 'libsession_util_nodejs' {
     rotatingPrivKeyHex: string;
   };
 
-
   type ProConfig = WithRotatingPrivKeyHex & {
     proProof: ProProof;
   };
@@ -55,8 +54,8 @@ declare module 'libsession_util_nodejs' {
     store_other: string;
     platform: string;
     platform_account: string;
-    refund_url: string;
-    refund_after_platform_deadline_url: string;
+    refund_support_url: string;
+    refund_platform_url: string;
     update_subscription_url: string;
     cancel_subscription_url: string;
   };

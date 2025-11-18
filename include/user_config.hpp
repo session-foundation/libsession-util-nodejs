@@ -16,10 +16,6 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     explicit UserConfigWrapper(const Napi::CallbackInfo& info);
 
   private:
-    // FIXME: wrap those in the extra data field of UserConfig instead
-    std::optional<config::ProConfig> pro_config;
-    int64_t pro_user_features = 0;
-
     config::UserProfile& config{get_config<config::UserProfile>()};
 
     Napi::Value getPriority(const Napi::CallbackInfo& info);
@@ -42,8 +38,11 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
 
     Napi::Value getProConfig(const Napi::CallbackInfo& info);
     void setProConfig(const Napi::CallbackInfo& info);
+    Napi::Value removeProConfig(const Napi::CallbackInfo& info);
+
     Napi::Value getProFeaturesBitset(const Napi::CallbackInfo& info);
-    void setProFeaturesBitset(const Napi::CallbackInfo& info);
+    void setProBadge(const Napi::CallbackInfo& info);
+    void setAnimatedAvatar(const Napi::CallbackInfo& info);
 
     Napi::Value generateProMasterKey(const Napi::CallbackInfo& info);
     Napi::Value generateRotatingPrivKeyHex(const Napi::CallbackInfo& info);

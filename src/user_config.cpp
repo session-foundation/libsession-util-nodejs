@@ -2,14 +2,10 @@
 
 #include <napi.h>
 
-#include <iostream>
-
 #include "base_config.hpp"
-#include "oxen/log.hpp"
 #include "oxenc/hex.h"
 #include "pro/types.hpp"
 #include "profile_pic.hpp"
-#include "session/config/base.hpp"
 #include "session/config/user_profile.hpp"
 #include "session/ed25519.hpp"
 #include "utilities.hpp"
@@ -107,8 +103,9 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("setNoteToSelfExpiry", &UserConfigWrapper::setNoteToSelfExpiry),
                     InstanceMethod("getProConfig", &UserConfigWrapper::getProConfig),
                     InstanceMethod("setProConfig", &UserConfigWrapper::setProConfig),
-                    InstanceMethod(
-                            "setProFeaturesBitset", &UserConfigWrapper::setProFeaturesBitset),
+                    InstanceMethod("removeProConfig", &UserConfigWrapper::removeProConfig),
+                    InstanceMethod("setProBadge", &UserConfigWrapper::setProBadge),
+                    InstanceMethod("setAnimatedAvatar", &UserConfigWrapper::setAnimatedAvatar),
                     InstanceMethod(
                             "getProFeaturesBitset", &UserConfigWrapper::getProFeaturesBitset),
                     InstanceMethod(
@@ -266,11 +263,8 @@ void UserConfigWrapper::setNoteToSelfExpiry(const Napi::CallbackInfo& info) {
 
 Napi::Value UserConfigWrapper::getProConfig(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
-        // TODO fixme once extra_data is implemented
-
-        oxen::log::warning(cat, "getProConfig() is not wrapped to libsession");
-        if (this->pro_config.has_value()) {
-            return toJs(info.Env(), this->pro_config);
+        if (config.get_pro_config().has_value()) {
+            return toJs(info.Env(), config.get_pro_config().value());
         }
 
         return info.Env().Null();
@@ -285,38 +279,43 @@ void UserConfigWrapper::setProConfig(const Napi::CallbackInfo& info) {
 
         session::config::ProConfig pro_config =
                 pro_config_from_object(pro_config_js.As<Napi::Object>());
-        // TODO fixme once extra_data is implemented
 
-        // config.set_pro_config(pro_config);
-        this->pro_config = pro_config;
+        config.set_pro_config(pro_config);
+    });
+}
+
+Napi::Value UserConfigWrapper::removeProConfig(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        assertInfoLength(info, 0);
+
+        return config.remove_pro_config();
     });
 }
 
 Napi::Value UserConfigWrapper::getProFeaturesBitset(const Napi::CallbackInfo& info) {
-    return wrapResult(info, [&] {
-        // TODO fixme once extra_data is implemented
-        // config.get_pro_features_bitset();
-        oxen::log::warning(cat, "getProFeaturesBitset() is not wrapped to libsession");
-        return proFeaturesToJsBitset(info.Env(), this->pro_user_features);
+    return wrapResult(
+            info, [&] { return proFeaturesToJsBitset(info.Env(), config.get_pro_features()); });
+}
+
+void UserConfigWrapper::setProBadge(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsBoolean(info[0], "setProBadge");
+
+        auto enabled = toCppBoolean(info[0], "UserConfigWrapper::setProBadge");
+
+        config.set_pro_badge(enabled);
     });
 }
 
-void UserConfigWrapper::setProFeaturesBitset(const Napi::CallbackInfo& info) {
+void UserConfigWrapper::setAnimatedAvatar(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
-        auto pro_features = info[0];
-        assertIsObject(info[0]);
-        auto obj = info[0].As<Napi::Object>();
-        assertIsBigint(obj.Get("proFeaturesBitset"), "UserConfigWrapper::setProFeaturesBitset");
+        assertIsBoolean(info[0], "setAnimatedAvatar");
 
-        auto pro_user_features_js = obj.Get("proFeaturesBitset");
-        auto pro_user_features_cpp = toCppIntegerB(
-                pro_user_features_js, "UserConfigWrapper::setProFeaturesBitset", false);
+        auto enabled = toCppBoolean(info[0], "UserConfigWrapper::setAnimatedAvatar");
 
-        // TODO fixme once extra_data is implemented
-
-        // config.set_pro_features_bitset(pro_user_features_cpp);
-        this->pro_user_features = pro_user_features_cpp;
+        config.set_animated_avatar(enabled);
     });
 }
 

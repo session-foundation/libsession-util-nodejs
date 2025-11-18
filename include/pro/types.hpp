@@ -44,8 +44,6 @@ struct toJs_impl<session::Envelope> {
 
         obj["timestampMs"] = toJs(env, envelope.timestamp.count());
         obj["source"] = envelope.source.size() ? toJs(env, envelope.source) : env.Null();
-        obj["proSigHex"] =
-                envelope.pro_sig.size() ? toJs(env, oxenc::to_hex(envelope.pro_sig)) : env.Null();
 
         return obj;
     }
@@ -75,8 +73,7 @@ struct toJs_impl<session::DecodedPro> {
                 toJs(env,
                      decoded_pro.status == ProStatus::InvalidProBackendSig ? "InvalidProBackendSig"
                      : decoded_pro.status == ProStatus::InvalidUserSig     ? "InvalidUserSig"
-                     : decoded_pro.status == ProStatus::Valid              ? "Valid"
-                                                                           : "Expired");
+                                                                           : "Valid");
         obj["proProof"] = toJs(env, decoded_pro.proof);
         obj["proFeaturesBitset"] = proFeaturesToJsBitset(env, decoded_pro.features);
 

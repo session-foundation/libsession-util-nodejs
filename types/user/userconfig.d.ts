@@ -40,8 +40,10 @@ declare module 'libsession_util_nodejs' {
 
     setProConfig: (proConfig: ProConfig) => void;
     getProConfig: () => ProConfig | null;
+    removeProConfig: () => boolean;
 
-    setProFeaturesBitset: (args: WithProFeaturesBitset) => void;
+    setAnimatedAvatar: (enabled: boolean) => void;
+    setProBadge: (enabled: boolean) => void;
     /**
      *
      * @returns 0 if no pro user features are enabled, the bitset of pro features enabled otherwise
@@ -91,8 +93,11 @@ declare module 'libsession_util_nodejs' {
     public setNoteToSelfExpiry: UserConfigWrapper['setNoteToSelfExpiry'];
     public getProConfig: UserConfigWrapper['getProConfig'];
     public setProConfig: UserConfigWrapper['setProConfig'];
+    public removeProConfig: UserConfigWrapper['removeProConfig'];
     public getProFeaturesBitset: UserConfigWrapper['getProFeaturesBitset'];
-    public setProFeaturesBitset: UserConfigWrapper['setProFeaturesBitset'];
+    public setAnimatedAvatar: UserConfigWrapper['setAnimatedAvatar'];
+    public setProBadge: UserConfigWrapper['setProBadge'];
+
     public generateProMasterKey: UserConfigWrapper['generateProMasterKey'];
     public generateRotatingPrivKeyHex: UserConfigWrapper['generateRotatingPrivKeyHex'];
   }
@@ -120,8 +125,10 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'setNoteToSelfExpiry'>
     | MakeActionCall<UserConfigWrapper, 'getProConfig'>
     | MakeActionCall<UserConfigWrapper, 'setProConfig'>
+    | MakeActionCall<UserConfigWrapper, 'removeProConfig'>
     | MakeActionCall<UserConfigWrapper, 'getProFeaturesBitset'>
-    | MakeActionCall<UserConfigWrapper, 'setProFeaturesBitset'>
+    | MakeActionCall<UserConfigWrapper, 'setAnimatedAvatar'>
+    | MakeActionCall<UserConfigWrapper, 'setProBadge'>
     | MakeActionCall<UserConfigWrapper, 'generateProMasterKey'>
     | MakeActionCall<UserConfigWrapper, 'generateRotatingPrivKeyHex'>;
 }
