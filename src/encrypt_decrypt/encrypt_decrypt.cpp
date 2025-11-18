@@ -661,9 +661,6 @@ Napi::Value MultiEncryptWrapper::decryptForCommunity(const Napi::CallbackInfo& i
             to_insert.Set("contentPlaintextUnpadded", toJs(info.Env(), d.content_plaintext));
             to_insert.Set("serverId", toJs(info.Env(), decryptedServerIds[i]));
 
-            to_insert.Set(
-                    "proSigHex",
-                    d.pro_sig ? toJs(info.Env(), oxenc::to_hex(*d.pro_sig)) : info.Env().Null());
             to_insert.Set("decodedPro", d.pro ? toJs(info.Env(), d.pro) : info.Env().Null());
 
             ret.Set(i, to_insert);

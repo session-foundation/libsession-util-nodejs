@@ -61,12 +61,6 @@ declare module 'libsession_util_nodejs' {
   type WithDecodedPro = {
     decodedPro: DecodedPro | null;
   };
-  type WithProSigHex = {
-    /**
-     * HexString
-     */
-    proSigHex: string | null;
-  };
 
   type Envelope = {
     timestampMs: number;
@@ -74,13 +68,13 @@ declare module 'libsession_util_nodejs' {
      * HexString, 33 bytes, 66 chars
      */
     source: string | null;
-    /**
-     * HexString
-     */
-    proSigHex: string | null;
   };
 
   type WithEnvelope = {
+    /**
+     * The envelope payload, if present. For communities, the envelope is not currently included, but will eventually be.
+     * We want to support both cases, hence why we use this type for decryptForCommunity, instead of WithNonNullableEnvelope
+     */
     envelope: Envelope | null;
   };
 

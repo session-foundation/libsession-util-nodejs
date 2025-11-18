@@ -20,7 +20,7 @@ std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_PROVIDER v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PAYMENT_STATUS v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_PLAN v);
 std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_USER_PRO_STATUS v);
-std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_STATUS_ERROR_REPORT v);
+std::string_view proBackendEnumToString(SESSION_PRO_BACKEND_GET_PRO_DETAILS_ERROR_REPORT v);
 std::string_view proBackendEnumToString(session::ProFeaturesForMsgStatus v);
 
 template <typename T>
@@ -193,7 +193,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto master_privkey_decoded = from_hex(master_privkey);
             auto rotating_privkey_decoded = from_hex(rotating_privkey);
 
-            std::string json = pro_backend::GetProProofRequest::build_to_json(
+            std::string json = pro_backend::GenerateProProofRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
                     to_span(master_privkey_decoded),
                     to_span(rotating_privkey_decoded),
@@ -267,7 +267,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             auto master_privkey_decoded = from_hex(master_privkey);
 
-            auto json = pro_backend::GetProStatusRequest::build_to_json(
+            auto json = pro_backend::GetProDetailsRequest::build_to_json(
                     static_cast<uint8_t>(requestVersion.Int32Value()),
                     to_span(master_privkey_decoded),
                     unix_ts_ms,
