@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "oxen/log/catlogger.hpp"
+#include "oxenc/base64.h"
 #include "oxenc/hex.h"
 #include "session/config/namespaces.hpp"
 #include "session/config/profile_pic.hpp"
@@ -43,6 +44,7 @@ void assertInfoMinLength(const Napi::CallbackInfo& info, const int minLength);
 
 void assertIsStringOrNull(const Napi::Value& value, const std::string& identifier = "");
 void assertIsNumber(const Napi::Value& value, const std::string& identifier);
+void assertIsNumberOrNull(const Napi::Value& val, const std::string& identifier);
 void assertIsBigint(const Napi::Value& val, const std::string& identifier);
 void assertIsArray(const Napi::Value& value, const std::string& identifier);
 void assertIsObject(const Napi::Value& value);
@@ -80,6 +82,8 @@ int64_t toCppInteger(Napi::Value x, const std::string& identifier, bool allowUnd
 int64_t toCppIntegerB(Napi::Value x, const std::string& identifier, bool allowUndefined = false);
 
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier);
+std::optional<int64_t> maybeNonemptyIntB(Napi::Value x, const std::string& identifier);
+
 std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& identifier);
 std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
         Napi::Value x, const std::string& identifier);
@@ -421,6 +425,21 @@ std::array<uint8_t, N> from_hex_to_array(std::string x) {
 
     std::array<uint8_t, N> result;
     std::memcpy(result.data(), as_hex.data(), N);
+    return result;
+}
+
+template <std::size_t N>
+std::array<uint8_t, N> from_base64_to_array(std::string x) {
+    std::string as_b64 = oxenc::from_base64(x);
+    if (as_b64.size() != N) {
+        throw std::invalid_argument(fmt::format(
+                "from_base64_to_array: Decoded hex size mismatch: expected {}, got {}",
+                N,
+                as_b64.size()));
+    }
+
+    std::array<uint8_t, N> result;
+    std::memcpy(result.data(), as_b64.data(), N);
     return result;
 }
 

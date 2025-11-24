@@ -1,11 +1,12 @@
 #include "convo_info_volatile_config.hpp"
 
+#include <oxenc/base64.h>
+
 #include <optional>
 
 #include "base_config.hpp"
 #include "community.hpp"
 #include "session/config/convo_info_volatile.hpp"
-#include "session/types.hpp"
 #include "utilities.hpp"
 
 namespace session::nodeapi {
@@ -14,6 +15,40 @@ namespace convo = config::convo;
 
 using config::ConvoInfoVolatile;
 
+struct ParsedBaseValues {
+    int64_t lastReadTsMs;
+    bool forcedUnread;
+
+    Napi::Object obj;
+};
+
+void addBaseValues(const Napi::Env& env, Napi::Object obj, const convo::base& base) {
+    obj["lastReadTsMs"] = toJs(env, base.last_read);
+    obj["forcedUnread"] = toJs(env, base.unread);
+}
+
+ParsedBaseValues parseBaseValues(
+        const Napi::CallbackInfo& info, convo::base& base, const std::string fnName) {
+    assertInfoLength(info, 2);
+    auto baseObj = info[1];
+    assertIsObject(baseObj);
+
+    auto obj = baseObj.As<Napi::Object>();
+    auto lastReadTsMsJs = obj.Get("lastReadTsMs");
+    assertIsNumber(lastReadTsMsJs, fnName + "lastReadTsMs");
+    auto lastReadTsMsCpp = toCppInteger(lastReadTsMsJs, fnName + "lastReadTsMs");
+
+    auto forcedUnreadJs = obj.Get("forcedUnread");
+    assertIsBoolean(forcedUnreadJs, fnName + "forcedUnread");
+    auto lastReadTsMs = toCppBoolean(forcedUnreadJs, fnName + "forcedUnread");
+
+    ParsedBaseValues result;
+    result.lastReadTsMs = lastReadTsMsCpp;
+    result.forcedUnread = lastReadTsMs;
+    result.obj = obj;
+    return result;
+}
+
 template <>
 struct toJs_impl<convo::one_to_one> {
     Napi::Object operator()(const Napi::Env& env, const convo::one_to_one& info_1o1) {
@@ -21,8 +56,16 @@ struct toJs_impl<convo::one_to_one> {
         auto obj = Napi::Object::New(env);
 
         obj["pubkeyHex"] = toJs(env, info_1o1.session_id);
-        obj["unread"] = toJs(env, info_1o1.unread);
-        obj["lastRead"] = toJs(env, info_1o1.last_read);
+        addBaseValues(env, obj, info_1o1);
+
+        if (info_1o1.pro_gen_index_hash->empty() ||
+            !info_1o1.pro_expiry_unix_ts.time_since_epoch().count()) {
+            obj["proGenIndexHashB64"] = env.Null();
+            obj["proExpiryTsMs"] = env.Null();
+        } else {
+            obj["proGenIndexHashB64"] = toJs(env, to_base64(*info_1o1.pro_gen_index_hash));
+            obj["proExpiryTsMs"] = toJs(env, info_1o1.pro_expiry_unix_ts);
+        }
 
         return obj;
     }
@@ -34,8 +77,7 @@ struct toJs_impl<convo::legacy_group> {
         auto obj = Napi::Object::New(env);
 
         obj["pubkeyHex"] = toJs(env, info_legacy.id);
-        obj["unread"] = toJs(env, info_legacy.unread);
-        obj["lastRead"] = toJs(env, info_legacy.last_read);
+        addBaseValues(env, obj, info_legacy);
 
         return obj;
     }
@@ -45,8 +87,8 @@ template <>
 struct toJs_impl<convo::community> : toJs_impl<config::community> {
     Napi::Object operator()(const Napi::Env& env, const convo::community info_comm) {
         auto obj = toJs_impl<config::community>::operator()(env, info_comm);
-        obj["unread"] = toJs(env, info_comm.unread);
-        obj["lastRead"] = toJs(env, info_comm.last_read);
+        addBaseValues(env, obj, info_comm);
+
         return obj;
     }
 };
@@ -57,8 +99,7 @@ struct toJs_impl<convo::group> {
         auto obj = Napi::Object::New(env);
 
         obj["pubkeyHex"] = toJs(env, group_info.id);
-        obj["unread"] = toJs(env, group_info.unread);
-        obj["lastRead"] = toJs(env, group_info.last_read);
+        addBaseValues(env, obj, group_info);
 
         return obj;
     }
@@ -122,22 +163,45 @@ Napi::Value ConvoInfoVolatileWrapper::getAll1o1(const Napi::CallbackInfo& info) 
 
 void ConvoInfoVolatileWrapper::set1o1(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
-        assertInfoLength(info, 3);
+        assertInfoLength(info, 2);
         auto first = info[0];
         assertIsString(first);
 
-        auto second = info[1];
-        assertIsNumber(second, "set1o1");
+        std::string fnName = "ConvoInfoVolatileWrapper::set1o1.";
+        auto convo = config.get_or_construct_1to1(toCppString(first, fnName + "convoInfo"));
 
-        auto third = info[2];
-        assertIsBoolean(third);
+        auto parsed = parseBaseValues(info, convo, fnName);
+        if (parsed.lastReadTsMs > convo.last_read)
+            convo.last_read = parsed.lastReadTsMs;
+        convo.unread = parsed.forcedUnread;
 
-        auto convo = config.get_or_construct_1to1(toCppString(first, "convoInfo.set1o1"));
+        // 1o1 also have a pro gen index hash & pro expiry
+        auto proGenIndexHashB64Js = parsed.obj.Get("proGenIndexHashB64");
+        assertIsStringOrNull(proGenIndexHashB64Js, fnName + "proGenIndexHashB64Js");
+        auto proGenIndexHashB64Cpp =
+                maybeNonemptyString(proGenIndexHashB64Js, fnName + "proGenIndexHashB64Cpp");
 
-        if (auto last_read = toCppInteger(second, "convoInfo.set1o1_2");
-            last_read > convo.last_read)
-            convo.last_read = last_read;
-        convo.unread = toCppBoolean(third, "convoInfo.set1o1_3");
+        auto proExpiryUnixTsMsJs = parsed.obj.Get("proExpiryTsMs");
+        assertIsNumberOrNull(proExpiryUnixTsMsJs, fnName + "proExpiryUnixTsMsJs");
+        auto proExpiryUnixTsMsCpp =
+                maybeNonemptyInt(proExpiryUnixTsMsJs, fnName + "proExpiryUnixTsMsCpp");
+        // Note: null is used to ignore an update. i.e. if the field is unset, we do not want to
+        // overwrite the current value.
+        // To reset it, set it to empty string
+        if (proGenIndexHashB64Cpp.has_value()) {
+            if (proGenIndexHashB64Cpp->empty()) {
+                // if the first is set, but empty, we want to reset the field
+                convo.pro_gen_index_hash = std::nullopt;
+            } else {
+                // this throws if the size is wrong
+                convo.pro_gen_index_hash = from_base64_to_array<32>(*proGenIndexHashB64Cpp);
+            }
+        }
+        if (proExpiryUnixTsMsCpp.has_value()) {
+            // if the field is set (not null), we want to write the change as is
+            convo.pro_expiry_unix_ts = std::chrono::sys_time<std::chrono::milliseconds>(
+                    std::chrono::milliseconds(*proExpiryUnixTsMsCpp));
+        }
 
         config.set(convo);
     });
@@ -164,23 +228,17 @@ Napi::Value ConvoInfoVolatileWrapper::getAllLegacyGroups(const Napi::CallbackInf
 
 void ConvoInfoVolatileWrapper::setLegacyGroup(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
-        assertInfoLength(info, 3);
+        assertInfoLength(info, 2);
         auto first = info[0];
         assertIsString(first);
-        auto second = info[1];
-        assertIsNumber(second, "setLegacyGroup");
 
-        auto third = info[2];
-        assertIsBoolean(third);
+        std::string fnName = "ConvoInfoVolatileWrapper::setLegacyGroup.";
+        auto convo = config.get_or_construct_legacy_group(toCppString(first, fnName + "convoInfo"));
 
-        auto convo = config.get_or_construct_legacy_group(
-                toCppString(first, "convoInfo.SetLegacyGroup1"));
-
-        if (auto last_read = toCppInteger(second, "convoInfo.SetLegacyGroup2");
-            last_read > convo.last_read)
-            convo.last_read = last_read;
-
-        convo.unread = toCppBoolean(third, "convoInfo.SetLegacyGroup3");
+        auto parsed = parseBaseValues(info, convo, fnName);
+        if (parsed.lastReadTsMs > convo.last_read)
+            convo.last_read = parsed.lastReadTsMs;
+        convo.unread = parsed.forcedUnread;
 
         config.set(convo);
     });
@@ -206,22 +264,17 @@ Napi::Value ConvoInfoVolatileWrapper::getAllGroups(const Napi::CallbackInfo& inf
 
 void ConvoInfoVolatileWrapper::setGroup(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
-        assertInfoLength(info, 3);
+        assertInfoLength(info, 2);
         auto first = info[0];
         assertIsString(first);
-        auto second = info[1];
-        assertIsNumber(second, "setGroup");
 
-        auto third = info[2];
-        assertIsBoolean(third);
+        std::string fnName = "ConvoInfoVolatileWrapper::setGroup.";
+        auto convo = config.get_or_construct_group(toCppString(first, fnName + "convoInfo"));
 
-        auto convo = config.get_or_construct_group(toCppString(first, "convoInfo.setGroup1"));
-
-        if (auto last_read = toCppInteger(second, "convoInfo.setGroup2");
-            last_read > convo.last_read)
-            convo.last_read = last_read;
-
-        convo.unread = toCppBoolean(third, "convoInfo.setGroup3");
+        auto parsed = parseBaseValues(info, convo, fnName);
+        if (parsed.lastReadTsMs > convo.last_read)
+            convo.last_read = parsed.lastReadTsMs;
+        convo.unread = parsed.forcedUnread;
 
         config.set(convo);
     });
@@ -250,24 +303,18 @@ Napi::Value ConvoInfoVolatileWrapper::getAllCommunities(const Napi::CallbackInfo
 
 void ConvoInfoVolatileWrapper::setCommunityByFullUrl(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
-        assertInfoLength(info, 3);
+        assertInfoLength(info, 2);
         auto first = info[0];
         assertIsString(first);
 
-        auto second = info[1];
-        assertIsNumber(second, "setCommunityByFullUrl");
+        std::string fnName = "ConvoInfoVolatileWrapper::setCommunityByFullUrl.";
 
-        auto third = info[2];
-        assertIsBoolean(third);
+        auto convo = config.get_or_construct_community(toCppString(first, fnName + "convoInfo"));
 
-        auto convo = config.get_or_construct_community(
-                toCppString(first, "convoInfo.SetCommunityByFullUrl1"));
-
-        if (auto last_read = toCppInteger(second, "convoInfo.SetCommunityByFullUrl2");
-            last_read > convo.last_read)
-            convo.last_read = last_read;
-
-        convo.unread = toCppBoolean(third, "convoInfo.SetCommunityByFullUrl3");
+        auto parsed = parseBaseValues(info, convo, fnName);
+        if (parsed.lastReadTsMs > convo.last_read)
+            convo.last_read = parsed.lastReadTsMs;
+        convo.unread = parsed.forcedUnread;
 
         // Note: we only keep the messages read when their timestamp is not older
         // than 30 days or so (see libsession util PRUNE constant). so this `set()`

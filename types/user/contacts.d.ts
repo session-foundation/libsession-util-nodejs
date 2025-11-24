@@ -51,12 +51,24 @@ declare module 'libsession_util_nodejs' {
     approved?: boolean;
     approvedMe?: boolean;
     blocked?: boolean;
+    /**
+     * The pro features bitset for this contact.
+     * see `SESSION_PROTOCOL_PRO_FEATURES`.
+     * To unset the pro features, set this to 0, if undefined or null no changes
+     */
+    profileProFeatures?: bigint;
   };
 
   export type ContactInfoGet = ContactInfoShared & {
     approved: boolean;
     approvedMe: boolean;
     blocked: boolean;
+    /**
+     * The bitset of pro features that this user currently has enabled.
+     * see `SESSION_PROTOCOL_PRO_FEATURES`.
+     * defaults to 0.
+     */
+    profileProFeatures: bigint;
   };
 
   export class ContactsConfigWrapperNode extends BaseConfigWrapperNode {

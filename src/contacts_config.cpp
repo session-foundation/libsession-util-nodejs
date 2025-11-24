@@ -5,6 +5,7 @@
 #include "profile_pic.hpp"
 #include "session/config/expiring.hpp"
 #include "session/types.hpp"
+#include "utilities.hpp"
 
 namespace session::nodeapi {
 
@@ -51,6 +52,7 @@ struct toJs_impl<contact_info> {
         obj["expirationMode"] = toJs(env, expiration_mode_string(contact.exp_mode));
         obj["expirationTimerSeconds"] = toJs(env, contact.exp_timer.count());
         obj["profilePicture"] = toJs(env, contact.profile_picture);
+        obj["profileProFeatures"] = proFeaturesToJsBitset(env, contact.get_pro_features());
 
         return obj;
     }
@@ -158,6 +160,12 @@ void ContactsConfigWrapper::set(const Napi::CallbackInfo& info) {
                 contact.profile_picture = profile_pic_from_object(pic);
             else
                 contact.profile_picture.clear();
+        }
+
+        if (auto profileProFeatures = maybeNonemptyIntB(
+                    obj.Get("profileProFeatures"),
+                    "ContactsConfigWrapper.set profileProFeatures")) {
+            contact.set_pro_features(*profileProFeatures);
         }
 
         config.set(contact);
