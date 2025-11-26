@@ -16,7 +16,7 @@
 #include "oxenc/hex.h"
 #include "session/config/namespaces.hpp"
 #include "session/config/profile_pic.hpp"
-#include "session/session_protocol.h"
+#include "session/session_protocol.hpp"
 #include "session/types.h"
 #include "session/types.hpp"
 
@@ -401,8 +401,9 @@ Napi::Object decrypt_result_to_JS(
 
 confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const Napi::Object& obj);
 
-Napi::BigInt proFeaturesToJsBitset(
-        const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset);
+Napi::BigInt proProfileBitsetToJS(const Napi::Env& env, const ProProfileBitset bitset);
+
+Napi::BigInt proMessageBitsetToJS(const Napi::Env& env, const ProMessageBitset bitset);
 
 std::span<const uint8_t> from_hex_to_span(std::string_view x);
 

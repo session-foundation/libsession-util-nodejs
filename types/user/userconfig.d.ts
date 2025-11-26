@@ -48,7 +48,7 @@ declare module 'libsession_util_nodejs' {
      *
      * @returns 0 if no pro user features are enabled, the bitset of pro features enabled otherwise
      */
-    getProFeaturesBitset: () => bigint;
+    getProProfileBitset: () => bigint;
 
     generateProMasterKey: ({
       ed25519SeedHex,
@@ -94,7 +94,7 @@ declare module 'libsession_util_nodejs' {
     public getProConfig: UserConfigWrapper['getProConfig'];
     public setProConfig: UserConfigWrapper['setProConfig'];
     public removeProConfig: UserConfigWrapper['removeProConfig'];
-    public getProFeaturesBitset: UserConfigWrapper['getProFeaturesBitset'];
+    public getProProfileBitset: UserConfigWrapper['getProProfileBitset'];
     public setAnimatedAvatar: UserConfigWrapper['setAnimatedAvatar'];
     public setProBadge: UserConfigWrapper['setProBadge'];
 
@@ -126,7 +126,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'getProConfig'>
     | MakeActionCall<UserConfigWrapper, 'setProConfig'>
     | MakeActionCall<UserConfigWrapper, 'removeProConfig'>
-    | MakeActionCall<UserConfigWrapper, 'getProFeaturesBitset'>
+    | MakeActionCall<UserConfigWrapper, 'getProProfileBitset'>
     | MakeActionCall<UserConfigWrapper, 'setAnimatedAvatar'>
     | MakeActionCall<UserConfigWrapper, 'setProBadge'>
     | MakeActionCall<UserConfigWrapper, 'generateProMasterKey'>

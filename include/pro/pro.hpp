@@ -117,10 +117,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
   private:
     static Napi::Value proFeaturesForMessage(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
-            // we expect two arguments that match:
+            // we expect one argument that matches:
             // first: {
             //   "utf16": string,
-            //   "proFeaturesBitset": bigint,
             // }
 
             assertInfoLength(info, 1);
@@ -132,17 +131,12 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             if (first.IsEmpty())
                 throw std::invalid_argument("proFeaturesForMessage first received empty");
 
-            assertIsBigint(
-                    first.Get("proFeaturesBitset"), "proFeaturesForMessage.proFeaturesBitset");
-
             auto lossless = true;
-            SESSION_PROTOCOL_PRO_FEATURES flags =
-                    first.Get("proFeaturesBitset").As<Napi::BigInt>().Uint64Value(&lossless);
 
             assertIsString(first.Get("utf16"), "proFeaturesForMessage.utf16");
             std::u16string utf16 = first.Get("utf16").As<Napi::String>().Utf16Value();
-            auto pro_features_msg =
-                    session::pro_features_for_utf16((utf16.data()), utf16.length(), flags);
+            ProFeaturesForMsg pro_features_msg =
+                    session::pro_features_for_utf16((utf16.data()), utf16.length());
 
             auto obj = Napi::Object::New(env);
 
@@ -150,7 +144,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["error"] =
                     pro_features_msg.error.size() ? toJs(env, pro_features_msg.error) : env.Null();
             obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
-            obj["proFeaturesBitset"] = proFeaturesToJsBitset(env, pro_features_msg.features);
+            obj["proMessageBitset"] = proMessageBitsetToJS(env, pro_features_msg.bitset);
 
             return obj;
         });

@@ -106,8 +106,7 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("removeProConfig", &UserConfigWrapper::removeProConfig),
                     InstanceMethod("setProBadge", &UserConfigWrapper::setProBadge),
                     InstanceMethod("setAnimatedAvatar", &UserConfigWrapper::setAnimatedAvatar),
-                    InstanceMethod(
-                            "getProFeaturesBitset", &UserConfigWrapper::getProFeaturesBitset),
+                    InstanceMethod("getProProfileBitset", &UserConfigWrapper::getProProfileBitset),
                     InstanceMethod(
                             "generateProMasterKey", &UserConfigWrapper::generateProMasterKey),
                     InstanceMethod(
@@ -292,9 +291,9 @@ Napi::Value UserConfigWrapper::removeProConfig(const Napi::CallbackInfo& info) {
     });
 }
 
-Napi::Value UserConfigWrapper::getProFeaturesBitset(const Napi::CallbackInfo& info) {
+Napi::Value UserConfigWrapper::getProProfileBitset(const Napi::CallbackInfo& info) {
     return wrapResult(
-            info, [&] { return proFeaturesToJsBitset(info.Env(), config.get_pro_features()); });
+            info, [&] { return proProfileBitsetToJS(info.Env(), config.get_profile_bitset()); });
 }
 
 void UserConfigWrapper::setProBadge(const Napi::CallbackInfo& info) {
