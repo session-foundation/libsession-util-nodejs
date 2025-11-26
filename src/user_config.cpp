@@ -106,8 +106,7 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("removeProConfig", &UserConfigWrapper::removeProConfig),
                     InstanceMethod("setProBadge", &UserConfigWrapper::setProBadge),
                     InstanceMethod("setAnimatedAvatar", &UserConfigWrapper::setAnimatedAvatar),
-                    InstanceMethod(
-                            "getProProfileBitset", &UserConfigWrapper::getProProfileBitset),
+                    InstanceMethod("getProProfileBitset", &UserConfigWrapper::getProProfileBitset),
                     InstanceMethod(
                             "generateProMasterKey", &UserConfigWrapper::generateProMasterKey),
                     InstanceMethod(
