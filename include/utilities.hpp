@@ -88,6 +88,9 @@ std::optional<bool> maybeNonemptyBoolean(Napi::Value x, const std::string& ident
 std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
         Napi::Value x, const std::string& identifier);
 
+std::optional<std::chrono::sys_time<std::chrono::milliseconds>> maybeNonemptyTimeMs(
+        Napi::Value x, const std::string& identifier);
+
 std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier);
 std::chrono::sys_time<std::chrono::milliseconds> toCppSysMs(
         Napi::Value x, const std::string& identifier);

@@ -41,8 +41,10 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     Napi::Value removeProConfig(const Napi::CallbackInfo& info);
 
     Napi::Value getProFeaturesBitset(const Napi::CallbackInfo& info);
+    Napi::Value getProAccessExpiry(const Napi::CallbackInfo& info);
     void setProBadge(const Napi::CallbackInfo& info);
     void setAnimatedAvatar(const Napi::CallbackInfo& info);
+    void setProAccessExpiry(const Napi::CallbackInfo& info);
 
     Napi::Value generateProMasterKey(const Napi::CallbackInfo& info);
     Napi::Value generateRotatingPrivKeyHex(const Napi::CallbackInfo& info);

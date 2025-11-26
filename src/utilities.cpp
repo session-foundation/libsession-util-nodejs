@@ -192,6 +192,19 @@ std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
             "maybeNonemptySysSeconds with invalid type, called from " + identifier};
 }
 
+std::optional<std::chrono::sys_time<std::chrono::milliseconds>> maybeNonemptyTimeMs(
+        Napi::Value x, const std::string& identifier) {
+    if (x.IsNull() || x.IsUndefined())
+        return std::nullopt;
+
+    if (x.IsNumber()) {
+        auto num = x.As<Napi::Number>().Int64Value();
+        return std::chrono::sys_time<std::chrono::milliseconds>{std::chrono::milliseconds{num}};
+    }
+
+    throw std::invalid_argument{"maybeNonemptySysMs with invalid type, called from " + identifier};
+}
+
 std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier) {
 
     if (x.IsNumber()) {
