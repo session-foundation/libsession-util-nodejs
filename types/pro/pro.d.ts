@@ -10,7 +10,7 @@ declare module 'libsession_util_nodejs' {
     proBackendPubkeyHex: string;
   };
 
-  type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid';
+  type ProStatus = 'ValidOrExpired' | 'Invalid';
   type WithProFeaturesBitset = { proFeaturesBitset: bigint };
   type WithGenIndexHash = { genIndexHashB64: string };
 

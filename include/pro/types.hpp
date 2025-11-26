@@ -69,11 +69,11 @@ struct toJs_impl<session::DecodedPro> {
     Napi::Object operator()(const Napi::Env& env, const session::DecodedPro decoded_pro) {
         auto obj = Napi::Object::New(env);
 
-        obj["proStatus"] =
-                toJs(env,
-                     decoded_pro.status == ProStatus::InvalidProBackendSig ? "InvalidProBackendSig"
-                     : decoded_pro.status == ProStatus::InvalidUserSig     ? "InvalidUserSig"
-                                                                           : "Valid");
+        obj["proStatus"] = toJs(
+                env,
+                decoded_pro.status == ProStatus::Valid || decoded_pro.status == ProStatus::Expired
+                        ? "ValidOrExpired"
+                        : "Invalid");
         obj["proProof"] = toJs(env, decoded_pro.proof);
         obj["proFeaturesBitset"] = proFeaturesToJsBitset(env, decoded_pro.features);
 
