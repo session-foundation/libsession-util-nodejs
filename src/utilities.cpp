@@ -362,9 +362,12 @@ confirm_pushed_entry_t confirm_pushed_entry_from_JS(const Napi::Env& env, const 
     return confirmed_pushed_entry;
 }
 
-Napi::BigInt proFeaturesToJsBitset(
-        const Napi::Env& env, const SESSION_PROTOCOL_PRO_FEATURES bitset) {
-    return Napi::BigInt::New(env, bitset);
+Napi::BigInt proProfileBitsetToJS(const Napi::Env& env, const ProProfileBitset bitset) {
+    return Napi::BigInt::New(env, bitset.data);
+}
+
+Napi::BigInt proMessageBitsetToJS(const Napi::Env& env, const ProMessageBitset bitset) {
+    return Napi::BigInt::New(env, bitset.data);
 }
 
 std::span<const uint8_t> from_hex_to_span(std::string_view x) {

@@ -11,7 +11,8 @@ declare module 'libsession_util_nodejs' {
   };
 
   type ProStatus = 'InvalidProBackendSig' | 'InvalidUserSig' | 'Valid';
-  type WithProFeaturesBitset = { proFeaturesBitset: bigint };
+  type WithProProfileBitset = { proProfileBitset: bigint };
+  type WithProMessageBitset = { proMessageBitset: bigint };
   type WithGenIndexHash = { genIndexHashB64: string };
 
   type WithRequestVersion = { requestVersion: number };
@@ -157,11 +158,7 @@ declare module 'libsession_util_nodejs' {
   };
 
   type ProWrapper = {
-    proFeaturesForMessage: (
-      args: WithProFeaturesBitset & {
-        utf16: string;
-      }
-    ) => WithProFeaturesBitset & {
+    proFeaturesForMessage: (args: { utf16: string }) => WithProMessageBitset & {
       status: 'SUCCESS' | 'UTF_DECODING_ERROR' | 'EXCEEDS_CHARACTER_LIMIT';
     };
     proProofRequestBody: (
