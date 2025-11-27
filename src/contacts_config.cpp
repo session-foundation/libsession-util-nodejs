@@ -52,7 +52,7 @@ struct toJs_impl<contact_info> {
         obj["expirationMode"] = toJs(env, expiration_mode_string(contact.exp_mode));
         obj["expirationTimerSeconds"] = toJs(env, contact.exp_timer.count());
         obj["profilePicture"] = toJs(env, contact.profile_picture);
-        obj["profileProFeatures"] = proFeaturesToJsBitset(env, contact.get_pro_features());
+        obj["proProfileBitset"] = proProfileBitsetToJS(env, contact.profile_bitset);
 
         return obj;
     }
@@ -162,10 +162,10 @@ void ContactsConfigWrapper::set(const Napi::CallbackInfo& info) {
                 contact.profile_picture.clear();
         }
 
-        if (auto profileProFeatures = maybeNonemptyIntB(
-                    obj.Get("profileProFeatures"),
-                    "ContactsConfigWrapper.set profileProFeatures")) {
-            contact.set_pro_features(*profileProFeatures);
+        if (auto proProfileBitset = maybeNonemptyIntB(
+                    obj.Get("proProfileBitset"),
+                    "ContactsConfigWrapper.set proProfileBitset")) {
+            contact.profile_bitset.data = *proProfileBitset;
         }
 
         config.set(contact);

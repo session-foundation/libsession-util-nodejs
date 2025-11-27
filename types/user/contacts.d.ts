@@ -56,7 +56,7 @@ declare module 'libsession_util_nodejs' {
      * see `SESSION_PROTOCOL_PRO_FEATURES`.
      * To unset the pro features, set this to 0, if undefined or null no changes
      */
-    profileProFeatures?: bigint;
+    proProfileBitset?: bigint;
   };
 
   export type ContactInfoGet = ContactInfoShared & {
@@ -68,7 +68,7 @@ declare module 'libsession_util_nodejs' {
      * see `SESSION_PROTOCOL_PRO_FEATURES`.
      * defaults to 0.
      */
-    profileProFeatures: bigint;
+    proProfileBitset: bigint;
   };
 
   export class ContactsConfigWrapperNode extends BaseConfigWrapperNode {
