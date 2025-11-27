@@ -32,6 +32,12 @@ void assertIsNumber(const Napi::Value& val, const std::string& identifier) {
             std::string("Wrong arguments: expected number: " + identifier).c_str());
 }
 
+void assertIsNumberOrNull(const Napi::Value& val, const std::string& identifier) {
+    checkOrThrow(
+            val.IsNumber() || val.IsNull(),
+            std::string("Wrong arguments: expected number or null: " + identifier).c_str());
+}
+
 void assertIsBigint(const Napi::Value& val, const std::string& identifier) {
     checkOrThrow(
             val.IsBigInt() && !val.IsEmpty() && !val.IsNull() && !val.IsUndefined(),
@@ -151,6 +157,16 @@ int64_t toCppIntegerB(Napi::Value x, const std::string& identifier, bool allowUn
     throw std::invalid_argument{"Unsupported type for "s + identifier + ": expected a bigint"};
 }
 
+std::optional<int64_t> maybeNonemptyIntB(Napi::Value x, const std::string& identifier) {
+    if (x.IsNull() || x.IsUndefined())
+        return std::nullopt;
+    if (x.IsBigInt()) {
+        return toCppIntegerB(x, identifier);
+    }
+
+    throw std::invalid_argument{"maybeNonemptyInt with invalid type, called from " + identifier};
+}
+
 std::optional<int64_t> maybeNonemptyInt(Napi::Value x, const std::string& identifier) {
     if (x.IsNull() || x.IsUndefined())
         return std::nullopt;
@@ -174,6 +190,19 @@ std::optional<std::chrono::sys_seconds> maybeNonemptySysSeconds(
 
     throw std::invalid_argument{
             "maybeNonemptySysSeconds with invalid type, called from " + identifier};
+}
+
+std::optional<std::chrono::sys_time<std::chrono::milliseconds>> maybeNonemptyTimeMs(
+        Napi::Value x, const std::string& identifier) {
+    if (x.IsNull() || x.IsUndefined())
+        return std::nullopt;
+
+    if (x.IsNumber()) {
+        auto num = x.As<Napi::Number>().Int64Value();
+        return std::chrono::sys_time<std::chrono::milliseconds>{std::chrono::milliseconds{num}};
+    }
+
+    throw std::invalid_argument{"maybeNonemptySysMs with invalid type, called from " + identifier};
 }
 
 std::chrono::sys_seconds toCppSysSeconds(Napi::Value x, const std::string& identifier) {
