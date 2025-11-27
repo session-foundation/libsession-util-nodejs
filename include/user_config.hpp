@@ -40,8 +40,8 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     void setProConfig(const Napi::CallbackInfo& info);
     Napi::Value removeProConfig(const Napi::CallbackInfo& info);
 
-    Napi::Value getProFeaturesBitset(const Napi::CallbackInfo& info);
     Napi::Value getProAccessExpiry(const Napi::CallbackInfo& info);
+    Napi::Value getProProfileBitset(const Napi::CallbackInfo& info);
     void setProBadge(const Napi::CallbackInfo& info);
     void setAnimatedAvatar(const Napi::CallbackInfo& info);
     void setProAccessExpiry(const Napi::CallbackInfo& info);
