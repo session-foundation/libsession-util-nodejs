@@ -73,7 +73,8 @@ struct toJs_impl<session::DecodedPro> {
                 env,
                 decoded_pro.status == ProStatus::Valid || decoded_pro.status == ProStatus::Expired
                         ? "ValidOrExpired"
-                        : "Invalid");
+                : decoded_pro.status == ProStatus::InvalidProBackendSig ? "InvalidProBackendSig"
+                                                                        : "InvalidUserSig");
         obj["proProof"] = toJs(env, decoded_pro.proof);
         obj["proProfileBitset"] = proProfileBitsetToJS(env, decoded_pro.profile_bitset);
         obj["proMessageBitset"] = proMessageBitsetToJS(env, decoded_pro.msg_bitset);
