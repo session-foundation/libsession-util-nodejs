@@ -163,8 +163,7 @@ void ContactsConfigWrapper::set(const Napi::CallbackInfo& info) {
         }
 
         if (auto proProfileBitset = maybeNonemptyIntB(
-                    obj.Get("proProfileBitset"),
-                    "ContactsConfigWrapper.set proProfileBitset")) {
+                    obj.Get("proProfileBitset"), "ContactsConfigWrapper.set proProfileBitset")) {
             contact.profile_bitset.data = *proProfileBitset;
         }
 
