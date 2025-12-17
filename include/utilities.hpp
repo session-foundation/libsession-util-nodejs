@@ -437,7 +437,7 @@ std::array<uint8_t, N> from_base64_to_array(std::string x) {
     std::string as_b64 = oxenc::from_base64(x);
     if (as_b64.size() != N) {
         throw std::invalid_argument(fmt::format(
-                "from_base64_to_array: Decoded hex size mismatch: expected {}, got {}",
+                "from_base64_to_array: Decoded v64 size mismatch: expected {}, got {}",
                 N,
                 as_b64.size()));
     }

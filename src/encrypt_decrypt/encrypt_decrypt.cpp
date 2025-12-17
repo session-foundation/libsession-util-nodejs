@@ -725,8 +725,8 @@ Napi::Value MultiEncryptWrapper::decryptFor1o1(const Napi::CallbackInfo& info) {
 
                 auto envelopePayload =
                         extractEnvelopePayload(obj, "decryptFor1o1.obj.envelopePayload");
-                decrypted.push_back(session::decode_envelope(
-                        keys, envelopePayload, proBackendPubkeyHex));
+                decrypted.push_back(
+                        session::decode_envelope(keys, envelopePayload, proBackendPubkeyHex));
                 decryptedMessageHashes.push_back(messageHash);
             } catch (const std::exception& e) {
                 log::warning(
@@ -826,8 +826,8 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
 
                 auto envelopePayload =
                         extractEnvelopePayload(obj, "decryptForGroup.obj.envelopePayload");
-                decrypted.push_back(session::decode_envelope(
-                        keys, envelopePayload, proBackendPubkeyHex));
+                decrypted.push_back(
+                        session::decode_envelope(keys, envelopePayload, proBackendPubkeyHex));
                 decryptedMessageHashes.push_back(messageHash);
             } catch (const std::exception& e) {
                 log::warning(
