@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, macos-13, macos-14, ubuntu-24.04]
+        os: [windows-2022, macos-15-intel, macos-14, ubuntu-24.04]
     env:
       SIGNAL_ENV: production
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
