@@ -43,7 +43,7 @@ declare module 'libsession_util_nodejs' {
     removeProConfig: () => boolean;
 
     setAnimatedAvatar: (enabled: boolean) => void;
-    setProAccessExpiry: (expiryTsMs: number) => void;
+    setProAccessExpiry: (expiryTsMs: number | null) => void;
     setProBadge: (enabled: boolean) => void;
     /**
      *
