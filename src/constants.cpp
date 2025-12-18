@@ -5,6 +5,7 @@
 #include "session/config/groups/info.hpp"
 #include "session/config/user_groups.hpp"
 #include "session/pro_backend.h"
+#include "session/session_protocol.h"
 #include "session/version.h"
 #include "utilities.hpp"
 #include "version.h"
@@ -17,11 +18,11 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     const char* class_name = "CONSTANTS";
 
     auto pro_urls = Napi::Object::New(env);
-    pro_urls["roadmap"] = toJs(env, SESSION_PRO_URLS.roadmap);
-    pro_urls["privacy_policy"] = toJs(env, SESSION_PRO_URLS.privacy_policy);
-    pro_urls["terms_of_service"] = toJs(env, SESSION_PRO_URLS.terms_of_service);
-    pro_urls["pro_access_not_found"] = toJs(env, SESSION_PRO_URLS.pro_access_not_found);
-    pro_urls["support_url"] = toJs(env, SESSION_PRO_URLS.support_url);
+    pro_urls["roadmap"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_roadmap);
+    pro_urls["privacy_policy"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_privacy_policy);
+    pro_urls["terms_of_service"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_terms_of_service);
+    pro_urls["pro_access_not_found"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_access_not_found);
+    pro_urls["support_url"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_support);
 
     auto pro_provider_nil = Napi::Object::New(env);
     pro_provider_nil["device"] = toJs(

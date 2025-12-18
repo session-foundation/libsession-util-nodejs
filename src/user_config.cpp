@@ -106,6 +106,8 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("removeProConfig", &UserConfigWrapper::removeProConfig),
                     InstanceMethod("setProBadge", &UserConfigWrapper::setProBadge),
                     InstanceMethod("setAnimatedAvatar", &UserConfigWrapper::setAnimatedAvatar),
+                    InstanceMethod("setProAccessExpiry", &UserConfigWrapper::setProAccessExpiry),
+                    InstanceMethod("getProAccessExpiry", &UserConfigWrapper::getProAccessExpiry),
                     InstanceMethod("getProProfileBitset", &UserConfigWrapper::getProProfileBitset),
                     InstanceMethod(
                             "generateProMasterKey", &UserConfigWrapper::generateProMasterKey),
@@ -296,6 +298,10 @@ Napi::Value UserConfigWrapper::getProProfileBitset(const Napi::CallbackInfo& inf
             info, [&] { return proProfileBitsetToJS(info.Env(), config.get_profile_bitset()); });
 }
 
+Napi::Value UserConfigWrapper::getProAccessExpiry(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] { return toJs(info.Env(), config.get_pro_access_expiry()); });
+}
+
 void UserConfigWrapper::setProBadge(const Napi::CallbackInfo& info) {
     wrapExceptions(info, [&] {
         assertInfoLength(info, 1);
@@ -315,6 +321,18 @@ void UserConfigWrapper::setAnimatedAvatar(const Napi::CallbackInfo& info) {
         auto enabled = toCppBoolean(info[0], "UserConfigWrapper::setAnimatedAvatar");
 
         config.set_animated_avatar(enabled);
+    });
+}
+
+void UserConfigWrapper::setProAccessExpiry(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsNumberOrNull(info[0], "setProAccessExpiry");
+
+        auto proAccessExpiryMs =
+                maybeNonemptyTimeMs(info[0], "UserConfigWrapper::setProAccessExpiry");
+
+        config.set_pro_access_expiry(proAccessExpiryMs);
     });
 }
 

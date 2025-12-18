@@ -173,12 +173,12 @@ declare module 'libsession_util_nodejs' {
 
     decryptFor1o1: (
       first: Array<WithEnvelopePayload & WithMessageHash>,
-      second: WithNowMs & WithProBackendPubkey & WithEd25519PrivateKeyHex
+      second:  WithProBackendPubkey & WithEd25519PrivateKeyHex
     ) => Array<WithDecodedEnvelope & WithMessageHash>;
 
     decryptForGroup: (
       first: Array<WithEnvelopePayload & WithMessageHash>,
-      second: WithNowMs & WithProBackendPubkey & WithEd25519GroupPubkeyHex & WithGroupEncryptionKeys
+      second:  WithProBackendPubkey & WithEd25519GroupPubkeyHex & WithGroupEncryptionKeys
     ) => Array<WithDecodedEnvelope & WithMessageHash>;
   };
 

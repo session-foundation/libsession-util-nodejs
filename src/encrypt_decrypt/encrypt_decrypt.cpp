@@ -678,7 +678,6 @@ Napi::Value MultiEncryptWrapper::decryptFor1o1(const Napi::CallbackInfo& info) {
         //   "messageHash": string,
         // }],
         // second: {
-        //   "nowMs": number,
         //   "proBackendPubkeyHex": Hexstring,
         //   "ed25519PrivateKeyHex": Hexstring,
         //  }
@@ -698,7 +697,6 @@ Napi::Value MultiEncryptWrapper::decryptFor1o1(const Napi::CallbackInfo& info) {
         if (second.IsEmpty())
             throw std::invalid_argument("decryptFor1o1 second received empty");
 
-        auto nowMs = extractNowSysMs(second, "decryptFor1o1.second.nowMs");
         auto proBackendPubkeyHex =
                 extractProBackendPubkeyHex(second, "decryptFor1o1.second.proBackendPubkeyHex");
 
@@ -727,8 +725,8 @@ Napi::Value MultiEncryptWrapper::decryptFor1o1(const Napi::CallbackInfo& info) {
 
                 auto envelopePayload =
                         extractEnvelopePayload(obj, "decryptFor1o1.obj.envelopePayload");
-                decrypted.push_back(session::decode_envelope(
-                        keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                decrypted.push_back(
+                        session::decode_envelope(keys, envelopePayload, proBackendPubkeyHex));
                 decryptedMessageHashes.push_back(messageHash);
             } catch (const std::exception& e) {
                 log::warning(
@@ -764,7 +762,6 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
         //   "messageHash": string,
         // }],
         // second: {
-        //   "nowMs": number,
         //   "proBackendPubkeyHex": Hexstring,
         //   "ed25519GroupPubkeyHex": Hexstring,
         //   "groupEncKeys": Array<Uint8Array>,
@@ -785,7 +782,6 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
         if (second.IsEmpty())
             throw std::invalid_argument("decryptForGroup second received empty");
 
-        auto nowMs = extractNowSysMs(second, "decryptForGroup.second.nowMs");
         auto proBackendPubkeyHex =
                 extractProBackendPubkeyHex(second, "decryptForGroup.second.proBackendPubkeyHex");
 
@@ -830,8 +826,8 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
 
                 auto envelopePayload =
                         extractEnvelopePayload(obj, "decryptForGroup.obj.envelopePayload");
-                decrypted.push_back(session::decode_envelope(
-                        keys, envelopePayload, nowMs, proBackendPubkeyHex));
+                decrypted.push_back(
+                        session::decode_envelope(keys, envelopePayload, proBackendPubkeyHex));
                 decryptedMessageHashes.push_back(messageHash);
             } catch (const std::exception& e) {
                 log::warning(
