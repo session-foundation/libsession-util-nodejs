@@ -4,6 +4,7 @@
 #include <oxenc/base64.h>
 #include <oxenc/hex.h>
 
+#include <cstddef>
 #include <vector>
 
 #include "meta/meta_base_wrapper.hpp"
@@ -93,6 +94,14 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                 "ProWrapperNode",
                 {
                         // Pro features
+                        StaticMethod<&ProWrapper::utf16CountTruncatedToCodepoints>(
+                                "utf16CountTruncatedToCodepoints",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
+                        StaticMethod<&ProWrapper::utf16Count>(
+                                "utf16Count",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
                         StaticMethod<&ProWrapper::proFeaturesForMessage>(
                                 "proFeaturesForMessage",
                                 static_cast<napi_property_attributes>(
@@ -145,6 +154,69 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                     pro_features_msg.error.size() ? toJs(env, pro_features_msg.error) : env.Null();
             obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
             obj["proMessageBitset"] = proMessageBitsetToJS(env, pro_features_msg.bitset);
+
+            return obj;
+        });
+    };
+
+    static Napi::Value utf16Count(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect one argument that matches:
+            // first: {
+            //   "utf16": string,
+            // }
+            // we return an object with a single property {`codepointCount: number`}
+
+            assertInfoLength(info, 1);
+            assertIsObject(info[0]);
+            auto env = info.Env();
+
+            auto first = info[0].As<Napi::Object>();
+
+            if (first.IsEmpty())
+                throw std::invalid_argument("utf16Count first received empty");
+
+            auto lossless = true;
+
+            assertIsString(first.Get("utf16"), "utf16Count.utf16");
+            std::u16string utf16 = first.Get("utf16").As<Napi::String>().Utf16Value();
+            size_t codepoint_count = session::utf16_count(utf16);
+
+            auto obj = Napi::Object::New(env);
+            obj["codepointCount"] = toJs(env, codepoint_count);
+
+            return obj;
+        });
+    };
+
+    static Napi::Value utf16CountTruncatedToCodepoints(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&] {
+            // we expect one argument that matches:
+            // first: {
+            //   "utf16": string,
+            //   "codepointLen": number,
+            // }
+            // we return an object with a single property {`truncateAt: number`}
+
+            assertInfoLength(info, 1);
+            assertIsObject(info[0]);
+            auto env = info.Env();
+
+            auto first = info[0].As<Napi::Object>();
+
+            if (first.IsEmpty())
+                throw std::invalid_argument("utf16CountTruncatedToCodepoints first received empty");
+
+            assertIsString(first.Get("utf16"), "utf16CountTruncatedToCodepoints.utf16");
+            std::u16string utf16 = first.Get("utf16").As<Napi::String>().Utf16Value();
+            assertIsNumber(
+                    first.Get("codepointLen"), "utf16CountTruncatedToCodepoints.codepointLen");
+            size_t codepointLen = first.Get("codepointLen").As<Napi::Number>().Uint32Value();
+
+            size_t truncate_at = session::utf16_count_truncated_to_codepoints(utf16, codepointLen);
+
+            auto obj = Napi::Object::New(env);
+            obj["truncateAt"] = toJs(env, truncate_at);
 
             return obj;
         });
