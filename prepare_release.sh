@@ -22,12 +22,12 @@ HEADER_GIT_COMMIT=$(grep 'LIBSESSION_NODEJS_COMMIT' src/version.h | sed -E 's/.*
 
 echo "Package: $PACKAGE_VERSION; Commit: $GIT_COMMIT"
 if [ "$PACKAGE_VERSION" != "$HEADER_PACKAGE_VERSION" ]; then
-    echo "Error: Version mismatch! package.json version is $PACKAGE_VERSION, but src/version.h has $HEADER_PACKAGE_VERSION. Build the project first before packaging 'yarn install'"
+    echo "Error: Version mismatch! package.json version is $PACKAGE_VERSION, but src/version.h has $HEADER_PACKAGE_VERSION. Build the project first before packaging 'pnpm install'"
     exit 1
 fi
 
 if [ "$GIT_COMMIT" != "$HEADER_GIT_COMMIT" ]; then
-    echo "Error: Version mismatch! Git commit is $GIT_COMMIT, but src/version.h has $HEADER_GIT_COMMIT. Build the project first before packaging 'yarn install'"
+    echo "Error: Version mismatch! Git commit is $GIT_COMMIT, but src/version.h has $HEADER_GIT_COMMIT. Build the project first before packaging 'pnpm install'"
     exit 1
 fi
 
@@ -53,5 +53,5 @@ echo "Uploading tar archive to release $PACKAGE_VERSION..."
 gh release upload v$PACKAGE_VERSION libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz
 echo "GH_RELEASE_URL: $GH_RELEASE_URL"
 echo "Update session-desktop with this new libsession-nodejs version with: "
-echo "yarn remove libsession_util_nodejs --ignore-scripts; yarn add https://github.com/session-foundation/libsession-util-nodejs/releases/download/v$PACKAGE_VERSION/libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz"
+echo "pnpm remove libsession_util_nodejs --ignore-scripts; pnpm add https://github.com/session-foundation/libsession-util-nodejs/releases/download/v$PACKAGE_VERSION/libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz"
 echo "Done"

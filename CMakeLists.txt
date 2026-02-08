@@ -6,6 +6,13 @@ set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 
 set(VERBOSE ON)
 
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
+
+
 # Get current commit hash as GIT_COMMIT
 find_package(Git)
 set(GIT_COMMIT "unknown") # Default value for when Git is not found
@@ -17,6 +24,8 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/.git/index" AND GIT_FOUND)
         message(WARNING "Cannot determine current commit. Make sure that you are building either from a Git working tree or from a source archive.")
     endif()
 endif()
+
+
 
 # Read the package.json file and extract the top-level .version as LIBSESSION_NODEJS_VERSION
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/package.json" PACKAGE_JSON)
@@ -42,6 +51,8 @@ message(STATUS "Number of processors detected: ${N}")
 
 add_definitions(-DNAPI_VERSION=8)
 set(CMAKE_CONFIGURATION_TYPES Release)
+
+
 
 project(libsession_util_nodejs LANGUAGES CXX)
 
