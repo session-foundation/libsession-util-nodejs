@@ -18,13 +18,6 @@ declare module 'libsession_util_nodejs' {
       sigPath: string;
       sigBody: Uint8Array | null;
     }) => Uint8Array;
-    blindVersionSign: (opts: {
-      /**
-       * len 64: ed25519 secretKey with pubkey
-       */
-      ed25519SecretKey: Uint8Array;
-      sigTimestampSeconds: number;
-    }) => Uint8Array;
   };
 
   export type BlindingActionsCalls = MakeWrapperActionCalls<BlindingWrapper>;
@@ -34,7 +27,7 @@ declare module 'libsession_util_nodejs' {
    */
   export class BlindingWrapperNode {
     public static blindVersionPubkey: BlindingWrapper['blindVersionPubkey'];
-    public static blindVersionSign: BlindingWrapper['blindVersionSign'];
+    public static blindVersionSignRequest: BlindingWrapper['blindVersionSignRequest'];
   }
 
   /**
@@ -44,6 +37,5 @@ declare module 'libsession_util_nodejs' {
    */
   export type BlindingActionsType =
     | MakeActionCall<BlindingWrapper, 'blindVersionPubkey'>
-    | MakeActionCall<BlindingWrapper, 'blindVersionSignRequest'>
-    | MakeActionCall<BlindingWrapper, 'blindVersionSign'>;
+    | MakeActionCall<BlindingWrapper, 'blindVersionSignRequest'>;
 }

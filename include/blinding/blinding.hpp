@@ -36,10 +36,6 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
                                 "blindVersionSignRequest",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
-                        StaticMethod<&BlindingWrapper::blindVersionSign>(
-                                "blindVersionSign",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
                 });
     }
 
@@ -105,28 +101,5 @@ class BlindingWrapper : public Napi::ObjectWrap<BlindingWrapper> {
                     ed25519_secret_key, sig_timestamp, sig_method, sig_path, sig_body);
         });
     };
-
-    static Napi::Value blindVersionSign(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
-            assertInfoLength(info, 1);
-            assertIsObject(info[0]);
-            auto obj = info[0].As<Napi::Object>();
-
-            if (obj.IsEmpty())
-                throw std::invalid_argument("blindVersionSign received empty");
-
-            assertIsUInt8Array(obj.Get("ed25519SecretKey"), "BlindingWrapper::blindVersionSign");
-            auto ed25519_secret_key =
-                    toCppBuffer(obj.Get("ed25519SecretKey"), "blindVersionSign.ed25519SecretKey");
-
-            assertIsNumber(obj.Get("sigTimestampSeconds"), "BlindingWrapper::blindVersionSign");
-            auto sig_timestamp = toCppInteger(
-                    obj.Get("sigTimestampSeconds"), "blindVersionSign.sigTimestampSeconds", false);
-
-            return session::blind_version_sign(
-                    ed25519_secret_key, Platform::desktop, sig_timestamp);
-        });
-    };
 };
-
 }  // namespace session::nodeapi

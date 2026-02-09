@@ -43,6 +43,8 @@ message(STATUS "Number of processors detected: ${N}")
 add_definitions(-DNAPI_VERSION=8)
 set(CMAKE_CONFIGURATION_TYPES Release)
 
+
+
 project(libsession_util_nodejs LANGUAGES CXX)
 
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
