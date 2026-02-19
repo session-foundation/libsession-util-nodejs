@@ -62,6 +62,10 @@ set(SUBMODULE_CHECK OFF)
 
 file(GLOB SOURCE_FILES src/*.cpp src/groups/*.cpp src/encrypt_decrypt/*.cpp src/pro/*.cpp src/meta/*.cpp )
 
+# **not** having this allows the system library to be used.
+# this breaks the release on macos, see https://github.com/session-foundation/session-desktop/issues/1844
+set(OXEN_LOGGING_FORCE_SUBMODULES ON CACHE INTERNAL "")
+
 add_subdirectory(libsession-util)
 
 if(MSVC)
