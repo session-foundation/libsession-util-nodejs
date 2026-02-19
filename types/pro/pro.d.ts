@@ -56,6 +56,7 @@ declare module 'libsession_util_nodejs' {
     platform: string;
     platform_account: string;
     refund_support_url: string;
+    refund_status_url: string;
     refund_platform_url: string;
     update_subscription_url: string;
     cancel_subscription_url: string;

@@ -45,6 +45,10 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
             env,
             SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL]
                     .refund_support_url);
+    pro_provider_nil["refund_status_url"] = toJs(
+            env,
+            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL]
+                    .refund_status_url);
     pro_provider_nil["refund_platform_url"] = toJs(
             env,
             SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL]
@@ -88,6 +92,11 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                  SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA
                          [SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE]
                                  .refund_support_url);
+    pro_provider_google["refund_status_url"] =
+            toJs(env,
+                 SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA
+                         [SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE]
+                                 .refund_status_url);
     pro_provider_google["refund_platform_url"] =
             toJs(env,
                  SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA
@@ -135,6 +144,11 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                  SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA
                          [SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE]
                                  .refund_support_url);
+    pro_provider_ios["refund_status_url"] =
+            toJs(env,
+                 SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA
+                         [SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE]
+                                 .refund_status_url);
     pro_provider_ios["refund_platform_url"] =
             toJs(env,
                  SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA
