@@ -284,22 +284,30 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         });
     };
 
-    static std::string requestJsonArg(const Napi::CallbackInfo& info, const std::string& id) {
+    // The response body is relayed RAW from the network (the client never parses it — the wire format
+    // is a contract between libsession and the backend only). Callers pass the raw bytes as a
+    // Uint8Array; we hand them straight to libsession's parser, no client-side decoding/assumption.
+    static std::vector<unsigned char> requestBodyBytes(
+            const Napi::CallbackInfo& info, const std::string& id) {
         assertInfoLength(info, 1);
         assertIsObject(info[0]);
         auto first = info[0].As<Napi::Object>();
         if (first.IsEmpty())
             throw std::invalid_argument(id + " first received empty");
-        assertIsString(first.Get("json"), id + ".json");
-        return toCppString(first.Get("json"), id + ".json");
+        assertIsUInt8Array(first.Get("body"), id + ".body");
+        return toCppBuffer(first.Get("body"), id + ".body");
+    }
+
+    static std::string_view asJsonView(const std::vector<unsigned char>& body) {
+        return std::string_view(reinterpret_cast<const char*>(body.data()), body.size());
     }
 
     static Napi::Value parseProProofResponse(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             auto env = info.Env();
-            auto json = requestJsonArg(info, "parseProProofResponse");
+            auto body = requestBodyBytes(info, "parseProProofResponse");
 
-            auto resp = session::pro_backend::parse_pro_proof(json);
+            auto resp = session::pro_backend::parse_pro_proof(asJsonView(body));
 
             auto obj = Napi::Object::New(env);
             obj["status"] = toJs(env, resp.status);
@@ -312,9 +320,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
     static Napi::Value parseRevocationsResponse(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             auto env = info.Env();
-            auto json = requestJsonArg(info, "parseRevocationsResponse");
+            auto body = requestBodyBytes(info, "parseRevocationsResponse");
 
-            auto resp = session::pro_backend::parse_revocations(json);
+            auto resp = session::pro_backend::parse_revocations(asJsonView(body));
 
             auto obj = Napi::Object::New(env);
             obj["status"] = toJs(env, resp.status);
@@ -340,9 +348,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
     static Napi::Value parsePaymentDetailsResponse(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             auto env = info.Env();
-            auto json = requestJsonArg(info, "parsePaymentDetailsResponse");
+            auto body = requestBodyBytes(info, "parsePaymentDetailsResponse");
 
-            auto resp = session::pro_backend::parse_payment_details(json);
+            auto resp = session::pro_backend::parse_payment_details(asJsonView(body));
 
             auto obj = Napi::Object::New(env);
             obj["status"] = toJs(env, resp.status);

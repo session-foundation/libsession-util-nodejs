@@ -212,11 +212,13 @@ declare module 'libsession_util_nodejs' {
     ) => ProRequest;
 
     /**
-     * Parse an add-payment / generate-proof reply (both carry a freshly-issued proof).
+     * Parse a backend reply. The `body` is the RAW response bytes relayed from the network — the wire
+     * format is a libsession<->backend contract, so the client never parses it; libsession does, and
+     * returns these typed structs. (parseProProofResponse covers add-payment + generate-proof.)
      */
-    parseProProofResponse: (args: { json: string }) => GenerateProProofResponse;
-    parseRevocationsResponse: (args: { json: string }) => GetProRevocationsResponse;
-    parsePaymentDetailsResponse: (args: { json: string }) => GetProDetailsResponse;
+    parseProProofResponse: (args: { body: Uint8Array }) => GenerateProProofResponse;
+    parseRevocationsResponse: (args: { body: Uint8Array }) => GetProRevocationsResponse;
+    parsePaymentDetailsResponse: (args: { body: Uint8Array }) => GetProDetailsResponse;
 
     /**
      * Support/management URLs for a provider slug, or null if none apply.
