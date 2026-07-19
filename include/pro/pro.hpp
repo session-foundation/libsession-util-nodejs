@@ -347,7 +347,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto obj = Napi::Object::New(env);
             obj["status"] = toJs(env, resp.status);
             obj["errors"] = errorsToJs(env, resp.errors);
-            obj["userStatus"] = toJs(env, static_cast<uint32_t>(resp.user_status));
+            // user_status is now an opaque string code (never/active/expired; unknowns pass through)
+            obj["userStatus"] = toJs(env, resp.user_status);
             obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
             obj["expiryMs"] = toJs(env, resp.expiry_unix_ts.time_since_epoch().count() * 1000);
@@ -361,7 +362,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             for (size_t i = 0; i < resp.items.size(); i++) {
                 const auto& src = resp.items[i];
                 auto item = Napi::Object::New(env);
-                item["status"] = toJs(env, static_cast<uint32_t>(src.status));
+                // status is now an opaque string code (unredeemed/redeemed/expired/revoked; pass through)
+                item["status"] = toJs(env, src.status);
                 item["plan"] = toJs(env, src.plan);
                 item["paymentProvider"] = toJs(env, src.payment_provider);
                 item["autoRenewing"] = toJs(env, src.auto_renewing);

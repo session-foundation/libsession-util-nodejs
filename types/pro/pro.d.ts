@@ -144,7 +144,10 @@ declare module 'libsession_util_nodejs' {
    * (0=Nil,1=Unredeemed,2=Redeemed,3=Expired,4=Revoked). provider/plan are opaque wire slugs.
    */
   type ProPaymentItem = {
-    status: number;
+    /**
+     * Opaque payment-status code slug: "unredeemed"/"redeemed"/"expired"/"revoked" (unknowns pass through).
+     */
+    status: string;
     /**
      * Billing-period slug, e.g. "1m"/"3m"/"1y" (opaque).
      */
@@ -169,9 +172,9 @@ declare module 'libsession_util_nodejs' {
 
   type GetProDetailsResponse = WithProResponseHeader & {
     /**
-     * numeric user-status enum (0=NeverBeenPro,1=Active,2=Expired)
+     * Opaque account-status code slug: "never"/"active"/"expired" (unknowns pass through).
      */
-    userStatus: number;
+    userStatus: string;
     /**
      * numeric error-report enum (0=Success,1=GenericError)
      */

@@ -1,9 +1,12 @@
 #include "constants.hpp"
 
+#include <oxenc/hex.h>
+
 #include "js_native_api_types.h"
 #include "session/config/contacts.hpp"
 #include "session/config/groups/info.hpp"
 #include "session/config/user_groups.hpp"
+#include "session/pro_backend.hpp"
 #include "session/session_protocol.h"
 #include "session/version.h"
 #include "utilities.hpp"
@@ -53,6 +56,16 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                      Napi::Number::New(env, session::config::community::FULL_URL_MAX_LENGTH),
                      napi_enumerable),
              ObjectWrap::StaticValue("LIBSESSION_PRO_URLS", pro_urls, napi_enumerable),
+             // Session Pro backend identity — the single source of truth clients read instead of
+             // hand-carrying their own copies (URL is the overridable prod/default; pubkey is hex).
+             ObjectWrap::StaticValue(
+                     "LIBSESSION_PRO_BACKEND_URL",
+                     Napi::String::New(env, std::string(session::pro_backend::URL)),
+                     napi_enumerable),
+             ObjectWrap::StaticValue(
+                     "LIBSESSION_PRO_BACKEND_PUBKEY_HEX",
+                     Napi::String::New(env, oxenc::to_hex(session::pro_backend::PUBKEY)),
+                     napi_enumerable),
              ObjectWrap::StaticValue(
                      "LIBSESSION_UTIL_VERSION",
                      Napi::String::New(env, LIBSESSION_UTIL_VERSION_FULL),

@@ -178,6 +178,10 @@ declare module 'libsession_util_nodejs' {
     LIBSESSION_NODEJS_COMMIT: string;
     /** Object containing pro urls **/
     LIBSESSION_PRO_URLS: ProBackendUrlsType;
+    /** Session Pro backend base URL (overridable prod/default) */
+    LIBSESSION_PRO_BACKEND_URL: string;
+    /** Session Pro backend Ed25519 signing pubkey (hex, 64 chars) */
+    LIBSESSION_PRO_BACKEND_PUBKEY_HEX: string;
   };
 
   export const CONSTANTS: ConstantsType;
