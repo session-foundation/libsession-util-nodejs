@@ -13,9 +13,11 @@ declare module 'libsession_util_nodejs' {
   type ProStatus = 'ValidOrExpired' | 'Invalid';
   type WithProProfileBitset = { proProfileBitset: bigint };
   type WithProMessageBitset = { proMessageBitset: bigint };
+  /**
+   * base64 of the proof's revocation tag (historically the "gen index hash")
+   */
   type WithGenIndexHash = { genIndexHashB64: string };
 
-  type WithRequestVersion = { requestVersion: number };
   type WithTicket = { ticket: number };
 
   type WithUnixTsMs = {
@@ -58,26 +60,10 @@ declare module 'libsession_util_nodejs' {
     proProof: Omit<ProProof, 'rotatingPubkeyHex'>;
   };
 
-  export type ProOriginatingPlatform = 'Nil' | 'Google' | 'iOS' | 'Rangeproof';
-
-  export type ProBackendProviderConstantType = {
-    device: string;
-    store: string;
-    store_other: string;
-    platform: string;
-    platform_account: string;
-    refund_support_url: string;
-    refund_status_url: string;
-    refund_platform_url: string;
-    update_subscription_url: string;
-    cancel_subscription_url: string;
-  };
-
-  export type ProBackendProviderConstantsType = Record<
-    ProOriginatingPlatform,
-    ProBackendProviderConstantType
-  >;
-
+  /**
+   * General (non per-provider) Pro URLs. These are libsession-owned constants (not translation data)
+   * still surfaced via LIBSESSION_PRO_URLS. Per-provider URLs are fetched via ProWrapper.providerUrls().
+   */
   export type ProBackendUrlsType = {
     roadmap: string;
     privacy_policy: string;
@@ -86,12 +72,117 @@ declare module 'libsession_util_nodejs' {
     support_url: string;
   };
 
-  type ProRevocationItem = WithGenIndexHash & {
-    expiryUnixTsMs: number;
+  /**
+   * Per-provider support/management URLs, looked up by provider slug via ProWrapper.providerUrls().
+   * `null` for a provider with no applicable URLs (unknown slug, or e.g. rangeproof).
+   */
+  type ProviderUrls = {
+    refundPlatformUrl: string;
+    refundSupportUrl: string;
+    refundStatusUrl: string;
+    updateSubscriptionUrl: string;
+    cancelSubscriptionUrl: string;
   };
 
   type WithMasterPrivKeyHex = { masterPrivKeyHex: string };
 
+  /**
+   * A request to POST to the Session Pro backend. libsession owns the endpoint<->body pairing.
+   */
+  type ProRequest = {
+    /**
+     * Endpoint path relative to the backend base URL, e.g. "generate_pro_proof".
+     */
+    endpoint: string;
+    /**
+     * The JSON request body to POST.
+     */
+    body: string;
+  };
+
+  /**
+   * A parsed backend response. Always check `errors`/`status` before using the typed fields.
+   */
+  type WithProResponseHeader = {
+    /**
+     * 0 on success; for add-payment this maps to the add-payment status enum, otherwise a generic
+     * success/error code.
+     */
+    status: number;
+    /**
+     * Parse/processing errors; empty on success (the parse may be partial if non-empty).
+     */
+    errors: Array<string>;
+  };
+
+  type GenerateProProofResponse = WithProResponseHeader & {
+    proof: ProProof;
+  };
+
+  type ProRevocationItem = WithGenIndexHash & {
+    /**
+     * A matching proof is revoked once the client clock reaches this unix instant (milliseconds).
+     */
+    effectiveMs: number;
+  };
+
+  type GetProRevocationsResponse = WithProResponseHeader & {
+    ticket: number;
+    /**
+     * Recommended seconds to wait before polling the revocation list again.
+     */
+    retryInS: number;
+    /**
+     * Seconds to retain each item after first seeing it (memory-only aging).
+     */
+    retainForS: number;
+    items: Array<ProRevocationItem>;
+  };
+
+  /**
+   * A single Pro payment item. `status` is the numeric payment-status enum
+   * (0=Nil,1=Unredeemed,2=Redeemed,3=Expired,4=Revoked). provider/plan are opaque wire slugs.
+   */
+  type ProPaymentItem = {
+    status: number;
+    /**
+     * Billing-period slug, e.g. "1m"/"3m"/"1y" (opaque).
+     */
+    plan: string;
+    /**
+     * Provider slug, e.g. "google_play"/"app_store" (opaque).
+     */
+    paymentProvider: string;
+    autoRenewing: boolean;
+    purchasedTsMs: number;
+    revokedTsMs: number;
+    redeemedTsMs: number;
+    expiryTsMs: number;
+    gracePeriodDurationMs: number;
+    platformRefundExpiryTsMs: number;
+    refundRequestedTsMs: number;
+    /**
+     * Opaque payment identifier (confidential).
+     */
+    paymentId: string;
+  };
+
+  type GetProDetailsResponse = WithProResponseHeader & {
+    /**
+     * numeric user-status enum (0=NeverBeenPro,1=Active,2=Expired)
+     */
+    userStatus: number;
+    /**
+     * numeric error-report enum (0=Success,1=GenericError)
+     */
+    errorReport: number;
+    autoRenewing: boolean;
+    expiryMs: number;
+    gracePeriodDurationMs: number;
+    refundRequestedTsMs: number;
+    paymentsTotal: number;
+    items: Array<ProPaymentItem>;
+  };
 
   type ProWrapper = {
     proFeaturesForMessage: (args: { utf16: string }) => WithProMessageBitset & {
@@ -102,25 +193,32 @@ declare module 'libsession_util_nodejs' {
       truncateAt: number;
     };
 
-    proProofRequestBody: (
-      args: WithMasterPrivKeyHex & WithRequestVersion & WithUnixTsMs & WithRotatingPrivKeyHex
-    ) => string;
+    proProofRequest: (
+      args: WithMasterPrivKeyHex & WithRotatingPrivKeyHex & WithUnixTsMs
+    ) => ProRequest;
 
     /**
-     * @param version: Request version. The latest accepted version is 0
-     * @param ticket: 4-byte monotonic integer for the caller's revocation list iteration. Set to 0 if unknown; otherwise, use the latest known `ticket` from a prior `GetProRevocationsResponse` to allow
-     the Session Pro Backend to omit the revocation list if it has not changed.
-     * @returns the stringified body to include in the request
+     * @param ticket: 64-bit monotonic revocation-list iteration. Set to 0 if unknown; otherwise use
+     * the latest known `ticket` from a prior GetProRevocationsResponse so the backend may omit an
+     * unchanged list.
      */
-    proRevocationsRequestBody: (args: WithRequestVersion & WithTicket) => string;
+    proRevocationsRequest: (args: WithTicket) => ProRequest;
 
-    proStatusRequestBody: (
-      args: WithMasterPrivKeyHex &
-        WithRequestVersion &
-        WithUnixTsMs & {
-          count: number;
-        }
-    ) => string;
+    proStatusRequest: (
+      args: WithMasterPrivKeyHex & WithUnixTsMs & { count: number }
+    ) => ProRequest;
+
+    /**
+     * Parse an add-payment / generate-proof reply (both carry a freshly-issued proof).
+     */
+    parseProProofResponse: (args: { json: string }) => GenerateProProofResponse;
+    parseRevocationsResponse: (args: { json: string }) => GetProRevocationsResponse;
+    parsePaymentDetailsResponse: (args: { json: string }) => GetProDetailsResponse;
+
+    /**
+     * Support/management URLs for a provider slug, or null if none apply.
+     */
+    providerUrls: (args: { code: string }) => ProviderUrls | null;
   };
 
   export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;
@@ -132,9 +230,13 @@ declare module 'libsession_util_nodejs' {
     public static proFeaturesForMessage: ProWrapper['proFeaturesForMessage'];
     public static utf16Count: ProWrapper['utf16Count'];
     public static utf16CountTruncatedToCodepoints: ProWrapper['utf16CountTruncatedToCodepoints'];
-    public static proProofRequestBody: ProWrapper['proProofRequestBody'];
-    public static proRevocationsRequestBody: ProWrapper['proRevocationsRequestBody'];
-    public static proStatusRequestBody: ProWrapper['proStatusRequestBody'];
+    public static proProofRequest: ProWrapper['proProofRequest'];
+    public static proRevocationsRequest: ProWrapper['proRevocationsRequest'];
+    public static proStatusRequest: ProWrapper['proStatusRequest'];
+    public static parseProProofResponse: ProWrapper['parseProProofResponse'];
+    public static parseRevocationsResponse: ProWrapper['parseRevocationsResponse'];
+    public static parsePaymentDetailsResponse: ProWrapper['parsePaymentDetailsResponse'];
+    public static providerUrls: ProWrapper['providerUrls'];
   }
 
   /**
@@ -146,7 +248,11 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<ProWrapper, 'proFeaturesForMessage'>
     | MakeActionCall<ProWrapper, 'utf16Count'>
     | MakeActionCall<ProWrapper, 'utf16CountTruncatedToCodepoints'>
-    | MakeActionCall<ProWrapper, 'proProofRequestBody'>
-    | MakeActionCall<ProWrapper, 'proRevocationsRequestBody'>
-    | MakeActionCall<ProWrapper, 'proStatusRequestBody'>;
+    | MakeActionCall<ProWrapper, 'proProofRequest'>
+    | MakeActionCall<ProWrapper, 'proRevocationsRequest'>
+    | MakeActionCall<ProWrapper, 'proStatusRequest'>
+    | MakeActionCall<ProWrapper, 'parseProProofResponse'>
+    | MakeActionCall<ProWrapper, 'parseRevocationsResponse'>
+    | MakeActionCall<ProWrapper, 'parsePaymentDetailsResponse'>
+    | MakeActionCall<ProWrapper, 'providerUrls'>;
 }

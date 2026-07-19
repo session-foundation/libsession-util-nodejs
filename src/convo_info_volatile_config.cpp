@@ -58,13 +58,15 @@ struct toJs_impl<convo::one_to_one> {
         obj["pubkeyHex"] = toJs(env, info_1o1.session_id);
         addBaseValues(env, obj, info_1o1);
 
-        if (info_1o1.pro_gen_index_hash->empty() ||
+        if (info_1o1.pro_revocation_tag->empty() ||
             !info_1o1.pro_expiry_unix_ts.time_since_epoch().count()) {
             obj["proGenIndexHashB64"] = env.Null();
             obj["proExpiryTsMs"] = env.Null();
         } else {
-            obj["proGenIndexHashB64"] = toJs(env, to_base64(*info_1o1.pro_gen_index_hash));
-            obj["proExpiryTsMs"] = toJs(env, info_1o1.pro_expiry_unix_ts);
+            obj["proGenIndexHashB64"] = toJs(env, to_base64(*info_1o1.pro_revocation_tag));
+            // config field is now whole seconds; the JS `proExpiryTsMs` key stays milliseconds
+            obj["proExpiryTsMs"] =
+                    toJs(env, info_1o1.pro_expiry_unix_ts.time_since_epoch().count() * 1000);
         }
 
         return obj;
@@ -191,16 +193,17 @@ void ConvoInfoVolatileWrapper::set1o1(const Napi::CallbackInfo& info) {
         if (proGenIndexHashB64Cpp.has_value()) {
             if (proGenIndexHashB64Cpp->empty()) {
                 // if the first is set, but empty, we want to reset the field
-                convo.pro_gen_index_hash = std::nullopt;
+                convo.pro_revocation_tag = std::nullopt;
             } else {
                 // this throws if the size is wrong
-                convo.pro_gen_index_hash = from_base64_to_array<32>(*proGenIndexHashB64Cpp);
+                convo.pro_revocation_tag = from_base64_to_array<32>(*proGenIndexHashB64Cpp);
             }
         }
         if (proExpiryUnixTsMsCpp.has_value()) {
-            // if the field is set (not null), we want to write the change as is
-            convo.pro_expiry_unix_ts = std::chrono::sys_time<std::chrono::milliseconds>(
-                    std::chrono::milliseconds(*proExpiryUnixTsMsCpp));
+            // if the field is set (not null), we want to write the change as is (ms -> whole seconds)
+            convo.pro_expiry_unix_ts = std::chrono::floor<std::chrono::seconds>(
+                    std::chrono::sys_time<std::chrono::milliseconds>(
+                            std::chrono::milliseconds(*proExpiryUnixTsMsCpp)));
         }
 
         config.set(convo);

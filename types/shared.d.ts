@@ -178,8 +178,6 @@ declare module 'libsession_util_nodejs' {
     LIBSESSION_NODEJS_COMMIT: string;
     /** Object containing pro urls **/
     LIBSESSION_PRO_URLS: ProBackendUrlsType;
-    /** Object containing mapped provider constants */
-    LIBSESSION_PRO_PROVIDERS: ProBackendProviderConstantsType;
   };
 
   export const CONSTANTS: ConstantsType;

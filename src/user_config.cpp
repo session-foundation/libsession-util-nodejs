@@ -44,7 +44,7 @@ session::config::ProConfig pro_config_from_object(Napi::Object input) {
     std::copy(
             gen_index_hash_cpp.begin(),
             gen_index_hash_cpp.end(),
-            pro_config.proof.gen_index_hash.begin());
+            pro_config.proof.revocation_tag.begin());
 
     // extract backend signature
     auto signature_hex_js = proof_js.Get("signatureHex");
@@ -55,10 +55,10 @@ session::config::ProConfig pro_config_from_object(Napi::Object input) {
     std::copy(signature_cpp.begin(), signature_cpp.end(), pro_config.proof.sig.begin());
     assert_length(signature_cpp, 64, "pro_config_from_object.signature_cpp");
 
-    // extract expiryMs
+    // extract expiryMs (JS domain is ms; the proof's expiry_unix_ts is now whole seconds)
     assertIsNumber(proof_js.Get("expiryMs"), "pro_config_from_object.expiryMs");
-    pro_config.proof.expiry_unix_ts =
-            toCppSysMs(proof_js.Get("expiryMs"), "pro_config_from_object.expiryMs");
+    pro_config.proof.expiry_unix_ts = std::chrono::floor<std::chrono::seconds>(
+            toCppSysMs(proof_js.Get("expiryMs"), "pro_config_from_object.expiryMs"));
 
     return pro_config;
 };
@@ -291,7 +291,16 @@ Napi::Value UserConfigWrapper::getProProfileBitset(const Napi::CallbackInfo& inf
 }
 
 Napi::Value UserConfigWrapper::getProAccessExpiry(const Napi::CallbackInfo& info) {
-    return wrapResult(info, [&] { return toJs(info.Env(), config.get_pro_access_expiry()); });
+    return wrapResult(info, [&] {
+        // libsession now stores this in whole seconds; the JS domain is milliseconds
+        auto expiry_s = config.get_pro_access_expiry();
+        std::optional<std::chrono::sys_time<std::chrono::milliseconds>> expiry_ms;
+        if (expiry_s)
+            expiry_ms = std::chrono::sys_time<std::chrono::milliseconds>(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                            expiry_s->time_since_epoch()));
+        return toJs(info.Env(), expiry_ms);
+    });
 }
 
 void UserConfigWrapper::setProBadge(const Napi::CallbackInfo& info) {
@@ -324,7 +333,12 @@ void UserConfigWrapper::setProAccessExpiry(const Napi::CallbackInfo& info) {
         auto proAccessExpiryMs =
                 maybeNonemptyTimeMs(info[0], "UserConfigWrapper::setProAccessExpiry");
 
-        config.set_pro_access_expiry(proAccessExpiryMs);
+        // libsession now stores this in whole seconds; the JS domain is milliseconds
+        std::optional<std::chrono::sys_seconds> proAccessExpiry;
+        if (proAccessExpiryMs)
+            proAccessExpiry = std::chrono::floor<std::chrono::seconds>(*proAccessExpiryMs);
+
+        config.set_pro_access_expiry(proAccessExpiry);
     });
 }
 

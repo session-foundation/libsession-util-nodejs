@@ -16,9 +16,11 @@ struct toJs_impl<session::ProProof> {
         auto obj = Napi::Object::New(env);
 
         obj["version"] = toJs(env, pro_proof.version);
-        obj["genIndexHashB64"] = toJs(env, oxenc::to_base64(pro_proof.gen_index_hash));
+        // `revocation_tag` (renamed from `gen_index_hash`); kept the JS key `genIndexHashB64` to avoid
+        // churning every desktop consumer. `expiry_unix_ts` is now whole seconds -> emit ms (the JS domain).
+        obj["genIndexHashB64"] = toJs(env, oxenc::to_base64(pro_proof.revocation_tag));
         obj["rotatingPubkeyHex"] = toJs(env, oxenc::to_hex(pro_proof.rotating_pubkey));
-        obj["expiryMs"] = toJs(env, pro_proof.expiry_unix_ts.time_since_epoch().count());
+        obj["expiryMs"] = toJs(env, pro_proof.expiry_unix_ts.time_since_epoch().count() * 1000);
         obj["signatureHex"] = toJs(env, oxenc::to_hex(pro_proof.sig));
 
         return obj;
