@@ -4,7 +4,6 @@
 #include "session/config/contacts.hpp"
 #include "session/config/groups/info.hpp"
 #include "session/config/user_groups.hpp"
-#include "session/pro_backend.h"
 #include "session/session_protocol.h"
 #include "session/version.h"
 #include "utilities.hpp"
@@ -24,43 +23,10 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     pro_urls["pro_access_not_found"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_access_not_found);
     pro_urls["support_url"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_support);
 
-    auto make_provider = [&](int provider, int other_provider) {
-        const auto& meta = SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[provider];
-        auto obj = Napi::Object::New(env);
-        obj["device"] = toJs(env, meta.device);
-        obj["store"] = toJs(env, meta.store);
-        obj["platform"] = toJs(env, meta.platform);
-        obj["platform_account"] = toJs(env, meta.platform_account);
-        obj["refund_support_url"] = toJs(env, meta.refund_support_url);
-        obj["refund_status_url"] = toJs(env, meta.refund_status_url);
-        obj["refund_platform_url"] = toJs(env, meta.refund_platform_url);
-        obj["update_subscription_url"] = toJs(env, meta.update_subscription_url);
-        obj["cancel_subscription_url"] = toJs(env, meta.cancel_subscription_url);
-        obj["store_other"] =
-                toJs(env, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_METADATA[other_provider].store);
-        return obj;
-    };
-
-    auto pro_provider_nil = make_provider(
-            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL, SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL);
-    auto pro_provider_google = make_provider(
-            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE,
-            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE);
-    auto pro_provider_ios = make_provider(
-            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_IOS_APP_STORE,
-            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_GOOGLE_PLAY_STORE);
-
-    auto pro_provider_rangeproof = make_provider(
-            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_RANGEPROOF,
-            // Use NIL as the second provider for Rangeproof so that it does not define an alternate
-            // store label (i.e., no explicit "other" store for Rangeproof in these constants).
-            SESSION_PRO_BACKEND_PAYMENT_PROVIDER_NIL);
-
-    auto pro_providers = Napi::Object::New(env);
-    pro_providers["Nil"] = toJs(env, pro_provider_nil);
-    pro_providers["Google"] = toJs(env, pro_provider_google);
-    pro_providers["iOS"] = toJs(env, pro_provider_ios);
-    pro_providers["Rangeproof"] = toJs(env, pro_provider_rangeproof);
+    // Provider display metadata (store/platform/account NAMES) is no longer shipped by libsession —
+    // those are translation data owned by each client (keyed on the provider slug). The per-provider
+    // support/management URLs are still libsession-owned but are now fetched on demand via
+    // ProWrapper.providerUrls(code) rather than baked into a constants table here.
 
     // construct javascript constants object
     Napi::Function cls = DefineClass(
@@ -87,7 +53,6 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                      Napi::Number::New(env, session::config::community::FULL_URL_MAX_LENGTH),
                      napi_enumerable),
              ObjectWrap::StaticValue("LIBSESSION_PRO_URLS", pro_urls, napi_enumerable),
-             ObjectWrap::StaticValue("LIBSESSION_PRO_PROVIDERS", pro_providers, napi_enumerable),
              ObjectWrap::StaticValue(
                      "LIBSESSION_UTIL_VERSION",
                      Napi::String::New(env, LIBSESSION_UTIL_VERSION_FULL),
