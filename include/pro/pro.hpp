@@ -99,11 +99,26 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         return obj;
     }
 
-    static Napi::Array errorsToJs(const Napi::Env& env, const std::vector<std::string>& errors) {
-        auto arr = Napi::Array::New(env, errors.size());
-        for (size_t i = 0; i < errors.size(); i++)
-            arr.Set(i, toJs(env, errors[i]));
-        return arr;
+    // Delta #12: the response envelope is a CLOSED status enum + an optional machine slug (error_code)
+    // + an optional English diagnostic (error) — no more errors[] array. Render status as its wire
+    // string ("ok"/"fail"/"error") for JS consumers; error_code/error are null on success.
+    static std::string_view responseStatusToJs(session::pro_backend::ResponseStatus s) {
+        using RS = session::pro_backend::ResponseStatus;
+        switch (s) {
+            case RS::Ok: return "ok";
+            case RS::Fail: return "fail";
+            case RS::Error: return "error";
+        }
+        return "error";  // fail-closed on an unexpected value
+    }
+
+    static void emitResponseHeader(
+            const Napi::Env& env,
+            Napi::Object& obj,
+            const session::pro_backend::ResponseBase& resp) {
+        obj["status"] = toJs(env, responseStatusToJs(resp.status));
+        obj["errorCode"] = resp.error_code ? toJs(env, *resp.error_code) : env.Null();
+        obj["error"] = resp.error ? toJs(env, *resp.error) : env.Null();
     }
 
     static Napi::Value proFeaturesForMessage(const Napi::CallbackInfo& info) {
@@ -314,8 +329,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto resp = session::pro_backend::parse_pro_proof(asJsonView(body));
 
             auto obj = Napi::Object::New(env);
-            obj["status"] = toJs(env, resp.status);
-            obj["errors"] = errorsToJs(env, resp.errors);
+            emitResponseHeader(env, obj, resp);
             obj["proof"] = toJs(env, resp.proof);
             return obj;
         });
@@ -329,8 +343,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto resp = session::pro_backend::parse_revocations(asJsonView(body));
 
             auto obj = Napi::Object::New(env);
-            obj["status"] = toJs(env, resp.status);
-            obj["errors"] = errorsToJs(env, resp.errors);
+            emitResponseHeader(env, obj, resp);
             obj["ticket"] = toJs(env, resp.ticket);
             // The backend returns a retry *delay*; resolve it to the absolute unix instant (ms) at which
             // the revocation list may next be polled, clamped so it is never in the past. Handing back an
@@ -365,8 +378,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto resp = session::pro_backend::parse_payment_details(asJsonView(body));
 
             auto obj = Napi::Object::New(env);
-            obj["status"] = toJs(env, resp.status);
-            obj["errors"] = errorsToJs(env, resp.errors);
+            emitResponseHeader(env, obj, resp);
             // user_status is now an opaque string code (never/active/expired; unknowns pass through)
             obj["userStatus"] = toJs(env, resp.user_status);
             obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));

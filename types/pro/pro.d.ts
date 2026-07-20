@@ -105,18 +105,24 @@ declare module 'libsession_util_nodejs' {
   };
 
   /**
-   * A parsed backend response. Always check `errors`/`status` before using the typed fields.
+   * A parsed backend response (Delta #12). Check `status === 'ok'` before using the typed payload.
    */
   type WithProResponseHeader = {
     /**
-     * 0 on success; for add-payment this maps to the add-payment status enum, otherwise a generic
-     * success/error code.
+     * Outcome category (closed set): 'ok' = success; 'fail' = client input / precondition rejected;
+     * 'error' = backend fault (retryable).
      */
-    status: number;
+    status: 'ok' | 'fail' | 'error';
     /**
-     * Parse/processing errors; empty on success (the parse may be partial if non-empty).
+     * On non-'ok', a stable machine slug (spec §5.1) — map known ones to a localized string, fall back
+     * to `error` for an unrecognized slug. null on success.
      */
-    errors: Array<string>;
+    errorCode: string | null;
+    /**
+     * On non-'ok', an English diagnostic — NOT user-facing (show only when the slug has no i18n entry);
+     * always safe to log. null on success.
+     */
+    error: string | null;
   };
 
   type GenerateProProofResponse = WithProResponseHeader & {
