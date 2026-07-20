@@ -129,13 +129,15 @@ declare module 'libsession_util_nodejs' {
   type GetProRevocationsResponse = WithProResponseHeader & {
     ticket: number;
     /**
-     * Recommended seconds to wait before polling the revocation list again.
+     * Absolute unix instant (ms) at which to next poll the revocation list — already `now + retry_in`
+     * (clamped ≥ now), so callers can feed it straight to a next-run scheduler without any arithmetic.
      */
-    retryInS: number;
+    retryAtMs: number;
     /**
-     * Seconds to retain each item after first seeing it (memory-only aging).
+     * Duration (ms) to retain each item after first seeing it — applied per item as `seenAt + retainForMs`
+     * (memory-only aging); stays a duration since each item is seen at a different time.
      */
-    retainForS: number;
+    retainForMs: number;
     items: Array<ProRevocationItem>;
   };
 

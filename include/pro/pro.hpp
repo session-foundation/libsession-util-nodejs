@@ -16,6 +16,8 @@
 
 namespace session::nodeapi {
 
+using namespace std::literals;
+
 std::string_view proBackendEnumToString(session::ProFeaturesForMsgStatus v);
 
 class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
@@ -328,8 +330,16 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["status"] = toJs(env, resp.status);
             obj["errors"] = errorsToJs(env, resp.errors);
             obj["ticket"] = toJs(env, resp.ticket);
-            obj["retryInS"] = toJs(env, static_cast<int64_t>(resp.retry_in.count()));
-            obj["retainForS"] = toJs(env, static_cast<int64_t>(resp.retain_for.count()));
+            // The backend returns a retry *delay*; resolve it to the absolute unix instant (ms) at which
+            // the revocation list may next be polled, clamped so it is never in the past. Handing back an
+            // absolute instant lets callers schedule the next poll without needing a clock of their own.
+            auto retryIn = std::max(resp.retry_in, 0s);
+            auto retryAt = std::chrono::system_clock::now() + retryIn;
+            obj["retryAtMs"] = toJs(env, static_cast<int64_t>(std::chrono::duration_cast<
+                    std::chrono::milliseconds>(retryAt.time_since_epoch()).count()));
+            // retain_for stays a duration (applied per item as seen + retain_for); milliseconds for nodejs.
+            obj["retainForMs"] = toJs(env, static_cast<int64_t>(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(resp.retain_for).count()));
 
             auto items = Napi::Array::New(env, resp.items.size());
             for (size_t i = 0; i < resp.items.size(); i++) {
