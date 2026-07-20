@@ -182,6 +182,8 @@ declare module 'libsession_util_nodejs' {
     LIBSESSION_PRO_BACKEND_URL: string;
     /** Session Pro backend Ed25519 signing pubkey (hex, 64 chars) */
     LIBSESSION_PRO_BACKEND_PUBKEY_HEX: string;
+    /** Session Pro backend X25519 pubkey for onion routing (hex, 64 chars) */
+    LIBSESSION_PRO_BACKEND_PUBKEY_X25519_HEX: string;
   };
 
   export const CONSTANTS: ConstantsType;

@@ -17,10 +17,10 @@ struct toJs_impl<session::ProProof> {
 
         obj["version"] = toJs(env, pro_proof.version);
         // `revocation_tag` (renamed from `gen_index_hash`); kept the JS key `genIndexHashB64` to avoid
-        // churning every desktop consumer. `expiry_unix_ts` is now whole seconds -> emit ms (the JS domain).
+        // churning every desktop consumer. `expiry_at` is whole seconds on the C++ side -> emit ms (JS domain).
         obj["genIndexHashB64"] = toJs(env, oxenc::to_base64(pro_proof.revocation_tag));
         obj["rotatingPubkeyHex"] = toJs(env, oxenc::to_hex(pro_proof.rotating_pubkey));
-        obj["expiryMs"] = toJs(env, pro_proof.expiry_unix_ts.time_since_epoch().count() * 1000);
+        obj["expiryMs"] = toJs(env, pro_proof.expiry_at.time_since_epoch().count() * 1000);
         obj["signatureHex"] = toJs(env, oxenc::to_hex(pro_proof.sig));
 
         return obj;

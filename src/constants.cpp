@@ -66,6 +66,11 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                      "LIBSESSION_PRO_BACKEND_PUBKEY_HEX",
                      Napi::String::New(env, oxenc::to_hex(session::pro_backend::PUBKEY)),
                      napi_enumerable),
+             // X25519 form of the backend pubkey (for onion routing), so clients needn't derive it
+             ObjectWrap::StaticValue(
+                     "LIBSESSION_PRO_BACKEND_PUBKEY_X25519_HEX",
+                     Napi::String::New(env, oxenc::to_hex(session::pro_backend::PUBKEY_X25519)),
+                     napi_enumerable),
              ObjectWrap::StaticValue(
                      "LIBSESSION_UTIL_VERSION",
                      Napi::String::New(env, LIBSESSION_UTIL_VERSION_FULL),

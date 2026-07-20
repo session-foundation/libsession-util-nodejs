@@ -57,7 +57,7 @@ session::config::ProConfig pro_config_from_object(Napi::Object input) {
 
     // extract expiryMs (JS domain is ms; the proof's expiry_unix_ts is now whole seconds)
     assertIsNumber(proof_js.Get("expiryMs"), "pro_config_from_object.expiryMs");
-    pro_config.proof.expiry_unix_ts = std::chrono::floor<std::chrono::seconds>(
+    pro_config.proof.expiry_at = std::chrono::floor<std::chrono::seconds>(
             toCppSysMs(proof_js.Get("expiryMs"), "pro_config_from_object.expiryMs"));
 
     return pro_config;

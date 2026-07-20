@@ -59,14 +59,14 @@ struct toJs_impl<convo::one_to_one> {
         addBaseValues(env, obj, info_1o1);
 
         if (info_1o1.pro_revocation_tag->empty() ||
-            !info_1o1.pro_expiry_unix_ts.time_since_epoch().count()) {
+            !info_1o1.pro_expiry_at.time_since_epoch().count()) {
             obj["proGenIndexHashB64"] = env.Null();
             obj["proExpiryTsMs"] = env.Null();
         } else {
             obj["proGenIndexHashB64"] = toJs(env, to_base64(*info_1o1.pro_revocation_tag));
             // config field is now whole seconds; the JS `proExpiryTsMs` key stays milliseconds
             obj["proExpiryTsMs"] =
-                    toJs(env, info_1o1.pro_expiry_unix_ts.time_since_epoch().count() * 1000);
+                    toJs(env, info_1o1.pro_expiry_at.time_since_epoch().count() * 1000);
         }
 
         return obj;
@@ -201,7 +201,7 @@ void ConvoInfoVolatileWrapper::set1o1(const Napi::CallbackInfo& info) {
         }
         if (proExpiryUnixTsMsCpp.has_value()) {
             // if the field is set (not null), we want to write the change as is (ms -> whole seconds)
-            convo.pro_expiry_unix_ts = std::chrono::floor<std::chrono::seconds>(
+            convo.pro_expiry_at = std::chrono::floor<std::chrono::seconds>(
                     std::chrono::sys_time<std::chrono::milliseconds>(
                             std::chrono::milliseconds(*proExpiryUnixTsMsCpp)));
         }

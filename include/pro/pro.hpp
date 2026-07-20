@@ -93,7 +93,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
     static Napi::Object proRequestToJs(const Napi::Env& env, const pro_backend::ProRequest& req) {
         auto obj = Napi::Object::New(env);
         obj["endpoint"] = toJs(env, req.endpoint);
-        obj["body"] = toJs(env, req.body);
+        obj["contentType"] = toJs(env, req.content_type);
+        // C++ member is the opaque `data` payload; expose it under the JS key `body` (what desktop reads)
+        obj["body"] = toJs(env, req.data);
         return obj;
     }
 
@@ -347,7 +349,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                 item["genIndexHashB64"] = toJs(env, oxenc::to_base64(resp.items[i].revocation_tag));
                 // effective instant (whole seconds) -> ms JS domain
                 item["effectiveMs"] = toJs(
-                        env, resp.items[i].effective_unix_ts.time_since_epoch().count() * 1000);
+                        env, resp.items[i].effective_at.time_since_epoch().count() * 1000);
                 items.Set(i, item);
             }
             obj["items"] = items;
@@ -369,11 +371,11 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["userStatus"] = toJs(env, resp.user_status);
             obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
-            obj["expiryMs"] = toJs(env, resp.expiry_unix_ts.time_since_epoch().count() * 1000);
+            obj["expiryMs"] = toJs(env, resp.expiry_at.time_since_epoch().count() * 1000);
             obj["gracePeriodDurationMs"] =
                     toJs(env, static_cast<int64_t>(resp.grace_period_duration.count()) * 1000);
             obj["refundRequestedTsMs"] =
-                    toJs(env, resp.refund_requested_unix_ts.time_since_epoch().count() * 1000);
+                    toJs(env, resp.refund_requested_at.time_since_epoch().count() * 1000);
             obj["paymentsTotal"] = toJs(env, resp.payments_total);
 
             auto items = Napi::Array::New(env, resp.items.size());
@@ -386,19 +388,19 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                 item["paymentProvider"] = toJs(env, src.payment_provider);
                 item["autoRenewing"] = toJs(env, src.auto_renewing);
                 // purchased/revoked are millisecond-resolution sys_ms (count() is already ms)
-                item["purchasedTsMs"] = toJs(env, src.purchased_unix_ts.time_since_epoch().count());
-                item["revokedTsMs"] = toJs(env, src.revoked_unix_ts.time_since_epoch().count());
+                item["purchasedTsMs"] = toJs(env, src.purchased_at.time_since_epoch().count());
+                item["revokedTsMs"] = toJs(env, src.revoked_at.time_since_epoch().count());
                 // the rest are whole seconds -> ms
                 item["redeemedTsMs"] =
-                        toJs(env, src.redeemed_unix_ts.time_since_epoch().count() * 1000);
+                        toJs(env, src.redeemed_at.time_since_epoch().count() * 1000);
                 item["expiryTsMs"] =
-                        toJs(env, src.expiry_unix_ts.time_since_epoch().count() * 1000);
+                        toJs(env, src.expiry_at.time_since_epoch().count() * 1000);
                 item["gracePeriodDurationMs"] =
                         toJs(env, static_cast<int64_t>(src.grace_period_duration.count()) * 1000);
                 item["platformRefundExpiryTsMs"] = toJs(
-                        env, src.platform_refund_expiry_unix_ts.time_since_epoch().count() * 1000);
+                        env, src.platform_refund_expiry_at.time_since_epoch().count() * 1000);
                 item["refundRequestedTsMs"] =
-                        toJs(env, src.refund_requested_unix_ts.time_since_epoch().count() * 1000);
+                        toJs(env, src.refund_requested_at.time_since_epoch().count() * 1000);
                 item["paymentId"] = toJs(env, src.payment_id);
                 items.Set(i, item);
             }

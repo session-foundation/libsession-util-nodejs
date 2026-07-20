@@ -95,7 +95,11 @@ declare module 'libsession_util_nodejs' {
      */
     endpoint: string;
     /**
-     * The JSON request body to POST.
+     * The value to send as the request's `Content-Type` header — relay verbatim; do not assume a format.
+     */
+    contentType: string;
+    /**
+     * The opaque request payload to POST. Relay it untouched — do not parse, inspect, or modify it.
      */
     body: string;
   };
