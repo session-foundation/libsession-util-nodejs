@@ -236,6 +236,13 @@ declare module 'libsession_util_nodejs' {
      * Support/management URLs for a provider slug, or null if none apply.
      */
     providerUrls: (args: { code: string }) => ProviderUrls | null;
+
+    /**
+     * The purchasable payment-provider slugs to surface to users (single source of truth in
+     * libsession; excludes non-purchasable providers like rangeproof). Order is not significant — the
+     * caller applies its own ordering and skips slugs it has no display translation for.
+     */
+    visiblePlatforms: () => Array<string>;
   };
 
   export type ProActionsCalls = MakeWrapperActionCalls<ProWrapper>;

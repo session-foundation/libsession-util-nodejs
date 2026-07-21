@@ -80,6 +80,12 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                                 "providerUrls",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
+
+                        // Purchasable payment-provider slugs to surface to users
+                        StaticMethod<&ProWrapper::visiblePlatforms>(
+                                "visiblePlatforms",
+                                static_cast<napi_property_attributes>(
+                                        napi_writable | napi_configurable)),
                 });
     }
 
@@ -449,6 +455,20 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["updateSubscriptionUrl"] = toJs(env, urls->update_subscription_url);
             obj["cancelSubscriptionUrl"] = toJs(env, urls->cancel_subscription_url);
             return obj;
+        });
+    };
+
+    // The purchasable payment-provider slugs to surface to users (single source of truth in
+    // libsession; excludes non-purchasable providers like rangeproof). Order is not significant.
+    static Napi::Value visiblePlatforms(const Napi::CallbackInfo& info) {
+        return wrapResult(info, [&]() -> Napi::Value {
+            auto env = info.Env();
+            auto platforms = session::pro_backend::visible_platforms();  // span<const string_view>
+            auto arr = Napi::Array::New(env, platforms.size());
+            uint32_t i = 0;
+            for (auto slug : platforms)
+                arr[i++] = Napi::String::New(env, std::string(slug));
+            return arr;
         });
     };
 };
