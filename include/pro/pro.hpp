@@ -365,7 +365,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto items = Napi::Array::New(env, resp.items.size());
             for (size_t i = 0; i < resp.items.size(); i++) {
                 auto item = Napi::Object::New(env);
-                item["genIndexHashB64"] = toJs(env, oxenc::to_base64(resp.items[i].revocation_tag));
+                item["revocationTagB64"] = toJs(env, oxenc::to_base64(resp.items[i].revocation_tag));
                 // effective instant (whole seconds) -> ms JS domain
                 item["effectiveMs"] = toJs(
                         env, resp.items[i].effective_at.time_since_epoch().count() * 1000);

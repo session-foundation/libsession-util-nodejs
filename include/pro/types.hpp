@@ -16,9 +16,9 @@ struct toJs_impl<session::ProProof> {
         auto obj = Napi::Object::New(env);
 
         obj["version"] = toJs(env, pro_proof.version);
-        // `revocation_tag` (renamed from `gen_index_hash`); kept the JS key `genIndexHashB64` to avoid
+        // `revocation_tag` (renamed from `revocation_tag`); kept the JS key `revocationTagB64` to avoid
         // churning every desktop consumer. `expiry_at` is whole seconds on the C++ side -> emit ms (JS domain).
-        obj["genIndexHashB64"] = toJs(env, oxenc::to_base64(pro_proof.revocation_tag));
+        obj["revocationTagB64"] = toJs(env, oxenc::to_base64(pro_proof.revocation_tag));
         obj["rotatingPubkeyHex"] = toJs(env, oxenc::to_hex(pro_proof.rotating_pubkey));
         obj["expiryMs"] = toJs(env, pro_proof.expiry_at.time_since_epoch().count() * 1000);
         obj["signatureHex"] = toJs(env, oxenc::to_hex(pro_proof.sig));

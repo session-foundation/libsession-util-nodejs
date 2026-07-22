@@ -16,7 +16,7 @@ declare module 'libsession_util_nodejs' {
   /**
    * base64 of the proof's revocation tag (historically the "gen index hash")
    */
-  type WithGenIndexHash = { genIndexHashB64: string };
+  type WithRevocationTag = { revocationTagB64: string };
 
   type WithTicket = { ticket: number };
 
@@ -24,7 +24,7 @@ declare module 'libsession_util_nodejs' {
     unixTsMs: number;
   };
 
-  type ProProof = WithGenIndexHash & {
+  type ProProof = WithRevocationTag & {
     version: number;
     /**
      * HexString, 64 chars
@@ -129,7 +129,7 @@ declare module 'libsession_util_nodejs' {
     proof: ProProof;
   };
 
-  type ProRevocationItem = WithGenIndexHash & {
+  type ProRevocationItem = WithRevocationTag & {
     /**
      * A matching proof is revoked once the client clock reaches this unix instant (milliseconds).
      */

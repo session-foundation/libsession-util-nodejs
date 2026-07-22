@@ -11,7 +11,7 @@ declare module 'libsession_util_nodejs' {
 
   type ConvoVolatile1o1GetExtra = {
     pubkeyHex: string;
-  } & { proExpiryTsMs: number | null; genIndexHashB64: string | null };
+  } & { proExpiryTsMs: number | null; revocationTagB64: string | null };
 
   type ConvoVolatile1o1SetExtra = {
     /**
@@ -21,11 +21,11 @@ declare module 'libsession_util_nodejs' {
      */
     proExpiryTsMs: number | null;
     /**
-     * The base64 encoded `genIndexHash` of the proof (32 bytes)
+     * The base64 encoded `revocationTag` of the proof (32 bytes)
      * If null, no changes will be made.
      * To force the field to be reset, you need to provide an empty string here
      */
-    proGenIndexHashB64: string | null;
+    proRevocationTagB64: string | null;
   };
 
   type ConvoInfoVolatileGet1o1 = BaseConvoInfoVolatile & ConvoVolatile1o1GetExtra;
