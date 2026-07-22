@@ -16,8 +16,8 @@ struct toJs_impl<session::ProProof> {
         auto obj = Napi::Object::New(env);
 
         obj["version"] = toJs(env, pro_proof.version);
-        // `revocation_tag` (renamed from `revocation_tag`); kept the JS key `revocationTagB64` to avoid
-        // churning every desktop consumer.
+        // `revocation_tag` (renamed from `revocation_tag`); kept the JS key `revocationTagB64` to
+        // avoid churning every desktop consumer.
         obj["revocationTagB64"] = toJs(env, oxenc::to_base64(pro_proof.revocation_tag));
         obj["rotatingPubkeyHex"] = toJs(env, oxenc::to_hex(pro_proof.rotating_pubkey));
         obj["expiryMs"] = toJsMs(env, pro_proof.expiry_at);

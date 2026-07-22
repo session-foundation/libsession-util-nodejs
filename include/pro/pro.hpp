@@ -90,8 +90,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
     }
 
   private:
-    // The wire carries whole-second timestamps; the JS domain is milliseconds, so we convert at this
-    // boundary (the signed request timestamp round-trips losslessly as the value is always seconds).
+    // The wire carries whole-second timestamps; the JS domain is milliseconds, so we convert at
+    // this boundary (the signed request timestamp round-trips losslessly as the value is always
+    // seconds).
     static std::chrono::sys_seconds unixTsMsToSeconds(Napi::Value v, const std::string& id) {
         return std::chrono::floor<std::chrono::seconds>(toCppSysMs(v, id));
     }
@@ -100,12 +101,14 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         auto obj = Napi::Object::New(env);
         obj["endpoint"] = toJs(env, req.endpoint);
         obj["contentType"] = toJs(env, req.content_type);
-        // C++ member is the opaque `data` payload; expose it under the JS key `body` (what desktop reads)
+        // C++ member is the opaque `data` payload; expose it under the JS key `body` (what desktop
+        // reads)
         obj["body"] = toJs(env, req.data);
         return obj;
     }
 
-    // Delta #12: the response envelope is a CLOSED status enum + an optional machine slug (error_code)
+    // Delta #12: the response envelope is a CLOSED status enum + an optional machine slug
+    // (error_code)
     // + an optional English diagnostic (error) — no more errors[] array. Render status as its wire
     // string ("ok"/"fail"/"error") for JS consumers; error_code/error are null on success.
     static std::string_view responseStatusToJs(session::pro_backend::ResponseStatus s) {
@@ -299,8 +302,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto count = toCppInteger(first.Get("count"), "proStatusRequest.count");
 
             assertIsString(first.Get("masterPrivKeyHex"), "proStatusRequest.masterPrivKeyHex");
-            auto master_privkey = from_hex(
-                    toCppString(first.Get("masterPrivKeyHex"), "proStatusRequest.masterPrivKeyHex"));
+            auto master_privkey = from_hex(toCppString(
+                    first.Get("masterPrivKeyHex"), "proStatusRequest.masterPrivKeyHex"));
 
             auto req = session::pro_backend::payment_details_request(
                     to_span(master_privkey), unix_ts, static_cast<uint32_t>(count));
@@ -309,9 +312,10 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         });
     };
 
-    // The response body is relayed RAW from the network (the client never parses it — the wire format
-    // is a contract between libsession and the backend only). Callers pass the raw bytes as a
-    // Uint8Array; we hand them straight to libsession's parser, no client-side decoding/assumption.
+    // The response body is relayed RAW from the network (the client never parses it — the wire
+    // format is a contract between libsession and the backend only). Callers pass the raw bytes as
+    // a Uint8Array; we hand them straight to libsession's parser, no client-side
+    // decoding/assumption.
     static std::vector<unsigned char> requestBodyBytes(
             const Napi::CallbackInfo& info, const std::string& id) {
         assertInfoLength(info, 1);
@@ -351,19 +355,22 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto obj = Napi::Object::New(env);
             emitResponseHeader(env, obj, resp);
             obj["ticket"] = toJs(env, resp.ticket);
-            // The backend returns a retry *delay*; resolve it to the absolute unix instant (ms) at which
-            // the revocation list may next be polled, clamped so it is never in the past. Handing back an
-            // absolute instant lets callers schedule the next poll without needing a clock of their own.
+            // The backend returns a retry *delay*; resolve it to the absolute unix instant (ms) at
+            // which the revocation list may next be polled, clamped so it is never in the past.
+            // Handing back an absolute instant lets callers schedule the next poll without needing
+            // a clock of their own.
             auto retryIn = std::max(resp.retry_in, 0s);
             auto retryAt = std::chrono::system_clock::now() + retryIn;
             obj["retryAtMs"] = toJsMs(env, std::chrono::floor<std::chrono::milliseconds>(retryAt));
-            // retain_for stays a duration (applied per item as seen + retain_for); milliseconds for nodejs.
+            // retain_for stays a duration (applied per item as seen + retain_for); milliseconds for
+            // nodejs.
             obj["retainForMs"] = toJsMs(env, resp.retain_for);
 
             auto items = Napi::Array::New(env, resp.items.size());
             for (size_t i = 0; i < resp.items.size(); i++) {
                 auto item = Napi::Object::New(env);
-                item["revocationTagB64"] = toJs(env, oxenc::to_base64(resp.items[i].revocation_tag));
+                item["revocationTagB64"] =
+                        toJs(env, oxenc::to_base64(resp.items[i].revocation_tag));
                 item["effectiveMs"] = toJsMs(env, resp.items[i].effective_at);
                 items.Set(i, item);
             }
@@ -381,7 +388,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             auto obj = Napi::Object::New(env);
             emitResponseHeader(env, obj, resp);
-            // user_status is now an opaque string code (never/active/expired; unknowns pass through)
+            // user_status is now an opaque string code (never/active/expired; unknowns pass
+            // through)
             obj["userStatus"] = toJs(env, resp.user_status);
             obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
@@ -394,7 +402,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             for (size_t i = 0; i < resp.items.size(); i++) {
                 const auto& src = resp.items[i];
                 auto item = Napi::Object::New(env);
-                // status is now an opaque string code (unredeemed/redeemed/expired/revoked; pass through)
+                // status is now an opaque string code (unredeemed/redeemed/expired/revoked; pass
+                // through)
                 item["status"] = toJs(env, src.status);
                 item["plan"] = toJs(env, src.plan);
                 item["paymentProvider"] = toJs(env, src.payment_provider);

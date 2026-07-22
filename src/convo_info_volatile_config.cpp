@@ -200,7 +200,8 @@ void ConvoInfoVolatileWrapper::set1o1(const Napi::CallbackInfo& info) {
             }
         }
         if (proExpiryUnixTsMsCpp.has_value()) {
-            // if the field is set (not null), we want to write the change as is (ms -> whole seconds)
+            // if the field is set (not null), we want to write the change as is (ms -> whole
+            // seconds)
             convo.pro_expiry_at = std::chrono::floor<std::chrono::seconds>(
                     std::chrono::sys_time<std::chrono::milliseconds>(
                             std::chrono::milliseconds(*proExpiryUnixTsMsCpp)));

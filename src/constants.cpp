@@ -27,9 +27,9 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     pro_urls["support_url"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_support);
 
     // Provider display metadata (store/platform/account NAMES) is no longer shipped by libsession —
-    // those are translation data owned by each client (keyed on the provider slug). The per-provider
-    // support/management URLs are still libsession-owned but are now fetched on demand via
-    // ProWrapper.providerUrls(code) rather than baked into a constants table here.
+    // those are translation data owned by each client (keyed on the provider slug). The
+    // per-provider support/management URLs are still libsession-owned but are now fetched on demand
+    // via ProWrapper.providerUrls(code) rather than baked into a constants table here.
 
     // construct javascript constants object
     Napi::Function cls = DefineClass(
