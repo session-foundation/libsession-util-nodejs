@@ -356,19 +356,15 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             // absolute instant lets callers schedule the next poll without needing a clock of their own.
             auto retryIn = std::max(resp.retry_in, 0s);
             auto retryAt = std::chrono::system_clock::now() + retryIn;
-            obj["retryAtMs"] = toJs(env, static_cast<int64_t>(std::chrono::duration_cast<
-                    std::chrono::milliseconds>(retryAt.time_since_epoch()).count()));
+            obj["retryAtMs"] = toJsMs(env, std::chrono::floor<std::chrono::milliseconds>(retryAt));
             // retain_for stays a duration (applied per item as seen + retain_for); milliseconds for nodejs.
-            obj["retainForMs"] = toJs(env, static_cast<int64_t>(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(resp.retain_for).count()));
+            obj["retainForMs"] = toJsMs(env, resp.retain_for);
 
             auto items = Napi::Array::New(env, resp.items.size());
             for (size_t i = 0; i < resp.items.size(); i++) {
                 auto item = Napi::Object::New(env);
                 item["revocationTagB64"] = toJs(env, oxenc::to_base64(resp.items[i].revocation_tag));
-                // effective instant (whole seconds) -> ms JS domain
-                item["effectiveMs"] = toJs(
-                        env, resp.items[i].effective_at.time_since_epoch().count() * 1000);
+                item["effectiveMs"] = toJsMs(env, resp.items[i].effective_at);
                 items.Set(i, item);
             }
             obj["items"] = items;
@@ -389,11 +385,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["userStatus"] = toJs(env, resp.user_status);
             obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
-            obj["expiryMs"] = toJs(env, resp.expiry_at.time_since_epoch().count() * 1000);
-            obj["gracePeriodDurationMs"] =
-                    toJs(env, static_cast<int64_t>(resp.grace_period_duration.count()) * 1000);
-            obj["refundRequestedTsMs"] =
-                    toJs(env, resp.refund_requested_at.time_since_epoch().count() * 1000);
+            obj["expiryMs"] = toJsMs(env, resp.expiry_at);
+            obj["gracePeriodDurationMs"] = toJsMs(env, resp.grace_period_duration);
+            obj["refundRequestedTsMs"] = toJsMs(env, resp.refund_requested_at);
             obj["paymentsTotal"] = toJs(env, resp.payments_total);
 
             auto items = Napi::Array::New(env, resp.items.size());
@@ -405,20 +399,15 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                 item["plan"] = toJs(env, src.plan);
                 item["paymentProvider"] = toJs(env, src.payment_provider);
                 item["autoRenewing"] = toJs(env, src.auto_renewing);
-                // purchased/revoked are millisecond-resolution sys_ms (count() is already ms)
-                item["purchasedTsMs"] = toJs(env, src.purchased_at.time_since_epoch().count());
-                item["revokedTsMs"] = toJs(env, src.revoked_at.time_since_epoch().count());
-                // the rest are whole seconds -> ms
-                item["redeemedTsMs"] =
-                        toJs(env, src.redeemed_at.time_since_epoch().count() * 1000);
-                item["expiryTsMs"] =
-                        toJs(env, src.expiry_at.time_since_epoch().count() * 1000);
-                item["gracePeriodDurationMs"] =
-                        toJs(env, static_cast<int64_t>(src.grace_period_duration.count()) * 1000);
-                item["platformRefundExpiryTsMs"] = toJs(
-                        env, src.platform_refund_expiry_at.time_since_epoch().count() * 1000);
-                item["refundRequestedTsMs"] =
-                        toJs(env, src.refund_requested_at.time_since_epoch().count() * 1000);
+                // purchased/revoked carry sub-second (ms) precision; the rest are whole seconds.
+                // toJsMs normalises every one of them to the ms JS domain (see utilities.hpp).
+                item["purchasedTsMs"] = toJsMs(env, src.purchased_at);
+                item["revokedTsMs"] = toJsMs(env, src.revoked_at);
+                item["redeemedTsMs"] = toJsMs(env, src.redeemed_at);
+                item["expiryTsMs"] = toJsMs(env, src.expiry_at);
+                item["gracePeriodDurationMs"] = toJsMs(env, src.grace_period_duration);
+                item["platformRefundExpiryTsMs"] = toJsMs(env, src.platform_refund_expiry_at);
+                item["refundRequestedTsMs"] = toJsMs(env, src.refund_requested_at);
                 item["paymentId"] = toJs(env, src.payment_id);
                 items.Set(i, item);
             }
