@@ -182,6 +182,11 @@ declare module 'libsession_util_nodejs' {
     paymentId: string;
   };
 
+  // NOTE: session-desktop persists this shape verbatim to local storage and reads it back cast to this
+  // type (getProDetailsFromStorage). The glue and desktop ship in lockstep so a single build can't
+  // drift, but an older build's cache can. If you add a REQUIRED field here, the desktop read side needs
+  // a transition (drop the stale cache, or treat the field as optional there) — see the reminder at
+  // getProDetailsFromStorage in session-desktop. Adding OPTIONAL fields is always safe.
   type GetProDetailsResponse = WithProResponseHeader & {
     /**
      * Opaque account-status code slug: "never"/"active"/"expired" (unknowns pass through).
