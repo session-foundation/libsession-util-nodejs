@@ -105,7 +105,7 @@ declare module 'libsession_util_nodejs' {
   };
 
   /**
-   * A parsed backend response (Delta #12). Check `status === 'ok'` before using the typed payload.
+   * A parsed backend response (§5). Check `status === 'ok'` before using the typed payload.
    */
   type WithProResponseHeader = {
     /**
@@ -161,7 +161,7 @@ declare module 'libsession_util_nodejs' {
      */
     status: string;
     /**
-     * Parsed billing period (libsession parses the closed `plan` grammar, Delta #14). `planUnit` is
+     * Parsed billing period (libsession parses the closed `plan` grammar, §1). `planUnit` is
      * one of "second"/"day"/"week"/"month"/"year"/"lifetime" (preserved as transmitted, not
      * canonicalized). `planCount` is >= 1 for periodic units and 0 for "lifetime". Client localizes.
      */

@@ -107,8 +107,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         return obj;
     }
 
-    // Delta #12: the response envelope is a CLOSED status enum + an optional machine slug
-    // (error_code)
+    // §5: the response envelope is a CLOSED status enum + an optional machine slug (error_code, §5.1)
     // + an optional English diagnostic (error) — no more errors[] array. Render status as its wire
     // string ("ok"/"fail"/"error") for JS consumers; error_code/error are null on success.
     static std::string_view responseStatusToJs(session::pro_backend::ResponseStatus s) {
@@ -378,7 +377,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         });
     };
 
-    // Parsed plan unit -> lowercase slug for the JS domain to localize (Delta #14).
+    // Parsed plan unit -> lowercase slug for the JS domain to localize (plan grammar, §1).
     static std::string_view planUnitToString(session::pro_backend::ProPlanUnit u) {
         using U = session::pro_backend::ProPlanUnit;
         switch (u) {
