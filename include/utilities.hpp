@@ -163,12 +163,6 @@ struct toJs_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string_view>>
     }
 };
 
-template <>
-struct toJs_impl<string8> {
-    auto operator()(const Napi::Env& env, string8 s) const {
-        return Napi::String::New(env, s.data, s.size);
-    }
-};
 
 template <typename T>
 struct toJs_impl<

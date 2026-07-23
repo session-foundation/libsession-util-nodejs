@@ -161,9 +161,12 @@ declare module 'libsession_util_nodejs' {
      */
     status: string;
     /**
-     * Billing-period slug, e.g. "1m"/"3m"/"1y" (opaque).
+     * Parsed billing period (libsession parses the closed `plan` grammar, Delta #14). `planUnit` is
+     * one of "second"/"day"/"week"/"month"/"year"/"lifetime" (preserved as transmitted, not
+     * canonicalized). `planCount` is >= 1 for periodic units and 0 for "lifetime". Client localizes.
      */
-    plan: string;
+    planCount: number;
+    planUnit: string;
     /**
      * Provider slug, e.g. "google_play"/"app_store" (opaque).
      */
@@ -183,11 +186,11 @@ declare module 'libsession_util_nodejs' {
   };
 
   // NOTE: session-desktop persists this shape verbatim to local storage and reads it back cast to this
-  // type (getProDetailsFromStorage). The glue and desktop ship in lockstep so a single build can't
+  // type (getProStatusFromStorage). The glue and desktop ship in lockstep so a single build can't
   // drift, but an older build's cache can. If you add a REQUIRED field here, the desktop read side needs
   // a transition (drop the stale cache, or treat the field as optional there) — see the reminder at
-  // getProDetailsFromStorage in session-desktop. Adding OPTIONAL fields is always safe.
-  type GetProDetailsResponse = WithProResponseHeader & {
+  // getProStatusFromStorage in session-desktop. Adding OPTIONAL fields is always safe.
+  type GetProStatusResponse = WithProResponseHeader & {
     /**
      * Opaque account-status code slug: "never"/"active"/"expired" (unknowns pass through).
      */
@@ -200,8 +203,9 @@ declare module 'libsession_util_nodejs' {
     expiryMs: number;
     gracePeriodDurationMs: number;
     refundRequestedTsMs: number;
-    paymentsTotal: number;
-    items: Array<ProPaymentItem>;
+    /** The single most-recent payment, or null when the account has no payments. (Full history is a
+     * separate library-only query — not wired.) */
+    latestPayment: ProPaymentItem | null;
   };
 
   type ProWrapper = {
@@ -224,9 +228,7 @@ declare module 'libsession_util_nodejs' {
      */
     proRevocationsRequest: (args: WithTicket) => ProRequest;
 
-    proStatusRequest: (
-      args: WithMasterPrivKeyHex & WithUnixTsMs & { count: number }
-    ) => ProRequest;
+    proStatusRequest: (args: WithMasterPrivKeyHex & WithUnixTsMs) => ProRequest;
 
     /**
      * Parse a backend reply. The `body` is the RAW response bytes relayed from the network — the wire
@@ -235,7 +237,7 @@ declare module 'libsession_util_nodejs' {
      */
     parseProProofResponse: (args: { body: Uint8Array }) => GenerateProProofResponse;
     parseRevocationsResponse: (args: { body: Uint8Array }) => GetProRevocationsResponse;
-    parsePaymentDetailsResponse: (args: { body: Uint8Array }) => GetProDetailsResponse;
+    parseProStatusResponse: (args: { body: Uint8Array }) => GetProStatusResponse;
 
     /**
      * Support/management URLs for a provider slug, or null if none apply.
@@ -264,7 +266,7 @@ declare module 'libsession_util_nodejs' {
     public static proStatusRequest: ProWrapper['proStatusRequest'];
     public static parseProProofResponse: ProWrapper['parseProProofResponse'];
     public static parseRevocationsResponse: ProWrapper['parseRevocationsResponse'];
-    public static parsePaymentDetailsResponse: ProWrapper['parsePaymentDetailsResponse'];
+    public static parseProStatusResponse: ProWrapper['parseProStatusResponse'];
     public static providerUrls: ProWrapper['providerUrls'];
   }
 
@@ -282,6 +284,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<ProWrapper, 'proStatusRequest'>
     | MakeActionCall<ProWrapper, 'parseProProofResponse'>
     | MakeActionCall<ProWrapper, 'parseRevocationsResponse'>
-    | MakeActionCall<ProWrapper, 'parsePaymentDetailsResponse'>
+    | MakeActionCall<ProWrapper, 'parseProStatusResponse'>
     | MakeActionCall<ProWrapper, 'providerUrls'>;
 }

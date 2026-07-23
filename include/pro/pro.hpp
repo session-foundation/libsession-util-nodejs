@@ -70,8 +70,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                                 "parseRevocationsResponse",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
-                        StaticMethod<&ProWrapper::parsePaymentDetailsResponse>(
-                                "parsePaymentDetailsResponse",
+                        StaticMethod<&ProWrapper::parseProStatusResponse>(
+                                "parseProStatusResponse",
                                 static_cast<napi_property_attributes>(
                                         napi_writable | napi_configurable)),
 
@@ -297,16 +297,15 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                 throw std::invalid_argument("proStatusRequest first received empty");
 
             assertIsNumber(first.Get("unixTsMs"), "proStatusRequest.unixTsMs");
-            assertIsNumber(first.Get("count"), "proStatusRequest.count");
             auto unix_ts = unixTsMsToSeconds(first.Get("unixTsMs"), "proStatusRequest.unixTsMs");
-            auto count = toCppInteger(first.Get("count"), "proStatusRequest.count");
 
             assertIsString(first.Get("masterPrivKeyHex"), "proStatusRequest.masterPrivKeyHex");
             auto master_privkey = from_hex(toCppString(
                     first.Get("masterPrivKeyHex"), "proStatusRequest.masterPrivKeyHex"));
 
-            auto req = session::pro_backend::payment_details_request(
-                    to_span(master_privkey), unix_ts, static_cast<uint32_t>(count));
+            // get_pro_status: the light "am I Pro?" query (no count/limit — a single latest payment
+            // comes back in the response). Payment history (get_payment_details) is not wired.
+            auto req = session::pro_backend::pro_status_request(to_span(master_privkey), unix_ts);
 
             return proRequestToJs(env, req);
         });
@@ -379,48 +378,66 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         });
     };
 
-    static Napi::Value parsePaymentDetailsResponse(const Napi::CallbackInfo& info) {
+    // Parsed plan unit -> lowercase slug for the JS domain to localize (Delta #14).
+    static std::string_view planUnitToString(session::pro_backend::ProPlanUnit u) {
+        using U = session::pro_backend::ProPlanUnit;
+        switch (u) {
+            case U::second: return "second";
+            case U::day: return "day";
+            case U::week: return "week";
+            case U::month: return "month";
+            case U::year: return "year";
+            case U::lifetime: return "lifetime";
+        }
+        return "";
+    }
+
+    // Emit a single ProPaymentItem: ms timestamps, plan as {planCount, planUnit}, opaque slugs.
+    static Napi::Object paymentItemToJs(
+            const Napi::Env& env, const session::pro_backend::ProPaymentItem& src) {
+        auto item = Napi::Object::New(env);
+        item["status"] = toJs(env, src.status);  // opaque status slug; pass through
+        item["planCount"] = toJs(env, src.plan.count);
+        item["planUnit"] = toJs(env, planUnitToString(src.plan.unit));
+        item["paymentProvider"] = toJs(env, src.payment_provider);
+        item["autoRenewing"] = toJs(env, src.auto_renewing);
+        // purchased/revoked carry sub-second (ms) precision; the rest are whole seconds. toJsMs
+        // normalises every one of them to the ms JS domain (see utilities.hpp).
+        item["purchasedTsMs"] = toJsMs(env, src.purchased_at);
+        item["revokedTsMs"] = toJsMs(env, src.revoked_at);
+        item["redeemedTsMs"] = toJsMs(env, src.redeemed_at);
+        item["expiryTsMs"] = toJsMs(env, src.expiry_at);
+        item["gracePeriodDurationMs"] = toJsMs(env, src.grace_period_duration);
+        item["platformRefundExpiryTsMs"] = toJsMs(env, src.platform_refund_expiry_at);
+        item["refundRequestedTsMs"] = toJsMs(env, src.refund_requested_at);
+        item["paymentId"] = toJs(env, src.payment_id);
+        return item;
+    }
+
+    // get_pro_status: the light entitlement query. Carries user_status + expiry/grace/refund + a
+    // single most-recent payment (latestPayment, or null). Payment history (get_payment_details) is
+    // a separate library-only endpoint, not wired here.
+    static Napi::Value parseProStatusResponse(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&] {
             auto env = info.Env();
-            auto body = requestBodyBytes(info, "parsePaymentDetailsResponse");
+            auto body = requestBodyBytes(info, "parseProStatusResponse");
 
-            auto resp = session::pro_backend::parse_payment_details(asJsonView(body));
+            auto resp = session::pro_backend::parse_pro_status(asJsonView(body));
 
             auto obj = Napi::Object::New(env);
             emitResponseHeader(env, obj, resp);
-            // user_status is now an opaque string code (never/active/expired; unknowns pass
-            // through)
+            // user_status: opaque string code (never/active/expired; unknowns pass through)
             obj["userStatus"] = toJs(env, resp.user_status);
             obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
             obj["expiryMs"] = toJsMs(env, resp.expiry_at);
             obj["gracePeriodDurationMs"] = toJsMs(env, resp.grace_period_duration);
             obj["refundRequestedTsMs"] = toJsMs(env, resp.refund_requested_at);
-            obj["paymentsTotal"] = toJs(env, resp.payments_total);
-
-            auto items = Napi::Array::New(env, resp.items.size());
-            for (size_t i = 0; i < resp.items.size(); i++) {
-                const auto& src = resp.items[i];
-                auto item = Napi::Object::New(env);
-                // status is now an opaque string code (unredeemed/redeemed/expired/revoked; pass
-                // through)
-                item["status"] = toJs(env, src.status);
-                item["plan"] = toJs(env, src.plan);
-                item["paymentProvider"] = toJs(env, src.payment_provider);
-                item["autoRenewing"] = toJs(env, src.auto_renewing);
-                // purchased/revoked carry sub-second (ms) precision; the rest are whole seconds.
-                // toJsMs normalises every one of them to the ms JS domain (see utilities.hpp).
-                item["purchasedTsMs"] = toJsMs(env, src.purchased_at);
-                item["revokedTsMs"] = toJsMs(env, src.revoked_at);
-                item["redeemedTsMs"] = toJsMs(env, src.redeemed_at);
-                item["expiryTsMs"] = toJsMs(env, src.expiry_at);
-                item["gracePeriodDurationMs"] = toJsMs(env, src.grace_period_duration);
-                item["platformRefundExpiryTsMs"] = toJsMs(env, src.platform_refund_expiry_at);
-                item["refundRequestedTsMs"] = toJsMs(env, src.refund_requested_at);
-                item["paymentId"] = toJs(env, src.payment_id);
-                items.Set(i, item);
+            if (resp.latest_payment) {
+                obj["latestPayment"] = paymentItemToJs(env, *resp.latest_payment);
+            } else {
+                obj["latestPayment"] = env.Null();
             }
-            obj["items"] = items;
             return obj;
         });
     };
