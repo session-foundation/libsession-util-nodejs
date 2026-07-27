@@ -1,0 +1,10 @@
+# Release-tooling Python dependencies, version- and hash-pinned so a
+# compromised PyPI account / dependency-confusion upload can't inject a
+# different artifact at release-tarball time. Installed via:
+#     pip install -r requirements.txt --require-hashes
+# prepare_release.sh then invokes the `git-archive-all` console script
+# from the venv directly, so a repo-root git_archive_all.py can't shadow
+# this pinned wheel (the CWD is never on sys.path for a console script).
+git-archive-all==1.23.1 \
+    --hash=sha256:d9f9611f2df629de3df1d6f134955ced4c704cbc0e423d769a7c0e55a8484242 \
+    --hash=sha256:a42fe0cedd2e0361250a4f3130f3d3543f640d4f1fe28530771df5972108729f
