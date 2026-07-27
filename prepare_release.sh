@@ -12,7 +12,7 @@ read_char() {
 rm -f ./libsession_util_nodejs*.tar.gz
 python -m venv .venv
 . .venv/bin/activate
-pip install git-archive-all
+pip install -r requirements.txt --require-hashes
 
 PACKAGE_VERSION=$(node -p "require('./package.json').version")
 GIT_COMMIT=$(git rev-parse HEAD)
@@ -42,7 +42,7 @@ esac
 echo "Continuing..."
 
 echo "Building tar archive of source..."
-python3 build_release_archive.py libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz --include src/version.h
+git-archive-all libsession_util_nodejs-v$PACKAGE_VERSION.tar.gz --include src/version.h
 
 echo "tar archive size:"
 du -sh libsession_util_nodejs*.tar.gz
