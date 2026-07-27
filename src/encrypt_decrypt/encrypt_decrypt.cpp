@@ -644,8 +644,9 @@ Napi::Value MultiEncryptWrapper::decryptForCommunity(const Napi::CallbackInfo& i
                 log::warning(
                         cat,
                         "decryptForCommunity: Failed to decrypt "
-                        "message at index {}",
-                        i);
+                        "message at index {}: {}",
+                        i,
+                        e.what());
             }
         }
 
@@ -732,8 +733,9 @@ Napi::Value MultiEncryptWrapper::decryptFor1o1(const Napi::CallbackInfo& info) {
                 log::warning(
                         cat,
                         "decryptFor1o1: Failed to decrypt "
-                        "message at index {}",
-                        i);
+                        "message at index {}: {}",
+                        i,
+                        e.what());
             }
         }
 
@@ -797,7 +799,7 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
                 extractGroupEncKeys(second, "decryptForGroup.second.groupEncKeys");
 
         std::vector<std::span<const unsigned char>> span_group_enc_keys;
-        span_group_enc_keys.reserve(span_group_enc_keys.size());
+        span_group_enc_keys.reserve(groupEncKeysVec.size());
         for (const auto& inner : groupEncKeysVec) {
             span_group_enc_keys.emplace_back(inner);
         }
@@ -833,8 +835,9 @@ Napi::Value MultiEncryptWrapper::decryptForGroup(const Napi::CallbackInfo& info)
                 log::warning(
                         cat,
                         "decryptForGroup: Failed to decrypt "
-                        "message at index {}",
-                        i);
+                        "message at index {}: {}",
+                        i,
+                        e.what());
             }
         }
 
