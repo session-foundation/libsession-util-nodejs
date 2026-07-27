@@ -210,9 +210,13 @@ struct toJs_impl<std::array<std::byte, N>> {
 template <>
 struct toJs_impl<std::span<std::byte>> {
     auto operator()(const Napi::Env& env, std::span<std::byte> b) const {
-        auto data = b.data();
-        auto data_uchar = reinterpret_cast<const unsigned char*>(data, b.size());
-
+        // `reinterpret_cast<const unsigned char*>(b.data(), b.size())`
+        // is the comma operator: it discards `b.data()` and casts
+        // `b.size()` (a size_t) as a pointer, giving a wild address.
+        // Currently dormant — no caller returns std::span<std::byte>
+        // through this template — but one accidental toJs() would
+        // SIGSEGV the Node process.
+        auto data_uchar = reinterpret_cast<const unsigned char*>(b.data());
         return Napi::Buffer<uint8_t>::Copy(env, data_uchar, b.size());
     }
 };
@@ -455,9 +459,7 @@ std::vector<unsigned char> from_base64_to_vector(std::string_view x);
 // Concept to match containers with a size() method
 template <typename T>
 concept HasSize = requires(T t) {
-    {
-        t.size()
-    } -> std::convertible_to<size_t>;
+    { t.size() } -> std::convertible_to<size_t>;
 };
 
 template <HasSize T>
