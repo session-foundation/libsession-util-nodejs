@@ -163,7 +163,6 @@ struct toJs_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string_view>>
     }
 };
 
-
 template <typename T>
 struct toJs_impl<
         T,

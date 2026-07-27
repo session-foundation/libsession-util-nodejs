@@ -107,7 +107,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         return obj;
     }
 
-    // §5: the response envelope is a CLOSED status enum + an optional machine slug (error_code, §5.1)
+    // §5: the response envelope is a CLOSED status enum + an optional machine slug (error_code,
+    // §5.1)
     // + an optional English diagnostic (error) — no more errors[] array. Render status as its wire
     // string ("ok"/"fail"/"error") for JS consumers; error_code/error are null on success.
     static std::string_view responseStatusToJs(session::pro_backend::ResponseStatus s) {
