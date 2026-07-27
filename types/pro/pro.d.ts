@@ -140,7 +140,8 @@ declare module 'libsession_util_nodejs' {
     ticket: number;
     /**
      * Absolute unix instant (ms) at which to next poll the revocation list — already `now + retry_in`
-     * (clamped ≥ now), so callers can feed it straight to a next-run scheduler without any arithmetic.
+     * (libsession clamps the delay to a sane range), so callers can feed it straight to a next-run
+     * scheduler without any arithmetic.
      */
     retryAtMs: number;
     /**
