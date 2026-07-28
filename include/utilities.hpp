@@ -20,6 +20,7 @@
 #include "session/session_protocol.hpp"
 #include "session/types.h"
 #include "session/types.hpp"
+#include "session/util.hpp"
 
 namespace session::nodeapi {
 
@@ -162,13 +163,6 @@ struct toJs_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string_view>>
     }
 };
 
-template <>
-struct toJs_impl<string8> {
-    auto operator()(const Napi::Env& env, string8 s) const {
-        return Napi::String::New(env, s.data, s.size);
-    }
-};
-
 template <typename T>
 struct toJs_impl<
         T,
@@ -278,6 +272,19 @@ struct toJs_impl<std::chrono::sys_time<std::chrono::milliseconds>> {
         return Napi::Number::New(env, t.time_since_epoch().count());
     }
 };
+
+// Normalise any system-clock time_point or duration to the JS domain as epoch-milliseconds. The
+// wire mixes whole-second (`sys_seconds` / `std::chrono::seconds`) and millisecond-resolution
+// (`sys_ms`) values; both widen implicitly and losslessly to the ms parameter types below, so
+// callers never hand-multiply by 1000 (and a finer-than-ms source fails to compile rather than
+// silently truncating). Prefer these over passing a `sys_seconds` straight to `toJs`, whose
+// specialisation emits *seconds* and is an easy way to land the wrong unit in a `...Ms` field.
+inline auto toJsMs(const Napi::Env& env, session::sys_ms tp) {
+    return toJs(env, tp);
+}
+inline auto toJsMs(const Napi::Env& env, std::chrono::milliseconds d) {
+    return toJs(env, d);
+}
 
 // Returns {"url": "...", "key": buffer} object; both values will be Null if the pic is not set.
 

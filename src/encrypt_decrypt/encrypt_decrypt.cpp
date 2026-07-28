@@ -637,7 +637,9 @@ Napi::Value MultiEncryptWrapper::decryptForCommunity(const Napi::CallbackInfo& i
                 auto contentOrEnvelope =
                         extractContentOrEnvelope(obj, "decryptForCommunity.obj.contentOrEnvelope");
                 decrypted.push_back(session::decode_for_community(
-                        contentOrEnvelope, nowMs, proBackendPubkeyHex));
+                        contentOrEnvelope,
+                        std::chrono::floor<std::chrono::seconds>(nowMs),
+                        proBackendPubkeyHex));
                 decryptedServerIds.push_back(serverId);
 
             } catch (const std::exception& e) {
