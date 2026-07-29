@@ -408,7 +408,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         item["expiryTsMs"] = toJsMs(env, src.expiry_at);
         item["gracePeriodDurationMs"] = toJsMs(env, src.grace_period_duration);
         item["platformRefundExpiryTsMs"] = toJsMs(env, src.platform_refund_expiry_at);
-        item["refundRequestedTsMs"] = toJsMs(env, src.refund_requested_at);
         item["paymentId"] = toJs(env, src.payment_id);
         return item;
     }
@@ -431,7 +430,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
             obj["expiryMs"] = toJsMs(env, resp.expiry_at);
             obj["gracePeriodDurationMs"] = toJsMs(env, resp.grace_period_duration);
-            obj["refundRequestedTsMs"] = toJsMs(env, resp.refund_requested_at);
             if (resp.latest_payment) {
                 obj["latestPayment"] = paymentItemToJs(env, *resp.latest_payment);
             } else {
