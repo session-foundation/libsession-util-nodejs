@@ -269,6 +269,7 @@ declare module 'libsession_util_nodejs' {
     public static parseRevocationsResponse: ProWrapper['parseRevocationsResponse'];
     public static parseProStatusResponse: ProWrapper['parseProStatusResponse'];
     public static providerUrls: ProWrapper['providerUrls'];
+    public static visiblePlatforms: ProWrapper['visiblePlatforms'];
   }
 
   /**
@@ -286,5 +287,6 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<ProWrapper, 'parseProProofResponse'>
     | MakeActionCall<ProWrapper, 'parseRevocationsResponse'>
     | MakeActionCall<ProWrapper, 'parseProStatusResponse'>
-    | MakeActionCall<ProWrapper, 'providerUrls'>;
+    | MakeActionCall<ProWrapper, 'providerUrls'>
+    | MakeActionCall<ProWrapper, 'visiblePlatforms'>;
 }
