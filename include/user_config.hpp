@@ -48,5 +48,18 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
 
     Napi::Value generateProMasterKey(const Napi::CallbackInfo& info);
     Napi::Value generateRotatingPrivKeyHex(const Napi::CallbackInfo& info);
+
+    // Deterministic weekly rotating key: derive the rotating seed (and its ed25519 keypair) for the
+    // rotation period containing `now` from the Pro master key, so every device converges on the
+    // same key for the same period. Replaces ad-hoc/random rotating-key generation.
+    Napi::Value deriveProRotatingKey(const Napi::CallbackInfo& info);
+
+    // Refund-requested (config key R) and pro-prepaid / purchase-in-flight (config key I) markers,
+    // and the renewal-target poll that decides when to (re)request a proof.
+    Napi::Value getRefundRequested(const Napi::CallbackInfo& info);
+    void setRefundRequested(const Napi::CallbackInfo& info);
+    Napi::Value getProPrepaid(const Napi::CallbackInfo& info);
+    void setProPrepaid(const Napi::CallbackInfo& info);
+    Napi::Value getProRenewalTarget(const Napi::CallbackInfo& info);
 };
 };  // namespace session::nodeapi

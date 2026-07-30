@@ -179,7 +179,6 @@ declare module 'libsession_util_nodejs' {
     expiryTsMs: number;
     gracePeriodDurationMs: number;
     platformRefundExpiryTsMs: number;
-    refundRequestedTsMs: number;
     /**
      * Opaque payment identifier (confidential).
      */
@@ -203,7 +202,6 @@ declare module 'libsession_util_nodejs' {
     autoRenewing: boolean;
     expiryMs: number;
     gracePeriodDurationMs: number;
-    refundRequestedTsMs: number;
     /** The single most-recent payment, or null when the account has no payments. (Full history is a
      * separate library-only query — not wired.) */
     latestPayment: ProPaymentItem | null;

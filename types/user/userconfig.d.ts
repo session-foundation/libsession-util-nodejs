@@ -72,6 +72,31 @@ declare module 'libsession_util_nodejs' {
      * Note: this should only be done once per device, and saved to the DB or the extra_data of `UserProfile`.
      */
     generateRotatingPrivKeyHex: () => WithRotatingPrivKeyHex;
+
+    /**
+     * Deterministically derive the rotating seed (and its ed25519 keypair) for the weekly rotation
+     * period containing `nowMs`, from the Pro master key. Every device derives the same key for the
+     * same period, so concurrent proof (re)generations converge. Feed the priv key to a proof
+     * request and persist the seed via setProConfig once the backend returns a signed proof.
+     */
+    deriveProRotatingKey: (args: { proMasterKeyHex: string; nowMs: number }) => {
+      /** 32 bytes, 64 chars */
+      rotatingSeedHex: string;
+      /** 64 bytes, 128 chars */
+      rotatingPrivKeyHex: string;
+    };
+
+    /** Refund-requested marker (config key R), in ms; null when unset or past the 1-week read gate. */
+    getRefundRequested: () => number | null;
+    setRefundRequested: (refundTsMs: number | null) => void;
+    /** Pro-prepaid / purchase-in-flight marker (config key I), in ms; null when unset or gated. */
+    getProPrepaid: () => number | null;
+    setProPrepaid: (prepaidTsMs: number | null) => void;
+    /**
+     * When to (re)request a proof given `nowMs`: nowMs (request now), a future ms (preemptive
+     * renewal ~1h before expiry), or null (don't renew). Supersedes bespoke auto-renew logic.
+     */
+    getProRenewalTarget: (nowMs: number) => number | null;
   };
 
   export type UserConfigWrapperActionsCalls = MakeWrapperActionCalls<UserConfigWrapper>;
@@ -105,6 +130,12 @@ declare module 'libsession_util_nodejs' {
 
     public generateProMasterKey: UserConfigWrapper['generateProMasterKey'];
     public generateRotatingPrivKeyHex: UserConfigWrapper['generateRotatingPrivKeyHex'];
+    public deriveProRotatingKey: UserConfigWrapper['deriveProRotatingKey'];
+    public getRefundRequested: UserConfigWrapper['getRefundRequested'];
+    public setRefundRequested: UserConfigWrapper['setRefundRequested'];
+    public getProPrepaid: UserConfigWrapper['getProPrepaid'];
+    public setProPrepaid: UserConfigWrapper['setProPrepaid'];
+    public getProRenewalTarget: UserConfigWrapper['getProRenewalTarget'];
   }
 
   /**
@@ -137,5 +168,11 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'getProAccessExpiry'>
     | MakeActionCall<UserConfigWrapper, 'setProBadge'>
     | MakeActionCall<UserConfigWrapper, 'generateProMasterKey'>
-    | MakeActionCall<UserConfigWrapper, 'generateRotatingPrivKeyHex'>;
+    | MakeActionCall<UserConfigWrapper, 'generateRotatingPrivKeyHex'>
+    | MakeActionCall<UserConfigWrapper, 'deriveProRotatingKey'>
+    | MakeActionCall<UserConfigWrapper, 'getRefundRequested'>
+    | MakeActionCall<UserConfigWrapper, 'setRefundRequested'>
+    | MakeActionCall<UserConfigWrapper, 'getProPrepaid'>
+    | MakeActionCall<UserConfigWrapper, 'setProPrepaid'>
+    | MakeActionCall<UserConfigWrapper, 'getProRenewalTarget'>;
 }
