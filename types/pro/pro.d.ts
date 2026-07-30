@@ -210,12 +210,8 @@ declare module 'libsession_util_nodejs' {
   };
 
   type ProWrapper = {
-    proFeaturesForMessage: (args: { utf16: string }) => WithProMessageBitset & {
-      status: 'SUCCESS' | 'UTF_DECODING_ERROR' | 'EXCEEDS_CHARACTER_LIMIT';
-    };
-    utf16Count: (args: { utf16: string }) => { codepointCount: number };
-    utf16CountTruncatedToCodepoints: (args: { utf16: string; codepointLen: number }) => {
-      truncateAt: number;
+    proFeaturesForMessage: (args: { codepointCount: number }) => WithProMessageBitset & {
+      status: 'SUCCESS' | 'EXCEEDS_CHARACTER_LIMIT';
     };
 
     proProofRequest: (
@@ -260,8 +256,6 @@ declare module 'libsession_util_nodejs' {
    */
   export class ProWrapperNode {
     public static proFeaturesForMessage: ProWrapper['proFeaturesForMessage'];
-    public static utf16Count: ProWrapper['utf16Count'];
-    public static utf16CountTruncatedToCodepoints: ProWrapper['utf16CountTruncatedToCodepoints'];
     public static proProofRequest: ProWrapper['proProofRequest'];
     public static proRevocationsRequest: ProWrapper['proRevocationsRequest'];
     public static proStatusRequest: ProWrapper['proStatusRequest'];
@@ -279,8 +273,6 @@ declare module 'libsession_util_nodejs' {
    */
   export type ProActionsType =
     | MakeActionCall<ProWrapper, 'proFeaturesForMessage'>
-    | MakeActionCall<ProWrapper, 'utf16Count'>
-    | MakeActionCall<ProWrapper, 'utf16CountTruncatedToCodepoints'>
     | MakeActionCall<ProWrapper, 'proProofRequest'>
     | MakeActionCall<ProWrapper, 'proRevocationsRequest'>
     | MakeActionCall<ProWrapper, 'proStatusRequest'>

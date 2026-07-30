@@ -55,6 +55,16 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
                      "COMMUNITY_FULL_URL_MAX_LENGTH",
                      Napi::Number::New(env, session::config::community::FULL_URL_MAX_LENGTH),
                      napi_enumerable),
+             // Pro message character (codepoint) limits — single-sourced from libsession so clients
+             // don't hard-code them (the count -> feature decision goes via proFeaturesForMessage).
+             ObjectWrap::StaticValue(
+                     "MESSAGE_CHARACTER_LIMIT_STANDARD",
+                     Napi::Number::New(env, SESSION_PROTOCOL_STANDARD_CHARACTER_LIMIT),
+                     napi_enumerable),
+             ObjectWrap::StaticValue(
+                     "MESSAGE_CHARACTER_LIMIT_PRO",
+                     Napi::Number::New(env, SESSION_PROTOCOL_PRO_HIGHER_CHARACTER_LIMIT),
+                     napi_enumerable),
              ObjectWrap::StaticValue("LIBSESSION_PRO_URLS", pro_urls, napi_enumerable),
              // Session Pro backend identity — the single source of truth clients read instead of
              // hand-carrying their own copies (URL is the overridable prod/default; pubkey is hex).
