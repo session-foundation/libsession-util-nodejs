@@ -271,6 +271,15 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto obj = Napi::Object::New(env);
             emitResponseHeader(env, obj, resp);
             obj["proof"] = toJs(env, resp.proof);
+            // Advisory account (subscription) expiry — grace-inclusive true entitlement end. Present
+            // on success + subscription_expired (a past value there), null otherwise. Distinct from
+            // the proof's own clamped expiry; unsigned/not-in-M, for display + `E` refresh only.
+            std::optional<std::chrono::sys_time<std::chrono::milliseconds>> account_expiry_ms;
+            if (resp.account_expiry)
+                account_expiry_ms = std::chrono::sys_time<std::chrono::milliseconds>(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(
+                                resp.account_expiry->time_since_epoch()));
+            obj["accountExpiryMs"] = toJs(env, account_expiry_ms);
             return obj;
         });
     };

@@ -127,6 +127,13 @@ declare module 'libsession_util_nodejs' {
 
   type GenerateProProofResponse = WithProResponseHeader & {
     proof: ProProof;
+    /**
+     * Advisory account (subscription) expiry (ms) — grace-inclusive true entitlement end; present on
+     * a successful proof and on a `subscription_expired` failure (a past value), null otherwise.
+     * Distinct from the proof's own clamped expiry; unsigned / not-in-M — use for the "Pro until X"
+     * display and to refresh the cached access expiry (`E`), never for entitlement gating.
+     */
+    accountExpiryMs: number | null;
   };
 
   type ProRevocationItem = WithRevocationTag & {
