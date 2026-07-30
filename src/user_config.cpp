@@ -403,7 +403,7 @@ Napi::Value UserConfigWrapper::deriveProRotatingKey(const Napi::CallbackInfo& in
         auto now = std::chrono::floor<std::chrono::seconds>(
                 toCppSysMs(obj_in.Get("nowMs"), "deriveProRotatingKey.nowMs"));
 
-        // Deterministic weekly seed shared across the account's devices, then its ed25519 keypair.
+        // Deterministic seed for `now` (shared across the account's devices), then its ed25519 keypair.
         auto rotating_seed = session::ProProof::rotating_seed(master_key, now);
         auto [rotating_pk, rotating_sk] = session::ed25519::ed25519_key_pair(rotating_seed);
 

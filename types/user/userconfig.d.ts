@@ -74,10 +74,11 @@ declare module 'libsession_util_nodejs' {
     generateRotatingPrivKeyHex: () => WithRotatingPrivKeyHex;
 
     /**
-     * Deterministically derive the rotating seed (and its ed25519 keypair) for the weekly rotation
-     * period containing `nowMs`, from the Pro master key. Every device derives the same key for the
-     * same period, so concurrent proof (re)generations converge. Feed the priv key to a proof
-     * request and persist the seed via setProConfig once the backend returns a signed proof.
+     * Deterministically derive the rotating seed (and its ed25519 keypair) for `nowMs` from the Pro
+     * master key (libsession owns the rotation schedule). Every device deriving from the same master
+     * key + time converges on the same key, so concurrent proof (re)generations don't race. Feed the
+     * priv key to a proof request and persist the seed via setProConfig once the backend returns a
+     * signed proof.
      */
     deriveProRotatingKey: (args: { proMasterKeyHex: string; nowMs: number }) => {
       /** 32 bytes, 64 chars */
