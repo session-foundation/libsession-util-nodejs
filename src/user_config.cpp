@@ -105,14 +105,11 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                             &UserConfigWrapper::generateRotatingPrivKeyHex),
                     InstanceMethod(
                             "deriveProRotatingKey", &UserConfigWrapper::deriveProRotatingKey),
-                    InstanceMethod(
-                            "getRefundRequested", &UserConfigWrapper::getRefundRequested),
-                    InstanceMethod(
-                            "setRefundRequested", &UserConfigWrapper::setRefundRequested),
+                    InstanceMethod("getRefundRequested", &UserConfigWrapper::getRefundRequested),
+                    InstanceMethod("setRefundRequested", &UserConfigWrapper::setRefundRequested),
                     InstanceMethod("getProPrepaid", &UserConfigWrapper::getProPrepaid),
                     InstanceMethod("setProPrepaid", &UserConfigWrapper::setProPrepaid),
-                    InstanceMethod(
-                            "getProRenewalTarget", &UserConfigWrapper::getProRenewalTarget),
+                    InstanceMethod("getProRenewalTarget", &UserConfigWrapper::getProRenewalTarget),
             });
 }
 
@@ -403,7 +400,8 @@ Napi::Value UserConfigWrapper::deriveProRotatingKey(const Napi::CallbackInfo& in
         auto now = std::chrono::floor<std::chrono::seconds>(
                 toCppSysMs(obj_in.Get("nowMs"), "deriveProRotatingKey.nowMs"));
 
-        // Deterministic seed for `now` (shared across the account's devices), then its ed25519 keypair.
+        // Deterministic seed for `now` (shared across the account's devices), then its ed25519
+        // keypair.
         auto rotating_seed = session::ProProof::rotating_seed(master_key, now);
         auto [rotating_pk, rotating_sk] = session::ed25519::ed25519_key_pair(rotating_seed);
 
@@ -416,7 +414,8 @@ Napi::Value UserConfigWrapper::deriveProRotatingKey(const Napi::CallbackInfo& in
 
 Napi::Value UserConfigWrapper::getRefundRequested(const Napi::CallbackInfo& info) {
     return wrapResult(info, [&] {
-        // libsession stores whole seconds; the JS domain is milliseconds. Null when unset (or gated).
+        // libsession stores whole seconds; the JS domain is milliseconds. Null when unset (or
+        // gated).
         auto refund_s = config.get_refund_requested();
         std::optional<std::chrono::sys_time<std::chrono::milliseconds>> refund_ms;
         if (refund_s)

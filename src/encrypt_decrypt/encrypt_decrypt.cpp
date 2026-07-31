@@ -467,7 +467,8 @@ Napi::Value MultiEncryptWrapper::encryptForCommunityInbox(const Napi::CallbackIn
                     extractPlaintext(obj, "encryptForCommunityInbox.obj.plaintext"),
                     extractSenderEd25519SeedAsVector(
                             obj, "encryptForCommunityInbox.obj.senderEd25519Seed"),
-                    // §4: sent_timestamp_ms removed — community-inbox messages carry no envelope ts.
+                    // §4: sent_timestamp_ms removed — community-inbox messages carry no envelope
+                    // ts.
                     extractRecipientPubkeyAsArray(
                             obj, "encryptForCommunityInbox.obj.recipientPubkey"),
                     extractCommunityPubkeyAsArray(
