@@ -345,7 +345,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         // normalises every one of them to the ms JS domain (see utilities.hpp).
         item["purchasedTsMs"] = toJsMs(env, src.purchased_at);
         item["revokedTsMs"] = toJsMs(env, src.revoked_at);
-        item["redeemedTsMs"] = toJsMs(env, src.redeemed_at);
         item["expiryTsMs"] = toJsMs(env, src.expiry_at);
         item["gracePeriodDurationMs"] = toJsMs(env, src.grace_period_duration);
         item["platformRefundExpiryTsMs"] = toJsMs(env, src.platform_refund_expiry_at);
@@ -412,7 +411,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
     };
 
     // The purchasable payment-provider slugs to surface to users (single source of truth in
-    // libsession; excludes non-purchasable providers like rangeproof). Order is not significant.
+    // libsession; excludes non-purchasable providers like stf). Order is not significant.
     static Napi::Value visiblePlatforms(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&]() -> Napi::Value {
             auto env = info.Env();

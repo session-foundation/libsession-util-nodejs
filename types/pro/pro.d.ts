@@ -74,7 +74,7 @@ declare module 'libsession_util_nodejs' {
 
   /**
    * Per-provider support/management URLs, looked up by provider slug via ProWrapper.providerUrls().
-   * `null` for a provider with no applicable URLs (unknown slug, or e.g. rangeproof).
+   * `null` for a provider with no applicable URLs (unknown slug, or e.g. stf).
    */
   type ProviderUrls = {
     refundPlatformUrl: string;
@@ -182,7 +182,6 @@ declare module 'libsession_util_nodejs' {
     autoRenewing: boolean;
     purchasedTsMs: number;
     revokedTsMs: number;
-    redeemedTsMs: number;
     expiryTsMs: number;
     gracePeriodDurationMs: number;
     platformRefundExpiryTsMs: number;
@@ -248,7 +247,7 @@ declare module 'libsession_util_nodejs' {
 
     /**
      * The purchasable payment-provider slugs to surface to users (single source of truth in
-     * libsession; excludes non-purchasable providers like rangeproof). Order is not significant — the
+     * libsession; excludes non-purchasable providers like stf). Order is not significant — the
      * caller applies its own ordering and skips slugs it has no display translation for.
      */
     visiblePlatforms: () => Array<string>;
