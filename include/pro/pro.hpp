@@ -366,7 +366,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             emitResponseHeader(env, obj, resp);
             // user_status: opaque string code (never/active/expired; unknowns pass through)
             obj["userStatus"] = toJs(env, resp.user_status);
-            obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
             obj["expiryMs"] = toJsMs(env, resp.expiry_at);
             obj["gracePeriodDurationMs"] = toJsMs(env, resp.grace_period_duration);

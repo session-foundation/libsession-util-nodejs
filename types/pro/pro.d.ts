@@ -201,10 +201,6 @@ declare module 'libsession_util_nodejs' {
      * Opaque account-status code slug: "never"/"active"/"expired" (unknowns pass through).
      */
     userStatus: string;
-    /**
-     * numeric error-report enum (0=Success,1=GenericError)
-     */
-    errorReport: number;
     autoRenewing: boolean;
     expiryMs: number;
     gracePeriodDurationMs: number;
