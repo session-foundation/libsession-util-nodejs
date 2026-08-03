@@ -164,6 +164,10 @@ declare module 'libsession_util_nodejs' {
      * BASE_URL_MAX_LENGTH + '/r/' + ROOM_MAX_LENGTH + qs_pubkey.size() + hex pubkey + null terminator
      */
     COMMUNITY_FULL_URL_MAX_LENGTH: number;
+    /** Max message codepoints for a standard (non-Pro) message */
+    MESSAGE_CHARACTER_LIMIT_STANDARD: number;
+    /** Max message codepoints for a Pro message */
+    MESSAGE_CHARACTER_LIMIT_PRO: number;
     /**
      * A string that looks like libsession-util v1.2.0-nogit
      */

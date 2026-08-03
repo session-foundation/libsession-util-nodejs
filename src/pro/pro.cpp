@@ -9,7 +9,6 @@ namespace session::nodeapi {
 std::string_view proBackendEnumToString(session::ProFeaturesForMsgStatus v) {
     switch (v) {
         case session::ProFeaturesForMsgStatus::Success: return "SUCCESS";
-        case session::ProFeaturesForMsgStatus::UTFDecodingError: return "UTF_DECODING_ERROR";
         case session::ProFeaturesForMsgStatus::ExceedsCharacterLimit:
             return "EXCEEDS_CHARACTER_LIMIT";
     }

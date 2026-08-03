@@ -74,7 +74,7 @@ declare module 'libsession_util_nodejs' {
 
   /**
    * Per-provider support/management URLs, looked up by provider slug via ProWrapper.providerUrls().
-   * `null` for a provider with no applicable URLs (unknown slug, or e.g. rangeproof).
+   * `null` for a provider with no applicable URLs (unknown slug, or e.g. stf).
    */
   type ProviderUrls = {
     refundPlatformUrl: string;
@@ -127,6 +127,13 @@ declare module 'libsession_util_nodejs' {
 
   type GenerateProProofResponse = WithProResponseHeader & {
     proof: ProProof;
+    /**
+     * Advisory account (subscription) expiry (ms) — grace-inclusive true entitlement end; present on
+     * a successful proof and on a `subscription_expired` failure (a past value), null otherwise.
+     * Distinct from the proof's own clamped expiry; unsigned / not-in-M — use for the "Pro until X"
+     * display and to refresh the cached access expiry (`E`), never for entitlement gating.
+     */
+    accountExpiryMs: number | null;
   };
 
   type ProRevocationItem = WithRevocationTag & {
@@ -175,11 +182,9 @@ declare module 'libsession_util_nodejs' {
     autoRenewing: boolean;
     purchasedTsMs: number;
     revokedTsMs: number;
-    redeemedTsMs: number;
     expiryTsMs: number;
     gracePeriodDurationMs: number;
     platformRefundExpiryTsMs: number;
-    refundRequestedTsMs: number;
     /**
      * Opaque payment identifier (confidential).
      */
@@ -196,26 +201,17 @@ declare module 'libsession_util_nodejs' {
      * Opaque account-status code slug: "never"/"active"/"expired" (unknowns pass through).
      */
     userStatus: string;
-    /**
-     * numeric error-report enum (0=Success,1=GenericError)
-     */
-    errorReport: number;
     autoRenewing: boolean;
     expiryMs: number;
     gracePeriodDurationMs: number;
-    refundRequestedTsMs: number;
     /** The single most-recent payment, or null when the account has no payments. (Full history is a
      * separate library-only query — not wired.) */
     latestPayment: ProPaymentItem | null;
   };
 
   type ProWrapper = {
-    proFeaturesForMessage: (args: { utf16: string }) => WithProMessageBitset & {
-      status: 'SUCCESS' | 'UTF_DECODING_ERROR' | 'EXCEEDS_CHARACTER_LIMIT';
-    };
-    utf16Count: (args: { utf16: string }) => { codepointCount: number };
-    utf16CountTruncatedToCodepoints: (args: { utf16: string; codepointLen: number }) => {
-      truncateAt: number;
+    proFeaturesForMessage: (args: { codepointCount: number }) => WithProMessageBitset & {
+      status: 'SUCCESS' | 'EXCEEDS_CHARACTER_LIMIT';
     };
 
     proProofRequest: (
@@ -247,7 +243,7 @@ declare module 'libsession_util_nodejs' {
 
     /**
      * The purchasable payment-provider slugs to surface to users (single source of truth in
-     * libsession; excludes non-purchasable providers like rangeproof). Order is not significant — the
+     * libsession; excludes non-purchasable providers like stf). Order is not significant — the
      * caller applies its own ordering and skips slugs it has no display translation for.
      */
     visiblePlatforms: () => Array<string>;
@@ -260,8 +256,6 @@ declare module 'libsession_util_nodejs' {
    */
   export class ProWrapperNode {
     public static proFeaturesForMessage: ProWrapper['proFeaturesForMessage'];
-    public static utf16Count: ProWrapper['utf16Count'];
-    public static utf16CountTruncatedToCodepoints: ProWrapper['utf16CountTruncatedToCodepoints'];
     public static proProofRequest: ProWrapper['proProofRequest'];
     public static proRevocationsRequest: ProWrapper['proRevocationsRequest'];
     public static proStatusRequest: ProWrapper['proStatusRequest'];
@@ -279,8 +273,6 @@ declare module 'libsession_util_nodejs' {
    */
   export type ProActionsType =
     | MakeActionCall<ProWrapper, 'proFeaturesForMessage'>
-    | MakeActionCall<ProWrapper, 'utf16Count'>
-    | MakeActionCall<ProWrapper, 'utf16CountTruncatedToCodepoints'>
     | MakeActionCall<ProWrapper, 'proProofRequest'>
     | MakeActionCall<ProWrapper, 'proRevocationsRequest'>
     | MakeActionCall<ProWrapper, 'proStatusRequest'>

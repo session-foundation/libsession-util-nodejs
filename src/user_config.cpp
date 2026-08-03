@@ -8,6 +8,7 @@
 #include "profile_pic.hpp"
 #include "session/config/user_profile.hpp"
 #include "session/ed25519.hpp"
+#include "session/session_protocol.hpp"
 #include "utilities.hpp"
 
 namespace session::nodeapi {
@@ -102,6 +103,13 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod(
                             "generateRotatingPrivKeyHex",
                             &UserConfigWrapper::generateRotatingPrivKeyHex),
+                    InstanceMethod(
+                            "deriveProRotatingKey", &UserConfigWrapper::deriveProRotatingKey),
+                    InstanceMethod("getRefundRequested", &UserConfigWrapper::getRefundRequested),
+                    InstanceMethod("setRefundRequested", &UserConfigWrapper::setRefundRequested),
+                    InstanceMethod("getProPrepaid", &UserConfigWrapper::getProPrepaid),
+                    InstanceMethod("setProPrepaid", &UserConfigWrapper::setProPrepaid),
+                    InstanceMethod("getProRenewalTarget", &UserConfigWrapper::getProRenewalTarget),
             });
 }
 
@@ -373,6 +381,99 @@ Napi::Value UserConfigWrapper::generateRotatingPrivKeyHex(const Napi::CallbackIn
         obj["rotatingPrivKeyHex"] = toJs(info.Env(), rotating_privkey_hex);
 
         return obj;
+    });
+}
+
+Napi::Value UserConfigWrapper::deriveProRotatingKey(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        assertInfoLength(info, 1);
+        auto input = info[0];
+        assertIsObject(input);
+        auto obj_in = input.As<Napi::Object>();
+
+        auto master_key_js_hex = obj_in.Get("proMasterKeyHex");
+        assertIsString(master_key_js_hex, "deriveProRotatingKey.proMasterKeyHex");
+        auto master_key_hex =
+                toCppString(master_key_js_hex, "deriveProRotatingKey.proMasterKeyHex");
+        auto master_key = from_hex_to_vector(master_key_hex);
+
+        auto now = std::chrono::floor<std::chrono::seconds>(
+                toCppSysMs(obj_in.Get("nowMs"), "deriveProRotatingKey.nowMs"));
+
+        // Deterministic seed for `now` (shared across the account's devices), then its ed25519
+        // keypair.
+        auto rotating_seed = session::ProProof::rotating_seed(master_key, now);
+        auto [rotating_pk, rotating_sk] = session::ed25519::ed25519_key_pair(rotating_seed);
+
+        auto obj = Napi::Object::New(info.Env());
+        obj["rotatingSeedHex"] = toJs(info.Env(), to_hex(rotating_seed));
+        obj["rotatingPrivKeyHex"] = toJs(info.Env(), to_hex(rotating_sk));
+        return obj;
+    });
+}
+
+Napi::Value UserConfigWrapper::getRefundRequested(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        // libsession stores whole seconds; the JS domain is milliseconds. Null when unset (or
+        // gated).
+        auto refund_s = config.get_refund_requested();
+        std::optional<std::chrono::sys_time<std::chrono::milliseconds>> refund_ms;
+        if (refund_s)
+            refund_ms = std::chrono::sys_time<std::chrono::milliseconds>(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                            refund_s->time_since_epoch()));
+        return toJs(info.Env(), refund_ms);
+    });
+}
+
+void UserConfigWrapper::setRefundRequested(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsNumberOrNull(info[0], "setRefundRequested");
+        auto refund_ms = maybeNonemptyTimeMs(info[0], "UserConfigWrapper::setRefundRequested");
+        std::optional<std::chrono::sys_seconds> refund;
+        if (refund_ms)
+            refund = std::chrono::floor<std::chrono::seconds>(*refund_ms);
+        config.set_refund_requested(refund);
+    });
+}
+
+Napi::Value UserConfigWrapper::getProPrepaid(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto prepaid_s = config.get_pro_prepaid();
+        std::optional<std::chrono::sys_time<std::chrono::milliseconds>> prepaid_ms;
+        if (prepaid_s)
+            prepaid_ms = std::chrono::sys_time<std::chrono::milliseconds>(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                            prepaid_s->time_since_epoch()));
+        return toJs(info.Env(), prepaid_ms);
+    });
+}
+
+void UserConfigWrapper::setProPrepaid(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsNumberOrNull(info[0], "setProPrepaid");
+        auto prepaid_ms = maybeNonemptyTimeMs(info[0], "UserConfigWrapper::setProPrepaid");
+        std::optional<std::chrono::sys_seconds> prepaid;
+        if (prepaid_ms)
+            prepaid = std::chrono::floor<std::chrono::seconds>(*prepaid_ms);
+        config.set_pro_prepaid(prepaid);
+    });
+}
+
+Napi::Value UserConfigWrapper::getProRenewalTarget(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        assertInfoLength(info, 1);
+        auto now = std::chrono::floor<std::chrono::seconds>(
+                toCppSysMs(info[0], "UserConfigWrapper::getProRenewalTarget"));
+        auto target_s = config.pro_renewal_target(now);
+        std::optional<std::chrono::sys_time<std::chrono::milliseconds>> target_ms;
+        if (target_s)
+            target_ms = std::chrono::sys_time<std::chrono::milliseconds>(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                            target_s->time_since_epoch()));
+        return toJs(info.Env(), target_ms);
     });
 }
 

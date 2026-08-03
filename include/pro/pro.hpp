@@ -34,14 +34,6 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                 "ProWrapperNode",
                 {
                         // Pro features
-                        StaticMethod<&ProWrapper::utf16CountTruncatedToCodepoints>(
-                                "utf16CountTruncatedToCodepoints",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
-                        StaticMethod<&ProWrapper::utf16Count>(
-                                "utf16Count",
-                                static_cast<napi_property_attributes>(
-                                        napi_writable | napi_configurable)),
                         StaticMethod<&ProWrapper::proFeaturesForMessage>(
                                 "proFeaturesForMessage",
                                 static_cast<napi_property_attributes>(
@@ -134,8 +126,10 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         return wrapResult(info, [&] {
             // we expect one argument that matches:
             // first: {
-            //   "utf16": string,
+            //   "codepointCount": number,
             // }
+            // The caller counts codepoints natively (JS: [...text].length) and passes the count;
+            // libsession owns the count -> feature policy.
 
             assertInfoLength(info, 1);
             assertIsObject(info[0]);
@@ -146,79 +140,16 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             if (first.IsEmpty())
                 throw std::invalid_argument("proFeaturesForMessage first received empty");
 
-            assertIsString(first.Get("utf16"), "proFeaturesForMessage.utf16");
-            std::u16string utf16 = first.Get("utf16").As<Napi::String>().Utf16Value();
-            ProFeaturesForMsg pro_features_msg =
-                    session::pro_features_for_utf16((utf16.data()), utf16.length());
+            assertIsNumber(first.Get("codepointCount"), "proFeaturesForMessage.codepointCount");
+            size_t codepoint_count = first.Get("codepointCount").As<Napi::Number>().Uint32Value();
+            ProFeaturesForMsg pro_features_msg = session::pro_features_for_message(codepoint_count);
 
             auto obj = Napi::Object::New(env);
 
             obj["status"] = toJs(env, proBackendEnumToString(pro_features_msg.status));
             obj["error"] =
                     pro_features_msg.error.size() ? toJs(env, pro_features_msg.error) : env.Null();
-            obj["codepointCount"] = toJs(env, pro_features_msg.codepoint_count);
             obj["proMessageBitset"] = proMessageBitsetToJS(env, pro_features_msg.bitset);
-
-            return obj;
-        });
-    };
-
-    static Napi::Value utf16Count(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
-            // we expect one argument that matches:
-            // first: {
-            //   "utf16": string,
-            // }
-            // we return an object with a single property {`codepointCount: number`}
-
-            assertInfoLength(info, 1);
-            assertIsObject(info[0]);
-            auto env = info.Env();
-
-            auto first = info[0].As<Napi::Object>();
-
-            if (first.IsEmpty())
-                throw std::invalid_argument("utf16Count first received empty");
-
-            assertIsString(first.Get("utf16"), "utf16Count.utf16");
-            std::u16string utf16 = first.Get("utf16").As<Napi::String>().Utf16Value();
-            size_t codepoint_count = session::utf16_count(utf16);
-
-            auto obj = Napi::Object::New(env);
-            obj["codepointCount"] = toJs(env, codepoint_count);
-
-            return obj;
-        });
-    };
-
-    static Napi::Value utf16CountTruncatedToCodepoints(const Napi::CallbackInfo& info) {
-        return wrapResult(info, [&] {
-            // we expect one argument that matches:
-            // first: {
-            //   "utf16": string,
-            //   "codepointLen": number,
-            // }
-            // we return an object with a single property {`truncateAt: number`}
-
-            assertInfoLength(info, 1);
-            assertIsObject(info[0]);
-            auto env = info.Env();
-
-            auto first = info[0].As<Napi::Object>();
-
-            if (first.IsEmpty())
-                throw std::invalid_argument("utf16CountTruncatedToCodepoints first received empty");
-
-            assertIsString(first.Get("utf16"), "utf16CountTruncatedToCodepoints.utf16");
-            std::u16string utf16 = first.Get("utf16").As<Napi::String>().Utf16Value();
-            assertIsNumber(
-                    first.Get("codepointLen"), "utf16CountTruncatedToCodepoints.codepointLen");
-            size_t codepointLen = first.Get("codepointLen").As<Napi::Number>().Uint32Value();
-
-            size_t truncate_at = session::utf16_count_truncated_to_codepoints(utf16, codepointLen);
-
-            auto obj = Napi::Object::New(env);
-            obj["truncateAt"] = toJs(env, truncate_at);
 
             return obj;
         });
@@ -340,6 +271,16 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto obj = Napi::Object::New(env);
             emitResponseHeader(env, obj, resp);
             obj["proof"] = toJs(env, resp.proof);
+            // Advisory account (subscription) expiry — grace-inclusive true entitlement end.
+            // Present on success + subscription_expired (a past value there), null otherwise.
+            // Distinct from the proof's own clamped expiry; unsigned/not-in-M, for display + `E`
+            // refresh only.
+            std::optional<std::chrono::sys_time<std::chrono::milliseconds>> account_expiry_ms;
+            if (resp.account_expiry)
+                account_expiry_ms = std::chrono::sys_time<std::chrono::milliseconds>(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(
+                                resp.account_expiry->time_since_epoch()));
+            obj["accountExpiryMs"] = toJs(env, account_expiry_ms);
             return obj;
         });
     };
@@ -404,11 +345,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
         // normalises every one of them to the ms JS domain (see utilities.hpp).
         item["purchasedTsMs"] = toJsMs(env, src.purchased_at);
         item["revokedTsMs"] = toJsMs(env, src.revoked_at);
-        item["redeemedTsMs"] = toJsMs(env, src.redeemed_at);
         item["expiryTsMs"] = toJsMs(env, src.expiry_at);
         item["gracePeriodDurationMs"] = toJsMs(env, src.grace_period_duration);
         item["platformRefundExpiryTsMs"] = toJsMs(env, src.platform_refund_expiry_at);
-        item["refundRequestedTsMs"] = toJsMs(env, src.refund_requested_at);
         item["paymentId"] = toJs(env, src.payment_id);
         return item;
     }
@@ -427,11 +366,9 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             emitResponseHeader(env, obj, resp);
             // user_status: opaque string code (never/active/expired; unknowns pass through)
             obj["userStatus"] = toJs(env, resp.user_status);
-            obj["errorReport"] = toJs(env, static_cast<uint32_t>(resp.error_report));
             obj["autoRenewing"] = toJs(env, resp.auto_renewing);
             obj["expiryMs"] = toJsMs(env, resp.expiry_at);
             obj["gracePeriodDurationMs"] = toJsMs(env, resp.grace_period_duration);
-            obj["refundRequestedTsMs"] = toJsMs(env, resp.refund_requested_at);
             if (resp.latest_payment) {
                 obj["latestPayment"] = paymentItemToJs(env, *resp.latest_payment);
             } else {
@@ -473,7 +410,7 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
     };
 
     // The purchasable payment-provider slugs to surface to users (single source of truth in
-    // libsession; excludes non-purchasable providers like rangeproof). Order is not significant.
+    // libsession; excludes non-purchasable providers like stf). Order is not significant.
     static Napi::Value visiblePlatforms(const Napi::CallbackInfo& info) {
         return wrapResult(info, [&]() -> Napi::Value {
             auto env = info.Env();
