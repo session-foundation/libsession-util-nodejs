@@ -88,6 +88,7 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     // shared exposed functions
                     InstanceMethod("needsPush", &MetaGroupWrapper::needsPush),
                     InstanceMethod("push", &MetaGroupWrapper::push),
+                    InstanceMethod("pushForRecovery", &MetaGroupWrapper::pushForRecovery),
                     InstanceMethod("needsDump", &MetaGroupWrapper::needsDump),
                     InstanceMethod("metaDump", &MetaGroupWrapper::metaDump),
                     InstanceMethod("metaMakeDump", &MetaGroupWrapper::metaMakeDump),
@@ -142,6 +143,7 @@ void MetaGroupWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod(
                             "keyGetEncryptionKeyHex", &MetaGroupWrapper::keyGetEncryptionKeyHex),
                     InstanceMethod("activeHashes", &MetaGroupWrapper::activeHashes),
+                    InstanceMethod("activeHashesByConfig", &MetaGroupWrapper::activeHashesByConfig),
                     InstanceMethod("loadKeyMessage", &MetaGroupWrapper::loadKeyMessage),
                     InstanceMethod("keyGetCurrentGen", &MetaGroupWrapper::keyGetCurrentGen),
                     InstanceMethod("encryptMessages", &MetaGroupWrapper::encryptMessages),
@@ -194,6 +196,44 @@ Napi::Value MetaGroupWrapper::push(const Napi::CallbackInfo& info) {
                     env, *(pending_config), this->meta_group->keys->storage_namespace());
         else
             to_push["groupKeys"s] = env.Null();
+
+        return to_push;
+    });
+}
+
+/**
+ * The current serialised bytes of GroupInfo and GroupMembers, whether or not they need pushing.
+ *
+ * This exists for ONE caller: putting a config back on the swarm after it expired from there. Do
+ * not reach for it when syncing — use push(), which returns null for a sub-config with nothing to
+ * send and is what every normal code path wants. Emitting a clean config during a sync would be
+ * pure redundant traffic, and would drain that config's obsolete-hash list as a side effect.
+ *
+ * Two things a caller has to know:
+ *
+ * - This still goes through ConfigBase::push(), which drains the config's obsolete-hash list and
+ *   clears it unconditionally. Those hashes come back in `hashes` and are handed over exactly
+ *   once, so a caller that ignores them loses them permanently and leaves the superseded messages
+ *   on the swarm forever. Issue the delete for them like a normal push does.
+ *   Note the drain is skipped for a read-only config (a group member), so an empty list there is
+ *   the expected result rather than a sign anything went wrong — and a member holds no Delete
+ *   permission to act on them with anyway.
+ * - GroupKeys is deliberately absent. There is no way to re-emit a stored keys message:
+ *   groups::Keys has no push(), and pending_config() is only non-null while a rekey is in
+ *   progress. An expired keys message can only be replaced by an admin rekeying.
+ */
+Napi::Value MetaGroupWrapper::pushForRecovery(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto env = info.Env();
+        auto to_push = Napi::Object::New(env);
+
+        to_push["groupMember"s] = push_result_to_JS(
+                env,
+                this->meta_group->members->push(),
+                this->meta_group->members->storage_namespace());
+
+        to_push["groupInfo"s] = push_result_to_JS(
+                env, this->meta_group->info->push(), this->meta_group->info->storage_namespace());
 
         return to_push;
     });
@@ -783,6 +823,35 @@ Napi::Value MetaGroupWrapper::activeHashes(const Napi::CallbackInfo& info) {
         std::copy(std::begin(memberHashes), std::end(memberHashes), std::back_inserter(merged));
 
         return merged;
+    });
+}
+
+/**
+ * The same hashes as activeHashes(), but kept separate per sub-config.
+ *
+ * activeHashes() concatenates all three, which is fine for bumping TTLs — the caller just needs
+ * the full set. It is not enough to act on a *specific* hash, though: once the storage server
+ * reports one missing, "which config was that?" decides what happens next, and the three answers
+ * are very different. A missing GroupInfo or GroupMembers hash can be put back by re-storing the
+ * config; a missing GroupKeys hash cannot be put back by anyone but an admin performing a rekey.
+ */
+Napi::Value MetaGroupWrapper::activeHashesByConfig(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        auto env = info.Env();
+        auto obj = Napi::Object::New(env);
+
+        auto keysHashes = meta_group->keys->active_hashes();
+        auto infoHashes = meta_group->info->active_hashes();
+        auto memberHashes = meta_group->members->active_hashes();
+
+        obj["groupKeys"s] =
+                toJs(env, std::vector<std::string>{keysHashes.begin(), keysHashes.end()});
+        obj["groupInfo"s] =
+                toJs(env, std::vector<std::string>{infoHashes.begin(), infoHashes.end()});
+        obj["groupMember"s] =
+                toJs(env, std::vector<std::string>{memberHashes.begin(), memberHashes.end()});
+
+        return obj;
     });
 }
 

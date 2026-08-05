@@ -44,6 +44,7 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     /* Shared Actions */
     Napi::Value needsPush(const Napi::CallbackInfo& info);
     Napi::Value push(const Napi::CallbackInfo& info);
+    Napi::Value pushForRecovery(const Napi::CallbackInfo& info);
     Napi::Value needsDump(const Napi::CallbackInfo& info);
     Napi::Value metaDump(const Napi::CallbackInfo& info);
     Napi::Value metaMakeDump(const Napi::CallbackInfo& info);
@@ -84,6 +85,7 @@ class MetaGroupWrapper : public Napi::ObjectWrap<MetaGroupWrapper> {
     Napi::Value loadKeyMessage(const Napi::CallbackInfo& info);
     Napi::Value keyGetCurrentGen(const Napi::CallbackInfo& info);
     Napi::Value activeHashes(const Napi::CallbackInfo& info);
+    Napi::Value activeHashesByConfig(const Napi::CallbackInfo& info);
     Napi::Value encryptMessages(const Napi::CallbackInfo& info);
     Napi::Value decryptMessage(const Napi::CallbackInfo& info);
     Napi::Value makeSwarmSubAccount(const Napi::CallbackInfo& info);
