@@ -42,6 +42,34 @@ declare module 'libsession_util_nodejs' {
           namespace: number;
         } | null;
       };
+      /**
+       * The current bytes of groupInfo and groupMember whether or not they need pushing, for
+       * putting a config back on the swarm after it expired from there.
+       *
+       * Use `push()` for syncing — this one deliberately ignores `needsPush()`, so using it to
+       * sync would send configs that haven't changed. `hashes` still carries the config's
+       * obsolete hashes and is still handed over only once, so the caller must issue the delete
+       * for them (expect an empty list on a read-only config — a group member — which is normal).
+       *
+       * groupKeys is absent because a stored keys message cannot be re-emitted at all; only an
+       * admin rekey can replace one.
+       */
+      pushForRecovery: () => {
+        groupInfo: PushConfigResult;
+        groupMember: PushConfigResult;
+      };
+      /**
+       * The same hashes as `activeHashes()`, kept separate per sub-config.
+       *
+       * `activeHashes()` merges all three, which is enough to bump TTLs but not to act on a
+       * specific hash: a missing groupInfo/groupMember hash can be re-stored, a missing groupKeys
+       * hash can only be replaced by an admin rekey.
+       */
+      activeHashesByConfig: () => {
+        groupInfo: Array<string>;
+        groupMember: Array<string>;
+        groupKeys: Array<string>;
+      };
       needsDump: () => boolean;
       metaDump: () => Uint8Array;
       metaMakeDump: () => Uint8Array;
@@ -52,6 +80,15 @@ declare module 'libsession_util_nodejs' {
         groupInfo: ConfirmPush | null;
         groupMember: ConfirmPush | null;
       }) => void;
+      /**
+       * @returns how many of the messages handed in were merged. Compare it against what you
+       * passed: libSession skips a config message it cannot take and carries on without erroring,
+       * so a partial merge is invisible to a caller that only checks for a throw.
+       *
+       * Note the keys count is optimistic — a keys message is counted even when it turns out not
+       * to be encrypted to us, which is not a failure. So this detects a lossy groupInfo or
+       * groupMember merge, which is what matters.
+       */
       metaMerge: ({
         groupInfo,
         groupKeys,
@@ -60,7 +97,7 @@ declare module 'libsession_util_nodejs' {
         groupInfo: Array<MergeSingle> | null;
         groupMember: Array<MergeSingle> | null;
         groupKeys: Array<MergeSingle & { timestampMs: number }> | null;
-      }) => void;
+      }) => number;
     };
 
   // this just adds an argument of type GroupPubkeyType in front of the parameters of that function
@@ -78,12 +115,14 @@ declare module 'libsession_util_nodejs' {
     // shared actions
     public needsPush: MetaGroupWrapper['needsPush'];
     public push: MetaGroupWrapper['push'];
+    public pushForRecovery: MetaGroupWrapper['pushForRecovery'];
     public needsDump: MetaGroupWrapper['needsDump'];
     public metaDump: MetaGroupWrapper['metaDump'];
     public metaMakeDump: MetaGroupWrapper['metaMakeDump'];
     public metaConfirmPushed: MetaGroupWrapper['metaConfirmPushed'];
     public metaMerge: MetaGroupWrapper['metaMerge'];
     public activeHashes: MetaGroupWrapper['activeHashes'];
+    public activeHashesByConfig: MetaGroupWrapper['activeHashesByConfig'];
 
     // info
     public infoGet: MetaGroupWrapper['infoGet'];
@@ -128,6 +167,7 @@ declare module 'libsession_util_nodejs' {
     // shared actions
     | MakeActionCall<MetaGroupWrapper, 'needsPush'>
     | MakeActionCall<MetaGroupWrapper, 'push'>
+    | MakeActionCall<MetaGroupWrapper, 'pushForRecovery'>
     | MakeActionCall<MetaGroupWrapper, 'needsDump'>
     | MakeActionCall<MetaGroupWrapper, 'metaDump'>
     | MakeActionCall<MetaGroupWrapper, 'metaMakeDump'>
@@ -169,6 +209,7 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<MetaGroupWrapper, 'keysAdmin'>
     | MakeActionCall<MetaGroupWrapper, 'keyGetCurrentGen'>
     | MakeActionCall<MetaGroupWrapper, 'activeHashes'>
+    | MakeActionCall<MetaGroupWrapper, 'activeHashesByConfig'>
     | MakeActionCall<MetaGroupWrapper, 'encryptMessages'>
     | MakeActionCall<MetaGroupWrapper, 'decryptMessage'>
     | MakeActionCall<MetaGroupWrapper, 'makeSwarmSubAccount'>
