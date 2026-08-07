@@ -94,6 +94,36 @@ declare module 'libsession_util_nodejs' {
     getProPrepaid: () => number | null;
     setProPrepaid: (prepaidTsMs: number | null) => void;
     /**
+     * Whether the subscription auto-renews (config key A), from get_pro_status.auto_renewing.
+     *
+     * Presence-only: core writes it with set_nonzero_int, so `setProAutoRenewing(false)` ERASES the
+     * key rather than storing a false. The getter therefore returns false for all three of "not
+     * auto-renewing", "never fetched yet" and "written by a client predating key A" — so treat
+     * false as terminal/unknown, and never key a change check on whether the key is present.
+     */
+    getProAutoRenewing: () => boolean;
+    setProAutoRenewing: (autoRenewing: boolean) => void;
+    /**
+     * The account's grace period (config key G), in MILLISECONDS, from
+     * get_pro_status.grace_period_duration. 0 when unset.
+     *
+     * Synced alongside `E` so any linked device can derive the paid-through instant as
+     * `getProAccessExpiry() - getProGracePeriod()`: the backend folds grace into the stored expiry
+     * for auto-renewing subscriptions, so `E` is the END OF COVERAGE, not the date the renewal is due.
+     *
+     * ⚠️ Only meaningful if `E` and `G` are written from the SAME get_pro_status response — they are
+     * then consistent whatever grace was in force. Write them together, and clear `G` whenever you
+     * clear `E`, or a later `E` will pair with a stale grace.
+     *
+     * Not optional, unlike the auto-renewing pair: the backend sends 0 when the subscription isn't
+     * auto-renewing, and `E - 0 == E`, so an absent key and a stored zero describe the same account.
+     * Milliseconds here (not seconds like setNoteToSelfExpiry) to match the rest of the Pro accessors
+     * and the `gracePeriodDurationMs` field callers receive from get_pro_status; core stores seconds
+     * and the conversion floors.
+     */
+    getProGracePeriod: () => number;
+    setProGracePeriod: (graceMs: number) => void;
+    /**
      * When to (re)request a proof given `nowMs`: nowMs (request now), a future ms (preemptive
      * renewal ~1h before expiry), or null (don't renew). Supersedes bespoke auto-renew logic.
      */
@@ -136,6 +166,10 @@ declare module 'libsession_util_nodejs' {
     public setRefundRequested: UserConfigWrapper['setRefundRequested'];
     public getProPrepaid: UserConfigWrapper['getProPrepaid'];
     public setProPrepaid: UserConfigWrapper['setProPrepaid'];
+    public getProAutoRenewing: UserConfigWrapper['getProAutoRenewing'];
+    public setProAutoRenewing: UserConfigWrapper['setProAutoRenewing'];
+    public getProGracePeriod: UserConfigWrapper['getProGracePeriod'];
+    public setProGracePeriod: UserConfigWrapper['setProGracePeriod'];
     public getProRenewalTarget: UserConfigWrapper['getProRenewalTarget'];
   }
 
@@ -175,5 +209,9 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'setRefundRequested'>
     | MakeActionCall<UserConfigWrapper, 'getProPrepaid'>
     | MakeActionCall<UserConfigWrapper, 'setProPrepaid'>
+    | MakeActionCall<UserConfigWrapper, 'getProAutoRenewing'>
+    | MakeActionCall<UserConfigWrapper, 'setProAutoRenewing'>
+    | MakeActionCall<UserConfigWrapper, 'getProGracePeriod'>
+    | MakeActionCall<UserConfigWrapper, 'setProGracePeriod'>
     | MakeActionCall<UserConfigWrapper, 'getProRenewalTarget'>;
 }

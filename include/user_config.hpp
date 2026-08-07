@@ -60,6 +60,17 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     void setRefundRequested(const Napi::CallbackInfo& info);
     Napi::Value getProPrepaid(const Napi::CallbackInfo& info);
     void setProPrepaid(const Napi::CallbackInfo& info);
+    // Auto-renewing (config key A). Presence-only in core: set_pro_auto_renewing uses
+    // set_nonzero_int, so writing false ERASES the key — absent means terminal/unknown, and a
+    // caller must compare the getter's value rather than the key's presence.
+    Napi::Value getProAutoRenewing(const Napi::CallbackInfo& info);
+    void setProAutoRenewing(const Napi::CallbackInfo& info);
+    // Grace period (config key G), in ms on the JS side. Synced alongside E so any linked device
+    // can derive the paid-through instant as E - G: the backend folds grace into the stored expiry
+    // for auto-renewing subscriptions, so E is the end of coverage, not the date the renewal is
+    // due. Deliberately not optional -- the backend sends 0 when not auto-renewing, and E - 0 == E.
+    Napi::Value getProGracePeriod(const Napi::CallbackInfo& info);
+    void setProGracePeriod(const Napi::CallbackInfo& info);
     Napi::Value getProRenewalTarget(const Napi::CallbackInfo& info);
 };
 };  // namespace session::nodeapi
