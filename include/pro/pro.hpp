@@ -284,20 +284,21 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
 
             // The account's auto-renewing flag and grace period, advisory like the expiry above, so
             // a proof fetch can refresh config keys `A` and `G` alongside `E` rather than leaving
-            // them to desync. Both are OPTIONAL and surface as `null` when the backend did not say
-            // — which is NOT the same as false or zero. Both config keys are stored presence-only,
-            // so a caller that collapses null to a value would ERASE what a `get_pro_status` fetch
-            // had learned. Keeping them nullable here is what forces the caller to branch instead.
+            // them to desync. Non-null: core requires all three on a successful parse, so a
+            // response missing one is a parse error rather than a defaulted value.
+            //
+            // ⚠️ Only MEANINGFUL on a success. On a failure outcome core never fills them and the
+            // struct's own defaults (`false` / `0s`) come through, indistinguishable from a backend
+            // that really said "not renewing, no grace". Read them only where `status == 'ok'`.
             obj["accountAutoRenewing"] = toJs(env, resp.account_auto_renewing);
 
             // Seconds in core, milliseconds in the JS domain, matching getProGracePeriod and the
             // `gracePeriodDurationMs` field on the get_pro_status response.
-            std::optional<int64_t> account_grace_period_ms;
-            if (resp.account_grace_period)
-                account_grace_period_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  *resp.account_grace_period)
-                                                  .count();
-            obj["accountGracePeriodMs"] = toJs(env, account_grace_period_ms);
+            obj["accountGracePeriodMs"] =
+                    toJs(env,
+                         static_cast<int64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                      resp.account_grace_period)
+                                                      .count()));
             return obj;
         });
     };

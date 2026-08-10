@@ -135,22 +135,22 @@ declare module 'libsession_util_nodejs' {
      */
     accountExpiryMs: number | null;
     /**
-     * Whether the subscription auto-renews, or **null when the backend did not say** — an older backend,
-     * or an outcome carrying no account state.
+     * Whether the subscription auto-renews. Non-null: core requires this on a successful parse, so a
+     * response missing it is a parse error rather than a defaulted value.
      *
-     * ⚠️ `null` is NOT false. Config key `A` is stored presence-only, so writing false ERASES it: a
-     * caller that collapses this with `?? false` would wipe, on every proof fetch, a correct value
-     * learned from `get_pro_status`. Branch on null and leave the key alone when absent.
+     * ⚠️ Only meaningful when `status === 'ok'`. On a failure outcome core never fills it and the
+     * struct's own default `false` comes through — indistinguishable from a backend that really said
+     * "not auto-renewing". Config key `A` is presence-only, so writing that false would ERASE what a
+     * `get_pro_status` fetch had learned. Read it only inside the success branch.
      */
-    accountAutoRenewing: boolean | null;
+    accountAutoRenewing: boolean;
     /**
-     * The account's grace period (ms), or **null when the backend did not say**.
+     * The account's grace period (ms). Non-null for the same reason; core stores whole seconds.
      *
-     * ⚠️ Same hazard: null is not zero, and zero erases config key `G`. Write it only when present, so
-     * `E - G` cannot pair a fresh expiry with a grace learned in a different billing period.
-     * Milliseconds here; core stores whole seconds.
+     * ⚠️ Same scope caveat: on a failure outcome this is the struct default `0`, and zero erases config
+     * key `G`. Read it only inside the success branch.
      */
-    accountGracePeriodMs: number | null;
+    accountGracePeriodMs: number;
   };
 
   type ProRevocationItem = WithRevocationTag & {
