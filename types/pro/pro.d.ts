@@ -134,6 +134,23 @@ declare module 'libsession_util_nodejs' {
      * display and to refresh the cached access expiry (`E`), never for entitlement gating.
      */
     accountExpiryMs: number | null;
+    /**
+     * Whether the subscription auto-renews, or **null when the backend did not say** — an older backend,
+     * or an outcome carrying no account state.
+     *
+     * ⚠️ `null` is NOT false. Config key `A` is stored presence-only, so writing false ERASES it: a
+     * caller that collapses this with `?? false` would wipe, on every proof fetch, a correct value
+     * learned from `get_pro_status`. Branch on null and leave the key alone when absent.
+     */
+    accountAutoRenewing: boolean | null;
+    /**
+     * The account's grace period (ms), or **null when the backend did not say**.
+     *
+     * ⚠️ Same hazard: null is not zero, and zero erases config key `G`. Write it only when present, so
+     * `E - G` cannot pair a fresh expiry with a grace learned in a different billing period.
+     * Milliseconds here; core stores whole seconds.
+     */
+    accountGracePeriodMs: number | null;
   };
 
   type ProRevocationItem = WithRevocationTag & {

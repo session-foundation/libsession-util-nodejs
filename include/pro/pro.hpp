@@ -281,6 +281,23 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                         std::chrono::duration_cast<std::chrono::milliseconds>(
                                 resp.account_expiry->time_since_epoch()));
             obj["accountExpiryMs"] = toJs(env, account_expiry_ms);
+
+            // The account's auto-renewing flag and grace period, advisory like the expiry above, so
+            // a proof fetch can refresh config keys `A` and `G` alongside `E` rather than leaving
+            // them to desync. Both are OPTIONAL and surface as `null` when the backend did not say
+            // — which is NOT the same as false or zero. Both config keys are stored presence-only,
+            // so a caller that collapses null to a value would ERASE what a `get_pro_status` fetch
+            // had learned. Keeping them nullable here is what forces the caller to branch instead.
+            obj["accountAutoRenewing"] = toJs(env, resp.account_auto_renewing);
+
+            // Seconds in core, milliseconds in the JS domain, matching getProGracePeriod and the
+            // `gracePeriodDurationMs` field on the get_pro_status response.
+            std::optional<int64_t> account_grace_period_ms;
+            if (resp.account_grace_period)
+                account_grace_period_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                  *resp.account_grace_period)
+                                                  .count();
+            obj["accountGracePeriodMs"] = toJs(env, account_grace_period_ms);
             return obj;
         });
     };
