@@ -498,7 +498,7 @@ void UserConfigWrapper::setProGracePeriod(const Napi::CallbackInfo& info) {
         assertIsNumber(info[0], "setProGracePeriod");
         auto grace_ms = toCppInteger(info[0], "UserConfigWrapper::setProGracePeriod", false);
         // Floor rather than round: a grace period is a coverage window, so truncating keeps
-        // `E - G` from claiming coverage the backend didn't grant. Zero or negative clears the key.
+        // `E + G` from claiming coverage the backend didn't grant. Zero or negative clears the key.
         config.set_pro_grace_period(
                 std::chrono::floor<std::chrono::seconds>(std::chrono::milliseconds{grace_ms}));
     });

@@ -104,19 +104,25 @@ declare module 'libsession_util_nodejs' {
     getProAutoRenewing: () => boolean;
     setProAutoRenewing: (autoRenewing: boolean) => void;
     /**
-     * The account's grace period (config key G), in MILLISECONDS, from
+     * The account's grace period (config key G), in MILLISECONDS, from the ACCOUNT-level
      * get_pro_status.grace_period_duration. 0 when unset.
      *
-     * Synced alongside `E` so any linked device can derive the paid-through instant as
-     * `getProAccessExpiry() - getProGracePeriod()`: the backend folds grace into the stored expiry
-     * for auto-renewing subscriptions, so `E` is the END OF COVERAGE, not the date the renewal is due.
+     * Synced alongside `E` so any linked device can derive when coverage ends:
+     * `getProAccessExpiry() + getProGracePeriod()`. `E` is the account's true expiry — what has been
+     * paid for, and the honest thing to show a user — and the backend keeps serving for `G` past it,
+     * judging active/expired against that later instant. So `[E, E + G)` is expired-but-still-served.
+     *
+     * ⚠️ NOT the `gracePeriodDurationMs` on a get_pro_status response's `latestPayment`. That one is a
+     * single store's raw declaration and is not gated on auto-renewal — a subscriber who cancels
+     * mid-retry keeps a nonzero value in it, and treating it as the account's grace would place
+     * coverage weeks past the truth. This key is "how much longer are we served"; the payment-level
+     * field is "what did the store declare about one transaction".
      *
      * ⚠️ Only meaningful if `E` and `G` are written from the SAME get_pro_status response — they are
-     * then consistent whatever grace was in force. Write them together, and clear `G` whenever you
-     * clear `E`, or a later `E` will pair with a stale grace.
+     * then consistent whatever grace was in force. Write them together; core clears `G` with `E`.
      *
      * Not optional, unlike the auto-renewing pair: the backend sends 0 when the subscription isn't
-     * auto-renewing, and `E - 0 == E`, so an absent key and a stored zero describe the same account.
+     * auto-renewing, and `E + 0 == E`, so an absent key and a stored zero describe the same account.
      * Milliseconds here (not seconds like setNoteToSelfExpiry) to match the rest of the Pro accessors
      * and the `gracePeriodDurationMs` field callers receive from get_pro_status; core stores seconds
      * and the conversion floors.
