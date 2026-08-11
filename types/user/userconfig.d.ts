@@ -96,36 +96,22 @@ declare module 'libsession_util_nodejs' {
     /**
      * Whether the subscription auto-renews (config key A), from get_pro_status.auto_renewing.
      *
-     * Presence-only: core writes it with set_nonzero_int, so `setProAutoRenewing(false)` ERASES the
-     * key rather than storing a false. The getter therefore returns false for all three of "not
-     * auto-renewing", "never fetched yet" and "written by a client predating key A" — so treat
-     * false as terminal/unknown, and never key a change check on whether the key is present.
+     * Presence-only: core writes it with set_nonzero_int, so `setProAutoRenewing(false)` ERASES the key.
+     * The getter returns false for "not auto-renewing", "never fetched" and "written by a client
+     * predating key A" alike — never key a change check on whether the key is present.
      */
     getProAutoRenewing: () => boolean;
     setProAutoRenewing: (autoRenewing: boolean) => void;
     /**
      * The account's grace period (config key G), in MILLISECONDS, from the ACCOUNT-level
-     * get_pro_status.grace_period_duration. 0 when unset.
+     * get_pro_status.grace_period_duration. 0 when unset. Core stores seconds; the conversion floors.
      *
-     * Synced alongside `E` so any linked device can derive when coverage ends:
-     * `getProAccessExpiry() + getProGracePeriod()`. `E` is the account's true expiry — what has been
-     * paid for, and the honest thing to show a user — and the backend keeps serving for `G` past it,
-     * judging active/expired against that later instant. So `[E, E + G)` is expired-but-still-served.
+     * Coverage ends at `getProAccessExpiry() + getProGracePeriod()` — `E` is the paid-through expiry and
+     * the backend serves for `G` past it, so `[E, E + G)` is expired-but-still-served.
      *
-     * ⚠️ NOT the `gracePeriodDurationMs` on a get_pro_status response's `latestPayment`. That one is a
-     * single store's raw declaration and is not gated on auto-renewal — a subscriber who cancels
-     * mid-retry keeps a nonzero value in it, and treating it as the account's grace would place
-     * coverage weeks past the truth. This key is "how much longer are we served"; the payment-level
-     * field is "what did the store declare about one transaction".
-     *
-     * ⚠️ Only meaningful if `E` and `G` are written from the SAME get_pro_status response — they are
-     * then consistent whatever grace was in force. Write them together; core clears `G` with `E`.
-     *
-     * Not optional, unlike the auto-renewing pair: the backend sends 0 when the subscription isn't
-     * auto-renewing, and `E + 0 == E`, so an absent key and a stored zero describe the same account.
-     * Milliseconds here (not seconds like setNoteToSelfExpiry) to match the rest of the Pro accessors
-     * and the `gracePeriodDurationMs` field callers receive from get_pro_status; core stores seconds
-     * and the conversion floors.
+     * NOT the `gracePeriodDurationMs` on a response's `latestPayment`: that is one store's declaration
+     * about a single transaction, is not gated on auto-renewal, and a subscriber who cancels mid-retry
+     * keeps a nonzero value in it. Only meaningful written from the same response as `E`.
      */
     getProGracePeriod: () => number;
     setProGracePeriod: (graceMs: number) => void;
