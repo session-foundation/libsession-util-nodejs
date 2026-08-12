@@ -94,6 +94,28 @@ declare module 'libsession_util_nodejs' {
     getProPrepaid: () => number | null;
     setProPrepaid: (prepaidTsMs: number | null) => void;
     /**
+     * Whether the subscription auto-renews (config key A), from get_pro_status.auto_renewing.
+     *
+     * Presence-only: core writes it with set_nonzero_int, so `setProAutoRenewing(false)` ERASES the key.
+     * The getter returns false for "not auto-renewing", "never fetched" and "written by a client
+     * predating key A" alike — never key a change check on whether the key is present.
+     */
+    getProAutoRenewing: () => boolean;
+    setProAutoRenewing: (autoRenewing: boolean) => void;
+    /**
+     * The account's grace period (config key G), in MILLISECONDS, from the ACCOUNT-level
+     * get_pro_status.grace_period_duration. 0 when unset. Core stores seconds; the conversion floors.
+     *
+     * Coverage ends at `getProAccessExpiry() + getProGracePeriod()` — `E` is the paid-through expiry and
+     * the backend serves for `G` past it, so `[E, E + G)` is expired-but-still-served.
+     *
+     * NOT the `gracePeriodDurationMs` on a response's `latestPayment`: that is one store's declaration
+     * about a single transaction, is not gated on auto-renewal, and a subscriber who cancels mid-retry
+     * keeps a nonzero value in it. Only meaningful written from the same response as `E`.
+     */
+    getProGracePeriod: () => number;
+    setProGracePeriod: (graceMs: number) => void;
+    /**
      * When to (re)request a proof given `nowMs`: nowMs (request now), a future ms (preemptive
      * renewal ~1h before expiry), or null (don't renew). Supersedes bespoke auto-renew logic.
      */
@@ -136,6 +158,10 @@ declare module 'libsession_util_nodejs' {
     public setRefundRequested: UserConfigWrapper['setRefundRequested'];
     public getProPrepaid: UserConfigWrapper['getProPrepaid'];
     public setProPrepaid: UserConfigWrapper['setProPrepaid'];
+    public getProAutoRenewing: UserConfigWrapper['getProAutoRenewing'];
+    public setProAutoRenewing: UserConfigWrapper['setProAutoRenewing'];
+    public getProGracePeriod: UserConfigWrapper['getProGracePeriod'];
+    public setProGracePeriod: UserConfigWrapper['setProGracePeriod'];
     public getProRenewalTarget: UserConfigWrapper['getProRenewalTarget'];
   }
 
@@ -175,5 +201,9 @@ declare module 'libsession_util_nodejs' {
     | MakeActionCall<UserConfigWrapper, 'setRefundRequested'>
     | MakeActionCall<UserConfigWrapper, 'getProPrepaid'>
     | MakeActionCall<UserConfigWrapper, 'setProPrepaid'>
+    | MakeActionCall<UserConfigWrapper, 'getProAutoRenewing'>
+    | MakeActionCall<UserConfigWrapper, 'setProAutoRenewing'>
+    | MakeActionCall<UserConfigWrapper, 'getProGracePeriod'>
+    | MakeActionCall<UserConfigWrapper, 'setProGracePeriod'>
     | MakeActionCall<UserConfigWrapper, 'getProRenewalTarget'>;
 }

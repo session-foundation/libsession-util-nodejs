@@ -271,7 +271,8 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
             auto obj = Napi::Object::New(env);
             emitResponseHeader(env, obj, resp);
             obj["proof"] = toJs(env, resp.proof);
-            // Advisory account (subscription) expiry — grace-inclusive true entitlement end.
+            // Advisory account (subscription) expiry — the account's true paid-through expiry, with
+            // coverage running to expiry + grace_period rather than ending here.
             // Present on success + subscription_expired (a past value there), null otherwise.
             // Distinct from the proof's own clamped expiry; unsigned/not-in-M, for display + `E`
             // refresh only.
@@ -281,6 +282,24 @@ class ProWrapper : public Napi::ObjectWrap<ProWrapper> {
                         std::chrono::duration_cast<std::chrono::milliseconds>(
                                 resp.account_expiry->time_since_epoch()));
             obj["accountExpiryMs"] = toJs(env, account_expiry_ms);
+
+            // The account's auto-renewing flag and grace period, advisory like the expiry above, so
+            // a proof fetch can refresh config keys `A` and `G` alongside `E` rather than leaving
+            // them to desync. Non-null: core requires all three on a successful parse, so a
+            // response missing one is a parse error rather than a defaulted value.
+            //
+            // ⚠️ Only MEANINGFUL on a success. On a failure outcome core never fills them and the
+            // struct's own defaults (`false` / `0s`) come through, indistinguishable from a backend
+            // that really said "not renewing, no grace". Read them only where `status == 'ok'`.
+            obj["accountAutoRenewing"] = toJs(env, resp.account_auto_renewing);
+
+            // Seconds in core, milliseconds in the JS domain, matching getProGracePeriod and the
+            // `gracePeriodDurationMs` field on the get_pro_status response.
+            obj["accountGracePeriodMs"] =
+                    toJs(env,
+                         static_cast<int64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                      resp.account_grace_period)
+                                                      .count()));
             return obj;
         });
     };

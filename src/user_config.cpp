@@ -109,6 +109,10 @@ void UserConfigWrapper::Init(Napi::Env env, Napi::Object exports) {
                     InstanceMethod("setRefundRequested", &UserConfigWrapper::setRefundRequested),
                     InstanceMethod("getProPrepaid", &UserConfigWrapper::getProPrepaid),
                     InstanceMethod("setProPrepaid", &UserConfigWrapper::setProPrepaid),
+                    InstanceMethod("getProAutoRenewing", &UserConfigWrapper::getProAutoRenewing),
+                    InstanceMethod("setProAutoRenewing", &UserConfigWrapper::setProAutoRenewing),
+                    InstanceMethod("getProGracePeriod", &UserConfigWrapper::getProGracePeriod),
+                    InstanceMethod("setProGracePeriod", &UserConfigWrapper::setProGracePeriod),
                     InstanceMethod("getProRenewalTarget", &UserConfigWrapper::getProRenewalTarget),
             });
 }
@@ -459,6 +463,44 @@ void UserConfigWrapper::setProPrepaid(const Napi::CallbackInfo& info) {
         if (prepaid_ms)
             prepaid = std::chrono::floor<std::chrono::seconds>(*prepaid_ms);
         config.set_pro_prepaid(prepaid);
+    });
+}
+
+Napi::Value UserConfigWrapper::getProAutoRenewing(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] { return toJs(info.Env(), config.get_pro_auto_renewing()); });
+}
+
+void UserConfigWrapper::setProAutoRenewing(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsBoolean(info[0], "setProAutoRenewing");
+        auto auto_renewing = toCppBoolean(info[0], "UserConfigWrapper::setProAutoRenewing");
+        config.set_pro_auto_renewing(auto_renewing);
+    });
+}
+
+Napi::Value UserConfigWrapper::getProGracePeriod(const Napi::CallbackInfo& info) {
+    return wrapResult(info, [&] {
+        // libsession stores whole seconds; the JS domain is milliseconds, matching the rest of the
+        // Pro accessors (and the `gracePeriodDurationMs` field callers get from get_pro_status).
+        // Not optional, unlike the auto-renewing pair: the backend sends 0 when the subscription
+        // isn't auto-renewing, and `E - 0 == E`, so an absent key and a stored zero are the same
+        // account.
+        auto grace_s = config.get_pro_grace_period();
+        return static_cast<int64_t>(
+                std::chrono::duration_cast<std::chrono::milliseconds>(grace_s).count());
+    });
+}
+
+void UserConfigWrapper::setProGracePeriod(const Napi::CallbackInfo& info) {
+    wrapExceptions(info, [&] {
+        assertInfoLength(info, 1);
+        assertIsNumber(info[0], "setProGracePeriod");
+        auto grace_ms = toCppInteger(info[0], "UserConfigWrapper::setProGracePeriod", false);
+        // Floor rather than round: a grace period is a coverage window, so truncating keeps
+        // `E + G` from claiming coverage the backend didn't grant. Zero or negative clears the key.
+        config.set_pro_grace_period(
+                std::chrono::floor<std::chrono::seconds>(std::chrono::milliseconds{grace_ms}));
     });
 }
 

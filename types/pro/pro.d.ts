@@ -128,12 +128,31 @@ declare module 'libsession_util_nodejs' {
   type GenerateProProofResponse = WithProResponseHeader & {
     proof: ProProof;
     /**
-     * Advisory account (subscription) expiry (ms) — grace-inclusive true entitlement end; present on
-     * a successful proof and on a `subscription_expired` failure (a past value), null otherwise.
+     * Advisory account (subscription) expiry (ms) — the account's true paid-through expiry, the same
+     * value `get_pro_status` reports as `expiryMs`. Coverage runs to `expiryMs + gracePeriodMs`, so this
+     * is not the instant the backend stops serving. Present on a successful proof and on a
+     * `subscription_expired` failure (a past value), null otherwise.
      * Distinct from the proof's own clamped expiry; unsigned / not-in-M — use for the "Pro until X"
      * display and to refresh the cached access expiry (`E`), never for entitlement gating.
      */
     accountExpiryMs: number | null;
+    /**
+     * Whether the subscription auto-renews. Non-null: core requires this on a successful parse, so a
+     * response missing it is a parse error rather than a defaulted value.
+     *
+     * ⚠️ Only meaningful when `status === 'ok'`. On a failure outcome core never fills it and the
+     * struct's own default `false` comes through — indistinguishable from a backend that really said
+     * "not auto-renewing". Config key `A` is presence-only, so writing that false would ERASE what a
+     * `get_pro_status` fetch had learned. Read it only inside the success branch.
+     */
+    accountAutoRenewing: boolean;
+    /**
+     * The account's grace period (ms). Non-null for the same reason; core stores whole seconds.
+     *
+     * ⚠️ Same scope caveat: on a failure outcome this is the struct default `0`, and zero erases config
+     * key `G`. Read it only inside the success branch.
+     */
+    accountGracePeriodMs: number;
   };
 
   type ProRevocationItem = WithRevocationTag & {
