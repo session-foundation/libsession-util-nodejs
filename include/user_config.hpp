@@ -65,9 +65,9 @@ class UserConfigWrapper : public ConfigBaseImpl, public Napi::ObjectWrap<UserCon
     // caller must compare the getter's value rather than the key's presence.
     Napi::Value getProAutoRenewing(const Napi::CallbackInfo& info);
     void setProAutoRenewing(const Napi::CallbackInfo& info);
-    // Grace period (config key G), in ms on the JS side. Synced alongside E so any linked device can
-    // derive when coverage ends as E + G: E is the account's true paid-through expiry, and the backend
-    // keeps serving for G past it, so [E, E + G) is expired-but-still-served. This is the
+    // Grace period (config key G), in ms on the JS side. Synced alongside E so any linked device
+    // can derive when coverage ends as E + G: E is the account's true paid-through expiry, and the
+    // backend keeps serving for G past it, so [E, E + G) is expired-but-still-served. This is the
     // ACCOUNT-level grace, not the per-payment field of the same name. Deliberately not optional --
     // the backend sends 0 when not auto-renewing, and E + 0 == E.
     Napi::Value getProGracePeriod(const Napi::CallbackInfo& info);
