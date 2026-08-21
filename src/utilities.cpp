@@ -151,10 +151,55 @@ int64_t toCppIntegerB(Napi::Value x, const std::string& identifier, bool allowUn
     auto lossless = true;
     if (allowUndefined && (x.IsNull() || x.IsUndefined()))
         return 0;
-    if (x.IsBigInt())
-        return x.As<Napi::BigInt>().Int64Value(&lossless);
+    if (x.IsBigInt()) {
+        auto value = x.As<Napi::BigInt>().Int64Value(&lossless);
+        // Napi reports whether the conversion truncated. Without
+        // this check, a BigInt outside int64_t range silently wraps
+        // — e.g. bit 63 of a uint64 Pro feature bitset accidentally
+        // set on the JS side stores the wrong value here.
+        if (!lossless)
+            throw std::invalid_argument{"BigInt out of int64_t range for "s + identifier};
+        return value;
+    }
 
     throw std::invalid_argument{"Unsupported type for "s + identifier + ": expected a bigint"};
+}
+
+uint64_t toCppUnsignedIntegerB(Napi::Value x, const std::string& identifier, bool allowUndefined) {
+    // Dedicated unsigned parser for fields the C++ side stores as
+    // uint64 (bitsets, profile flags, etc.). The lossless check on
+    // `toCppIntegerB` only catches BigInts outside int64_t range, but
+    // a NEGATIVE BigInt (e.g. -1n) is lossless as int64 and silently
+    // wraps to 0xFFFFFFFFFFFFFFFF when assigned to uint64 — exactly
+    // the high-bit injection the lossless check was meant to block.
+    // Use Uint64Value + explicit non-negative guard via BigInt::ToWords.
+    auto lossless = true;
+    if (allowUndefined && (x.IsNull() || x.IsUndefined()))
+        return 0;
+    if (x.IsBigInt()) {
+        auto bigint = x.As<Napi::BigInt>();
+        int signBit = 0;
+        size_t wordCount = 0;
+        bigint.ToWords(&signBit, &wordCount, nullptr);
+        if (signBit != 0)
+            throw std::invalid_argument{"BigInt is negative for unsigned field "s + identifier};
+        auto value = bigint.Uint64Value(&lossless);
+        if (!lossless)
+            throw std::invalid_argument{"BigInt out of uint64_t range for "s + identifier};
+        return value;
+    }
+
+    throw std::invalid_argument{"Unsupported type for "s + identifier + ": expected a bigint"};
+}
+
+std::optional<uint64_t> maybeNonemptyUintB(Napi::Value x, const std::string& identifier) {
+    if (x.IsNull() || x.IsUndefined())
+        return std::nullopt;
+    if (x.IsBigInt()) {
+        return toCppUnsignedIntegerB(x, identifier);
+    }
+
+    throw std::invalid_argument{"maybeNonemptyUint with invalid type, called from " + identifier};
 }
 
 std::optional<int64_t> maybeNonemptyIntB(Napi::Value x, const std::string& identifier) {
