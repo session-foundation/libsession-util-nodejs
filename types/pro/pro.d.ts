@@ -66,10 +66,15 @@ declare module 'libsession_util_nodejs' {
    */
   export type ProBackendUrlsType = {
     roadmap: string;
+    /** `url_pro_privacy_policy` — the Pro policy, not Session's general one. */
     privacy_policy: string;
+    /** `url_pro_terms_of_service` — the Pro terms, not Session's general ones. */
     terms_of_service: string;
     pro_access_not_found: string;
     support_url: string;
+    faq: string;
+    pro_page: string;
+    upgrade: string;
   };
 
   /**

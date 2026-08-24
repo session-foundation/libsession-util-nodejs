@@ -19,12 +19,20 @@ ConstantsWrapper::ConstantsWrapper(const Napi::CallbackInfo& info) :
 Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     const char* class_name = "CONSTANTS";
 
+    // Every entry here reads a `url_pro_*` field. Two of them used to read the generic
+    // `url_privacy_policy` / `url_terms_of_service` instead, so an object named `pro_urls` handed
+    // consumers Session's general terms and privacy pages rather than the Pro ones - a wrong link in
+    // the client UI, not a naming quibble. The registry carries both sets; only the Pro set belongs
+    // here.
     auto pro_urls = Napi::Object::New(env);
     pro_urls["roadmap"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_roadmap);
-    pro_urls["privacy_policy"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_privacy_policy);
-    pro_urls["terms_of_service"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_terms_of_service);
+    pro_urls["privacy_policy"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_privacy_policy);
+    pro_urls["terms_of_service"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_terms_of_service);
     pro_urls["pro_access_not_found"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_access_not_found);
     pro_urls["support_url"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_support);
+    pro_urls["faq"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_faq);
+    pro_urls["pro_page"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_page);
+    pro_urls["upgrade"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_upgrade);
 
     // Provider display metadata (store/platform/account NAMES) is no longer shipped by libsession —
     // those are translation data owned by each client (keyed on the provider slug). The
