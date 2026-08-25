@@ -25,7 +25,6 @@ declare module 'libsession_util_nodejs' {
   };
 
   type ProProof = WithRevocationTag & {
-    version: number;
     /**
      * HexString, 64 chars
      */

@@ -15,7 +15,6 @@ struct toJs_impl<session::ProProof> {
     Napi::Object operator()(const Napi::Env& env, const session::ProProof pro_proof) {
         auto obj = Napi::Object::New(env);
 
-        obj["version"] = toJs(env, pro_proof.version);
         // `revocation_tag` (renamed from `revocation_tag`); kept the JS key `revocationTagB64` to
         // avoid churning every desktop consumer.
         obj["revocationTagB64"] = toJs(env, oxenc::to_base64(pro_proof.revocation_tag));
@@ -71,12 +70,17 @@ struct toJs_impl<session::DecodedPro> {
     Napi::Object operator()(const Napi::Env& env, const session::DecodedPro decoded_pro) {
         auto obj = Napi::Object::New(env);
 
+        // Only the two states a client acts on, which is what `type ProStatus` in
+        // types/pro/pro.d.ts declares. Every other reason collapses to "Invalid" -- including
+        // libsession's new ProStatus::Invalid, meaning "no proof we could read": either none was
+        // attached, or it is in a format this build predates. Such a message is delivered as
+        // non-Pro rather than dropped, so a future proof format costs the sender their Pro
+        // affordances on old clients instead of costing them the whole message.
         obj["proStatus"] = toJs(
                 env,
                 decoded_pro.status == ProStatus::Valid || decoded_pro.status == ProStatus::Expired
                         ? "ValidOrExpired"
-                : decoded_pro.status == ProStatus::InvalidProBackendSig ? "InvalidProBackendSig"
-                                                                        : "InvalidUserSig");
+                        : "Invalid");
         obj["proProof"] = toJs(env, decoded_pro.proof);
         obj["proProfileBitset"] = proProfileBitsetToJS(env, decoded_pro.profile_bitset);
         obj["proMessageBitset"] = proMessageBitsetToJS(env, decoded_pro.msg_bitset);
