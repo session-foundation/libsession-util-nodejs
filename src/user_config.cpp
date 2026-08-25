@@ -32,10 +32,6 @@ session::config::ProConfig pro_config_from_object(Napi::Object input) {
     assertIsObject(proProof);
     auto proof_js = proProof.As<Napi::Object>();
 
-    // extract version
-    assertIsNumber(proof_js.Get("version"), "pro_config_from_object.version");
-    pro_config.proof.version =
-            toCppInteger(proof_js.Get("version"), "pro_config_from_object.version");
     // extract revocationTagB64
     auto revocation_tag_b64 = proof_js.Get("revocationTagB64");
     assertIsString(revocation_tag_b64, "pro_config_from_object.revocationTagB64");
