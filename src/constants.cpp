@@ -20,10 +20,10 @@ Napi::Object ConstantsWrapper::Init(Napi::Env env, Napi::Object exports) {
     const char* class_name = "CONSTANTS";
 
     // Every entry here reads a `url_pro_*` field. Two of them used to read the generic
-    // `url_privacy_policy` / `url_terms_of_service` instead, so an object named `pro_urls` handed
-    // consumers Session's general terms and privacy pages rather than the Pro ones - a wrong link in
-    // the client UI, not a naming quibble. The registry carries both sets; only the Pro set belongs
-    // here.
+    // `url_privacy_policy` / `url_terms_of_service` instead, so an object named `pro_urls`
+    // handed consumers Session's general terms and privacy pages rather than the Pro ones - a
+    // wrong link in the client UI, not a naming quibble. The registry carries both sets; only
+    // the Pro set belongs here.
     auto pro_urls = Napi::Object::New(env);
     pro_urls["roadmap"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_roadmap);
     pro_urls["privacy_policy"] = toJs(env, SESSION_PROTOCOL_STRINGS.url_pro_privacy_policy);
