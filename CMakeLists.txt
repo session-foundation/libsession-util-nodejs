@@ -94,6 +94,27 @@ target_include_directories(${PROJECT_NAME} PRIVATE  "include/" )
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} ${LIBSESSION_STATIC_BUNDLE_LIBS})
 
+# Export nothing but Node-API's entry points.  One process can load this addon more than once
+# (Session Desktop loads it on the renderer's main thread and again in its libsession worker), and
+# any symbol a copy exports can be bound to another copy's definition: macOS's dyld coalesces weak
+# definitions across images, so one copy runs the other's code against its own uninitialised state
+# (libsodium, for one, aborts in sodium_malloc).  Hidden, each copy only ever calls itself.
+# Windows already exports only what is marked dllexport.
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
+if(APPLE)
+  target_link_options(${PROJECT_NAME} PRIVATE
+      "LINKER:-exported_symbol,_napi_register_module_v1"
+      "LINKER:-exported_symbol,_node_api_module_get_api_version_v1")
+elseif(UNIX)
+  target_link_options(${PROJECT_NAME} PRIVATE
+      "LINKER:--version-script=${CMAKE_CURRENT_SOURCE_DIR}/scripts/addon-exports.map")
+  set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY
+      LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/addon-exports.map)
+endif()
+
 
 if(UNIX AND NOT APPLE)
     target_compile_options(${PROJECT_NAME} PRIVATE -Werror=switch-enum)
